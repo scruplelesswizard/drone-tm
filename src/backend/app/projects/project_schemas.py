@@ -1,7 +1,7 @@
 import json
 import uuid
 from datetime import date, datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from urllib.parse import urlparse
 
 import geojson
@@ -1037,3 +1037,16 @@ class CompleteMultipartUploadRequest(BaseModel):
 class AbortMultipartUploadRequest(BaseModel):
     upload_id: str
     file_key: str
+
+
+class RegulatorCommentIn(BaseModel):
+    """Body for a regulator's comment + approval decision on a project."""
+
+    regulator_comment: str
+    regulator_approval_status: Literal["PENDING", "APPROVED", "REJECTED"]
+
+
+class OamUploadTagsIn(BaseModel):
+    """Body for the OpenAerialMap upload tags."""
+
+    tags: list[str] = Field(default_factory=list)
