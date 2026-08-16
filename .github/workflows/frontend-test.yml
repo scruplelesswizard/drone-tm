@@ -1,0 +1,44 @@
+name: Test Frontend
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - "src/frontend/**"
+      - "src/pnpm-workspace.yaml"
+      - "src/pnpm-lock.yaml"
+      - ".github/workflows/frontend-test.yml"
+
+  pull_request:
+    paths:
+      - "src/frontend/**"
+      - "src/pnpm-workspace.yaml"
+      - "src/pnpm-lock.yaml"
+      - ".github/workflows/frontend-test.yml"
+
+  # Allow manual trigger (workflow_dispatch)
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: src/frontend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: src/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: src
+
+      - run: pnpm run test
+        working-directory: src/frontend
