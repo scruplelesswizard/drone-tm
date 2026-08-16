@@ -6,7 +6,10 @@ Frontend P0/P1 items only. CI/CD, Kubernetes/infra, cross-cutting security,
 and observability items are catalogued in the artifact but out of scope here
 until explicitly requested.
 
-Each item gets its own commit. Checked = committed.
+Each item gets its own commit (and, on the `scruplelesswizard/drone-tm` fork,
+its own stacked PR). Checked = committed. Follow-ups discovered while
+executing an item are filed as new entries below, not noted inline on the
+original item.
 
 ## Backend — P0
 
@@ -14,9 +17,8 @@ Each item gets its own commit. Checked = committed.
       slash; matches `main.py`'s `redirect_slashes=False` + its own comment)
 - [x] Fail fast when `SECRET_KEY` is unset outside debug (`app/config.py`)
 - [x] Paginate `GET /users/` (`user_routes.py`, currently unbounded)
-- [ ] Restore a real ruff lint config (currently `ignore`-only, falls back to
-      Ruff's minimal default `select`) — scoped to what's safely fixable now;
-      pre-existing debt gets documented `ignore` entries, not blind fixes
+- [x] Restore a real ruff lint config (`pyproject.toml`) — was `ignore`-only
+      with no `select`, silently falling back to Ruff's minimal defaults
 
 ## Backend — P1
 
@@ -26,27 +28,15 @@ Each item gets its own commit. Checked = committed.
       replaced duplicated inline ownership checks in `user_routes.py` with
       `check_permissions(...)`. Removed `HasObjectPermission`/`PermissionType`
       instead of implementing the stub — it's unused anywhere and there's no
-      permissions/roles table backing it; "implementing" it would mean
-      inventing a data model no route needs yet.
-- [x] RFC 7807-style problem responses: global exception handlers for
-      `HTTPException` / `RequestValidationError` / generic `Exception`
-      (`app/problem_details.py`). Fixed the 3 sites the audit named for
-      leaking raw exception text into `detail`. **Follow-up found while
-      doing this**: ~30 more `detail=f"...{e}"` sites in
-      `classification_routes.py`/`project_routes.py` — all already
-      `log.error(...)` the real error first, so not urgent, but worth a
-      dedicated pass.
-- [x] One shared pagination dependency + response envelope
-      (`app/pagination.py`: `PaginationParams`/`pagination_params`/
-      `PaginationMeta`/`paginate`) for projects/tasks/users list endpoints.
-      `GET /tasks` and `GET /users` now return `{results, pagination}`
-      instead of a bare list — updated the two frontend hooks that consumed
-      them (`api/dashboard.ts`, `api/projects.ts`) to unwrap `.results` at
-      the query-hook boundary so no downstream component needed changes.
-      `GET /users` keeps a larger default/max page size than the shared
-      default (existing mention-picker callers expect "all users" back).
-- [ ] Turn on mypy for the backend (pre-commit + CI), scoped to a workable
-      starting baseline rather than zero-errors-or-bust
+      permissions/roles table backing it.
+- [x] RFC 7807-style problem responses: global exception handlers
+      (`app/problem_details.py`) for `HTTPException` / `RequestValidationError`
+      / generic `Exception`. Fixed the 3 sites the audit named for leaking
+      raw exception text into `detail`.
+- [x] One shared pagination dependency + response envelope (`app/pagination.py`)
+      for projects/tasks/users list endpoints.
+- [x] Turn on mypy for the backend (`pyproject.toml` + pre-commit), as a
+      gradual-typing baseline rather than zero-errors-or-bust.
 
 ## Frontend — P0
 
@@ -62,6 +52,28 @@ Each item gets its own commit. Checked = committed.
       TanStack Query already owns server state)
 - [ ] Add a top-level `ErrorBoundary` at the app root using the already-
       installed `react-error-boundary` package (currently unused)
+
+## Follow-ups discovered while executing the above
+
+New items surfaced during backend work, filed separately rather than as
+inline notes on the item that found them:
+
+- [ ] Fix the ~30 remaining `detail=f"...{e}"` sites in
+      `classification_routes.py`/`project_routes.py` that leak raw exception
+      text into the client-facing response (all already `log.error(...)` the
+      real error first, so not urgent — found while adding the RFC 7807
+      handlers, which only fixed the 3 sites the original audit named).
+- [ ] Regenerate `uv.lock` (run `uv lock` from `src/backend` in a real dev
+      environment or container — this sandbox lacks `libpq-dev`/GDAL headers
+      needed to resolve `psycopg[c]`) now that mypy was added as a dev
+      dependency; the `uv-lock` pre-commit hook will fail until then.
+- [ ] Incrementally clear the debt the restored ruff config now tracks in
+      documented `ignore` entries: `B904` (51 sites, exception chaining),
+      `N805`/`N806` (43 sites, naming), `ASYNC240` (11 sites, blocking calls
+      in async functions). Each needs individual review, not a blind fix.
+- [ ] Give `GET /users` a real paged UI/UX instead of the large
+      default/max page size (200/500) it currently uses to avoid breaking
+      the user-mention picker, which expects "all users" back in one page.
 
 ## Explicitly out of scope for this pass
 
