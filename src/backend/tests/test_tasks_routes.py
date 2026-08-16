@@ -103,7 +103,7 @@ async def _unlock_task(
 @pytest.mark.asyncio
 async def test_list_tasks(client):
     """Test listing tasks for the authenticated user."""
-    response = await client.get("/api/tasks/")
+    response = await client.get("/api/tasks")
     assert response.status_code == 200
 
 

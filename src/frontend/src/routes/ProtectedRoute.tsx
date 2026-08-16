@@ -13,7 +13,7 @@ interface IProtectedRoute {
 
 /**
  * For Hanko SSO, the localStorage `userprofile` can outlive the actual
- * session cookie.  We ping `/users/my-info/` once per mount to confirm
+ * session cookie.  We ping `/users/my-info` once per mount to confirm
  * the session is still valid.  If not, we clear stale state and redirect.
  */
 function useValidateSession(isAuthenticated: boolean) {
@@ -30,7 +30,7 @@ function useValidateSession(isAuthenticated: boolean) {
 
     let cancelled = false;
 
-    fetch(`${API_URL}/users/my-info/`, { credentials: "include" })
+    fetch(`${API_URL}/users/my-info`, { credentials: "include" })
       .then((res) => {
         if (cancelled) return;
         if (res.ok) {

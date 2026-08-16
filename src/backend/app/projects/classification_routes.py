@@ -55,7 +55,7 @@ class FlightGapDownloadPlanRequest(BaseModel):
     overlap: float | None = None
 
 
-@router.post("/{project_id}/classify/reset-stale/", tags=["Image Classification"])
+@router.post("/{project_id}/classify/reset-stale", tags=["Image Classification"])
 async def reset_stale_classification(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -101,7 +101,7 @@ async def reset_stale_classification(
     }
 
 
-@router.post("/{project_id}/classify/", tags=["Image Classification"])
+@router.post("/{project_id}/classify", tags=["Image Classification"])
 async def start_project_classification(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -163,7 +163,7 @@ async def start_project_classification(
     }
 
 
-@router.post("/{project_id}/ingest-uploads/", tags=["Image Classification"])
+@router.post("/{project_id}/ingest-uploads", tags=["Image Classification"])
 async def ingest_existing_uploads(
     project_id: UUID,
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
@@ -215,7 +215,7 @@ async def ingest_existing_uploads(
     }
 
 
-@router.post("/project-from-imagery-exif/", tags=["Image Classification"])
+@router.post("/project-from-imagery-exif", tags=["Image Classification"])
 async def create_project_from_imagery_exif(
     body: project_schemas.ProjectFromImageryExifIn,
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
@@ -263,7 +263,7 @@ async def create_project_from_imagery_exif(
     }
 
 
-@router.get("/{project_id}/imagery/status/", tags=["Image Classification"])
+@router.get("/{project_id}/imagery/status", tags=["Image Classification"])
 async def get_project_imagery_status(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -307,7 +307,7 @@ async def get_project_imagery_status(
         )
 
 
-@router.get("/{project_id}/imagery/images/", tags=["Image Classification"])
+@router.get("/{project_id}/imagery/images", tags=["Image Classification"])
 async def get_project_images(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -337,7 +337,7 @@ async def get_project_images(
         )
 
 
-@router.post("/{project_id}/images/{image_id}/accept/", tags=["Image Classification"])
+@router.post("/{project_id}/images/{image_id}/accept", tags=["Image Classification"])
 async def accept_image(
     project_id: UUID,
     image_id: UUID,
@@ -362,7 +362,7 @@ async def accept_image(
         )
 
 
-@router.post("/{project_id}/images/{image_id}/reject/", tags=["Image Classification"])
+@router.post("/{project_id}/images/{image_id}/reject", tags=["Image Classification"])
 async def reject_image(
     project_id: UUID,
     image_id: UUID,
@@ -393,7 +393,7 @@ class ManualTaskAssignRequest(BaseModel):
 
 
 @router.post(
-    "/{project_id}/images/{image_id}/assign-task/",
+    "/{project_id}/images/{image_id}/assign-task",
     tags=["Image Classification"],
 )
 async def assign_image_to_task(
@@ -423,7 +423,7 @@ async def assign_image_to_task(
         )
 
 
-@router.delete("/{project_id}/batch/{batch_id}/", tags=["Image Classification"])
+@router.delete("/{project_id}/batch/{batch_id}", tags=["Image Classification"])
 async def delete_batch(
     project_id: UUID,
     batch_id: UUID,
@@ -463,7 +463,7 @@ async def delete_batch(
         )
 
 
-@router.delete("/{project_id}/images/{image_id}/", tags=["Image Classification"])
+@router.delete("/{project_id}/images/{image_id}", tags=["Image Classification"])
 async def delete_image(
     project_id: UUID,
     image_id: UUID,
@@ -486,7 +486,7 @@ async def delete_image(
         )
 
 
-@router.delete("/{project_id}/imagery/invalid/", tags=["Image Classification"])
+@router.delete("/{project_id}/imagery/invalid", tags=["Image Classification"])
 async def delete_invalid_images(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -506,7 +506,7 @@ async def delete_invalid_images(
 # ─── Project-level (task-centric) endpoints ──────────────────────────────────
 
 
-@router.get("/{project_id}/imagery/tasks/", tags=["Image Classification"])
+@router.get("/{project_id}/imagery/tasks", tags=["Image Classification"])
 async def get_project_task_imagery_summary(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -526,7 +526,7 @@ async def get_project_task_imagery_summary(
         )
 
 
-@router.get("/{project_id}/imagery/coverage/", tags=["Image Classification"])
+@router.get("/{project_id}/imagery/coverage", tags=["Image Classification"])
 async def get_project_coverage(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -547,7 +547,7 @@ async def get_project_coverage(
         )
 
 
-@router.get("/{project_id}/imagery/review/", tags=["Image Classification"])
+@router.get("/{project_id}/imagery/review", tags=["Image Classification"])
 async def get_project_review(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -564,7 +564,7 @@ async def get_project_review(
         )
 
 
-@router.get("/{project_id}/imagery/map-data/", tags=["Image Classification"])
+@router.get("/{project_id}/imagery/map-data", tags=["Image Classification"])
 async def get_project_map_data(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -582,7 +582,7 @@ async def get_project_map_data(
 
 
 @router.get(
-    "/{project_id}/imagery/task/{task_id}/image-urls/",
+    "/{project_id}/imagery/task/{task_id}/image-urls",
     tags=["Image Classification"],
 )
 async def get_task_image_urls(
@@ -610,7 +610,7 @@ async def get_task_image_urls(
 
 
 @router.get(
-    "/{project_id}/images/{image_id}/url/",
+    "/{project_id}/images/{image_id}/url",
     tags=["Image Classification"],
 )
 async def get_image_url(
@@ -638,7 +638,7 @@ class BulkImageUrlsRequest(BaseModel):
 
 
 @router.post(
-    "/{project_id}/imagery/image-urls/",
+    "/{project_id}/imagery/image-urls",
     tags=["Image Classification"],
 )
 async def get_bulk_image_urls(
@@ -662,7 +662,7 @@ async def get_bulk_image_urls(
 
 
 @router.get(
-    "/{project_id}/imagery/task/{task_id}/verification/",
+    "/{project_id}/imagery/task/{task_id}/verification",
     tags=["Image Classification"],
 )
 async def get_project_task_verification(
@@ -687,7 +687,7 @@ async def get_project_task_verification(
 
 
 @router.post(
-    "/{project_id}/tasks/{task_id}/mark-verified/", tags=["Image Classification"]
+    "/{project_id}/tasks/{task_id}/mark-verified", tags=["Image Classification"]
 )
 async def mark_task_verified(
     project_id: UUID,
@@ -804,7 +804,7 @@ async def mark_task_verified(
 
 
 @router.post(
-    "/{project_id}/imagery/task/{task_id}/find-gaps/",
+    "/{project_id}/imagery/task/{task_id}/find-gaps",
     tags=["Image Classification"],
 )
 async def detect_task_flight_gaps(
@@ -847,7 +847,7 @@ async def detect_task_flight_gaps(
 
 
 @router.post(
-    "/{project_id}/imagery/task/{task_id}/generate-flightplan/",
+    "/{project_id}/imagery/task/{task_id}/generate-flightplan",
     tags=["Image Classification"],
 )
 async def download_reflight_plan(

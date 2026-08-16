@@ -19,7 +19,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[drone_schemas.DroneOut])
+@router.get("", response_model=list[drone_schemas.DroneOut])
 async def read_drones(
     db: Annotated[Connection, Depends(database.get_db)],
 ):
@@ -80,7 +80,7 @@ async def read_drone(
     return drone
 
 
-@router.get("/drone-altitude/")
+@router.get("/drone-altitude")
 async def get_all_altitudes(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -92,7 +92,7 @@ async def get_all_altitudes(
     return altitudes
 
 
-@router.get("/drone-altitude/{country}/")
+@router.get("/drone-altitude/{country}")
 async def get_drone_altitude_by_country(
     country: str,
     db: Annotated[Connection, Depends(database.get_db)],

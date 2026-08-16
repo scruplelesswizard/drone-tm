@@ -9,7 +9,7 @@ async def test_find_images_for_a_project(client, create_test_project):
     point_data = {"longitude": 0.0, "latitude": 0.0}
 
     response = await client.post(
-        f"/api/gcp/find-project-images/?project_id={project_id}",
+        f"/api/gcp/find-project-images?project_id={project_id}",
         json=point_data,
     )
 

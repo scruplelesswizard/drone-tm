@@ -6,7 +6,7 @@ from loguru import logger as log
 @pytest.mark.asyncio
 async def test_my_info(client):
     """Test the /my-info/ endpoint to ensure a logged-in user can fetch their data."""
-    response = await client.get("/api/users/my-info/")
+    response = await client.get("/api/users/my-info")
     assert response.status_code == 200
     user_info = response.json()
 
@@ -30,7 +30,7 @@ async def test_reset_password_success(client, auth_user):
     new_password = "QPassword@12334"
 
     response = await client.post(
-        f"/api/users/reset-password/?token={token}&new_password={new_password}"
+        f"/api/users/reset-password?token={token}&new_password={new_password}"
     )
 
     if response.status_code != 200:

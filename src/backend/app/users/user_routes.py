@@ -46,7 +46,7 @@ router = APIRouter(
 )
 
 
-@router.post("/login/")
+@router.post("/login")
 async def login_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -73,7 +73,7 @@ async def login_access_token(
     return Token(access_token=access_token, refresh_token=refresh_token, role=role)
 
 
-@router.get("/", tags=["users"], response_model=list[user_schemas.DbUser])
+@router.get("", tags=["users"], response_model=list[user_schemas.DbUser])
 async def get_user(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -184,7 +184,7 @@ async def login_url(google_auth=Depends(init_google_auth)):
     return JSONResponse(content=login_url, status_code=200)
 
 
-@router.get("/callback/")
+@router.get("/callback")
 async def callback(
     request: Request,
     role: str,
@@ -222,7 +222,7 @@ async def update_token(user_data: Annotated[AuthUser, Depends(login_required)]):
     )
 
 
-@router.get("/my-info/")
+@router.get("/my-info")
 async def my_data(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -246,7 +246,7 @@ async def my_data(
     return user_info_dict
 
 
-@router.post("/forgot-password/")
+@router.post("/forgot-password")
 async def forgot_password(
     db: Annotated[Connection, Depends(database.get_db)],
     email: Annotated[EmailStr, Form()],
@@ -263,7 +263,7 @@ async def forgot_password(
     )
 
 
-@router.post("/reset-password/")
+@router.post("/reset-password")
 async def reset_password(
     db: Annotated[Connection, Depends(database.get_db)], token: str, new_password: str
 ):
@@ -313,7 +313,7 @@ async def reset_password(
     )
 
 
-@router.post("/regulator/", tags=["regulator"])
+@router.post("/regulator", tags=["regulator"])
 async def regulator_create(
     db: Annotated[Connection, Depends(database.get_db)], data: Base64Request
 ):

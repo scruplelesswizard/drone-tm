@@ -45,7 +45,7 @@ router = APIRouter(
 )
 
 
-@router.post("/task/{task_id}/")
+@router.post("/task/{task_id}")
 async def get_task_flightplan(
     db: Annotated[Connection, Depends(database.get_db)],
     project_id: uuid.UUID,
@@ -205,7 +205,7 @@ async def get_task_flightplan(
     }
 
 
-@router.post("/")
+@router.post("")
 async def generate_wmpl_kmz(
     project_geojson: UploadFile = File(
         ...,
@@ -323,7 +323,7 @@ async def generate_wmpl_kmz(
         )
 
 
-@router.post("/{task_id}/generate-kmz/")
+@router.post("/{task_id}/generate-kmz")
 async def generate_kmz_with_placemarks(
     task_id: uuid.UUID, data: waypoint_schemas.PlacemarksFeature
 ):
