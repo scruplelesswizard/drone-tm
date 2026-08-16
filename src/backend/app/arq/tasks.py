@@ -12,7 +12,7 @@ import urllib.parse
 import uuid
 import xml.etree.ElementTree as ET
 import zipfile
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, ClassVar, NamedTuple
 from uuid import UUID
@@ -546,7 +546,7 @@ async def ingest_existing_uploads(
             # while remaining deterministic across retries and duplicate requests.
             stable_child_id = (
                 f"ingest-img:{project_id}:"
-                f"{hashlib.md5(key.encode('utf-8')).hexdigest()}"
+                f"{hashlib.md5(key.encode('utf-8'), usedforsecurity=False).hexdigest()}"
             )
             child_job = await redis.enqueue_job(
                 "process_uploaded_image",
@@ -697,7 +697,7 @@ async def classify_project_images(
         raise
 
 
-class MoveEnqueue(str, Enum):
+class MoveEnqueue(StrEnum):
     """Outcome of trying to enqueue a task move."""
 
     ENQUEUED = "enqueued"  # a new job was queued

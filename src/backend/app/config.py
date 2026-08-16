@@ -1,7 +1,7 @@
 import base64
 import os
 import secrets
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
 from typing import Annotated
 from urllib.parse import quote
@@ -31,7 +31,7 @@ HttpUrlStr = Annotated[
 ]
 
 
-class MonitoringTypes(str, Enum):
+class MonitoringTypes(StrEnum):
     """Configuration options for monitoring."""
 
     NONE = ""

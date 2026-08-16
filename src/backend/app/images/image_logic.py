@@ -275,7 +275,7 @@ def calculate_file_hash(file_content: bytes) -> str:
     Returns:
         MD5 hash as hex string
     """
-    return hashlib.md5(file_content).hexdigest()
+    return hashlib.md5(file_content, usedforsecurity=False).hexdigest()
 
 
 async def create_project_image(
