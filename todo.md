@@ -40,18 +40,20 @@ original item.
 
 ## Frontend — P0
 
-- [ ] Stand up a test runner (Vitest + Testing Library) with a real smoke
-      test — zero tests exist today
-- [ ] Migrate ESLint to v9 flat config, upgrade typescript-eslint, enable
-      `@typescript-eslint/recommended` + `jsx-a11y/recommended` (currently
-      pinned at ESLint 8.2.0, pre-flat-config)
+- [x] Stand up a test runner (Vitest + Testing Library), with one real
+      smoke test (`components/common/Icon`) — zero tests existed before this
+- [x] Migrate ESLint to v9 flat config (`eslint.config.js`, bridging
+      eslint-config-airbnb via FlatCompat), upgrade typescript-eslint to v8
+      and enable it for real. jsx-a11y turned out to already be active
+      (bundled inside `eslint-config-airbnb`, not `-base`).
 
 ## Frontend — P1
 
-- [ ] Delete the dead redux-saga stack (empty root saga, zero watchers —
-      TanStack Query already owns server state)
-- [ ] Add a top-level `ErrorBoundary` at the app root using the already-
-      installed `react-error-boundary` package (currently unused)
+- [x] Delete the dead redux-saga stack (empty root saga, zero watchers —
+      TanStack Query already owns server state). Also deleted the entirely
+      unused `user-auth-module` store instance it was tangled up with.
+- [x] Add a top-level `ErrorBoundary` at the app root using the already-
+      installed `react-error-boundary` package (was unused before this)
 
 ## Follow-ups discovered while executing the above
 
@@ -74,6 +76,16 @@ inline notes on the item that found them:
 - [ ] Give `GET /users` a real paged UI/UX instead of the large
       default/max page size (200/500) it currently uses to avoid breaking
       the user-mention picker, which expects "all users" back in one page.
+- [ ] Reformat/fix `vite.config.ts` to the project's own prettier style
+      (single quotes etc.) — it was in `.eslintignore` entirely before the
+      ESLint v9 migration, so it was never actually linted; now it accounts
+      for ~60 of the pre-existing violation count surfaced by that migration.
+- [ ] Triage and fix the ~6600 pre-existing ESLint problems across the
+      frontend that `eslint .` now reports for real (lint has never run in
+      CI — see the ESLint v9 migration item above). This needs its own
+      deliberate, reviewed pass (almost 6000 are auto-fixable, but running
+      `--fix` across the whole tree in one shot is exactly what went wrong
+      mid-session here — do it in reviewable batches, not one commit).
 
 ## Explicitly out of scope for this pass
 
