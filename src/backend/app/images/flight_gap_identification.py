@@ -1055,10 +1055,7 @@ async def identify_flight_gaps(
             "images": images_geojson,
         }
 
-    if not flight_drone_type:
-        message = "Missing drone metadata"
-    else:
-        message = "No gaps detected"
+    message = "Missing drone metadata" if not flight_drone_type else "No gaps detected"
 
     log.info(f"Task {task_id}: No gaps identified for task")
 
