@@ -41,7 +41,7 @@ export default function App() {
       }
 
       try {
-        const response = await fetch(`${API_URL}/users/my-info/`, {
+        const response = await fetch(`${API_URL}/users/my-info`, {
           credentials: "include",
         });
 
