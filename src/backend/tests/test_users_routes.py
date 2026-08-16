@@ -41,18 +41,19 @@ async def test_reset_password_success(client, auth_user):
 
 
 @pytest.mark.asyncio
-async def test_get_users_default_returns_list(client):
-    """GET /users/ returns a list containing the authenticated user."""
+async def test_get_users_default_returns_envelope(client):
+    """GET /users now returns {results, pagination}, not a bare list."""
     response = await client.get("/api/users")
     assert response.status_code == 200
-    users = response.json()
-    assert isinstance(users, list)
-    assert any(u["email_address"] == "admin@hotosm.org" for u in users)
+    body = response.json()
+    assert "results" in body
+    assert "pagination" in body
+    assert any(u["email_address"] == "admin@hotosm.org" for u in body["results"])
 
 
 @pytest.mark.asyncio
-async def test_get_users_respects_limit(client, db, auth_user):
-    """GET /users/?limit=N bounds the result set instead of returning everyone."""
+async def test_get_users_respects_per_page(client, db, auth_user):
+    """GET /users?per_page=N bounds the result set instead of returning everyone."""
     for i in range(3):
         await DbUser.get_or_create_user(
             db,
@@ -63,25 +64,29 @@ async def test_get_users_respects_limit(client, db, auth_user):
             ),
         )
 
-    response = await client.get("/api/users?limit=2")
+    response = await client.get("/api/users?per_page=2")
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    body = response.json()
+    assert len(body["results"]) == 2
+    assert body["pagination"]["per_page"] == 2
+    assert body["pagination"]["total"] >= 4
 
 
 @pytest.mark.asyncio
-async def test_get_users_rejects_invalid_limit(client):
-    """limit is bounded (1-500); out-of-range values are a validation error, not a silent clamp."""
-    response = await client.get("/api/users?limit=0")
+async def test_get_users_rejects_invalid_per_page(client):
+    """per_page is bounded (1-500); out-of-range values are a validation
+    error, not a silent clamp."""
+    response = await client.get("/api/users?per_page=0")
     assert response.status_code == 422
 
-    response = await client.get("/api/users?limit=501")
+    response = await client.get("/api/users?per_page=501")
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_get_users_rejects_negative_skip(client):
-    """skip must be >= 0."""
-    response = await client.get("/api/users?skip=-1")
+async def test_get_users_rejects_invalid_page(client):
+    """page must be >= 1 (1-indexed, unlike the old skip/limit params)."""
+    response = await client.get("/api/users?page=0")
     assert response.status_code == 422
 
 

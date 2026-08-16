@@ -105,6 +105,27 @@ async def test_list_tasks(client):
     """Test listing tasks for the authenticated user."""
     response = await client.get("/api/tasks")
     assert response.status_code == 200
+    body = response.json()
+    assert "results" in body
+    assert "pagination" in body
+    assert body["pagination"]["page"] == 1
+
+
+@pytest.mark.asyncio
+async def test_list_tasks_rejects_invalid_page(client):
+    """page must be >= 1 - out of range is a 422, not silently clamped/ignored."""
+    response = await client.get("/api/tasks?page=0")
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_list_tasks_rejects_invalid_per_page(client):
+    """per_page is bounded (1-100 for the shared pagination dependency)."""
+    response = await client.get("/api/tasks?per_page=0")
+    assert response.status_code == 422
+
+    response = await client.get("/api/tasks?per_page=101")
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
