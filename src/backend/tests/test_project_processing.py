@@ -1168,7 +1168,7 @@ async def test_retry_transfer_endpoint_reports_enqueued_then_already_running(
         )
     await db.commit()
 
-    url = f"/api/projects/retry_transfer/{project_id}/{task_id}/"
+    url = f"/api/projects/retry_transfer/{project_id}/{task_id}"
     first = await client.post(url)
     assert first.status_code == 200
     assert first.json()["enqueued"] is True
