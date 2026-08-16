@@ -23,8 +23,8 @@ function GoogleAuth() {
 
     const loginRedirect = async () => {
       if (authcode) {
-        const callbackUrl = `${API_URL}/users/callback/?code=${authcode}&state=${state}&role=${signedInAs}`;
-        const userDetailsUrl = `${API_URL}/users/my-info/`;
+        const callbackUrl = `${API_URL}/users/callback?code=${authcode}&state=${state}&role=${signedInAs}`;
+        const userDetailsUrl = `${API_URL}/users/my-info`;
 
         const completeLogin = async () => {
           // fetch callback api

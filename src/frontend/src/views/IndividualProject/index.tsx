@@ -276,7 +276,7 @@ const IndividualProject = () => {
     const projectId = projectData?.id || id;
     if (!projectId) return;
 
-    const assetsPath = `/projects/odm/export/${projectId}/`;
+    const assetsPath = `/projects/odm/export/${projectId}`;
     const downloadUrl = buildDownloadUrl(assetsPath);
 
     try {
@@ -594,7 +594,7 @@ const IndividualProject = () => {
             <GcpEditor
               finalButtonText={m.individual_project_button_save_gcp()}
               // eslint-disable-next-line camelcase
-              rawImageUrl={`${API_URL}/gcp/find-project-images/?project_id=${projectData?.id || id}`}
+              rawImageUrl={`${API_URL}/gcp/find-project-images?project_id=${projectData?.id || id}`}
             />
           </div>
         ) : (

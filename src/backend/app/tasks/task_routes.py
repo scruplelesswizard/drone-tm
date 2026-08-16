@@ -62,7 +62,7 @@ async def read_task(
     return await task_schemas.TaskDetailsOut.get_task_details(db, task_id)
 
 
-@router.get("/statistics/")
+@router.get("/statistics")
 async def get_task_stats(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: AuthUser = Depends(login_required),
@@ -71,7 +71,7 @@ async def get_task_stats(
     return await task_logic.get_task_stats(db, user_data)
 
 
-@router.get("/")
+@router.get("")
 async def list_tasks(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],

@@ -10,7 +10,7 @@ export const getTaskWaypoint = (
   allowMissingDem = false,
 ) =>
   authenticated(api).post(
-    `/waypoint/task/${taskId}/?project_id=${projectId}&download=false&mode=${mode}&drone_type=${droneModel}&rotation_angle=${rotationAngle}&gimbal_angle=${gimbalAngle}&allow_missing_dem=${allowMissingDem}`,
+    `/waypoint/task/${taskId}?project_id=${projectId}&download=false&mode=${mode}&drone_type=${droneModel}&rotation_angle=${rotationAngle}&gimbal_angle=${gimbalAngle}&allow_missing_dem=${allowMissingDem}`,
   );
 
 export const getIndividualTask = (taskId: string) => authenticated(api).get(`/tasks/${taskId}`);
@@ -33,7 +33,7 @@ export const postTaskWaypoint = (payload: Record<string, any>) => {
   } = payload;
 
   return authenticated(api).post(
-    `/waypoint/task/${taskId}/?project_id=${projectId}&download=false&mode=${mode}&drone_type=${droneModel}&rotation_angle=${rotationAngle}&gimbal_angle=${gimbalAngle}&allow_missing_dem=${allowMissingDem}`,
+    `/waypoint/task/${taskId}?project_id=${projectId}&download=false&mode=${mode}&drone_type=${droneModel}&rotation_angle=${rotationAngle}&gimbal_angle=${gimbalAngle}&allow_missing_dem=${allowMissingDem}`,
     takeOffPoint,
     {
       headers: { "Content-Type": "application/json" },
@@ -41,10 +41,10 @@ export const postTaskWaypoint = (payload: Record<string, any>) => {
   );
 };
 export const getTaskAssetsInfo = (projectId: string, taskId: string) =>
-  authenticated(api).get(`/projects/assets/${projectId}/?task_id=${taskId}`);
+  authenticated(api).get(`/projects/assets/${projectId}?task_id=${taskId}`);
 
 export const getAllTaskAssetsInfo = (projectId: string) =>
-  authenticated(api).get(`/projects/assets/${projectId}/`);
+  authenticated(api).get(`/projects/assets/${projectId}`);
 
 export const postProcessImagery = (projectId: string, taskId: string, odmUrl?: string) =>
   authenticated(api).post(
@@ -55,11 +55,11 @@ export const postReconcileProcessing = (projectId: string) =>
   authenticated(api).post(`/projects/assets/${projectId}/reconcile`);
 
 export const postRetryTransfer = (projectId: string, taskId: string) =>
-  authenticated(api).post(`/projects/retry_transfer/${projectId}/${taskId}/`);
+  authenticated(api).post(`/projects/retry_transfer/${projectId}/${taskId}`);
 
 export const postRotatedTaskWayPoint = (payload: Record<string, any>) => {
   const { taskId, data } = payload;
-  return authenticated(api).post(`/waypoint/${taskId}/generate-kmz/`, data, {
+  return authenticated(api).post(`/waypoint/${taskId}/generate-kmz`, data, {
     headers: { "Content-Type": "application/json" },
   });
 };

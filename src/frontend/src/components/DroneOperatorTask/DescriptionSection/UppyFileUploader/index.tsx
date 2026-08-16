@@ -95,7 +95,7 @@ const UppyFileUploader = ({
           }
 
           const response = await authenticated(api).post(
-            "/projects/initiate-multipart-upload/",
+            "/projects/initiate-multipart-upload",
             requestData,
             {
               headers: {
@@ -116,7 +116,7 @@ const UppyFileUploader = ({
       signPart: async (file, partData) => {
         try {
           const response = await authenticated(api).post(
-            "/projects/sign-part-upload/",
+            "/projects/sign-part-upload",
             {
               upload_id: partData.uploadId,
               file_key: partData.key,
@@ -153,7 +153,7 @@ const UppyFileUploader = ({
             requestBody.batch_id = batchIdRef.current;
           }
 
-          await authenticated(api).post("/projects/complete-multipart-upload/", requestBody, {
+          await authenticated(api).post("/projects/complete-multipart-upload", requestBody, {
             headers: {
               "Content-Type": "application/json",
             },
@@ -170,7 +170,7 @@ const UppyFileUploader = ({
       abortMultipartUpload: async (file, data) => {
         try {
           await authenticated(api).post(
-            "/projects/abort-multipart-upload/",
+            "/projects/abort-multipart-upload",
             {
               upload_id: data.uploadId,
               file_key: data.key,
@@ -188,7 +188,7 @@ const UppyFileUploader = ({
       listParts: async (file, data) => {
         try {
           const response = await authenticated(api).get(
-            `/projects/list-parts/?upload_id=${data.uploadId}&file_key=${data.key}`,
+            `/projects/list-parts?upload_id=${data.uploadId}&file_key=${data.key}`,
           );
 
           return response.data.parts || [];
