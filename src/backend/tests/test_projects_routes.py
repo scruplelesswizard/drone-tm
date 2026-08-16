@@ -159,7 +159,10 @@ async def test_regulator_comment_valid_body_reaches_authorization_check(
     project_id = create_test_project
     response = await client.post(
         f"/api/projects/regulator/comment/{project_id}",
-        json={"regulator_comment": "looks fine", "regulator_approval_status": "APPROVED"},
+        json={
+            "regulator_comment": "looks fine",
+            "regulator_approval_status": "APPROVED",
+        },
     )
     assert response.status_code == 403
     assert response.json()["details"] == "You are not authorized to perform the action"
