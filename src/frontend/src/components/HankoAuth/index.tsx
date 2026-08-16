@@ -53,7 +53,7 @@ function HankoAuth() {
         // JWT is already in cookie (set by Portal after successful auth)
         // Call /my-info/ which uses login_required (overridden for Hanko)
         // This validates JWT, creates/maps user, and returns complete profile
-        const userDetailsUrl = `${BASE_URL}/users/my-info/`;
+        const userDetailsUrl = `${BASE_URL}/users/my-info`;
 
         const userDetailsResponse = await fetch(userDetailsUrl, {
           credentials: "include", // Include Hanko JWT cookie

@@ -29,7 +29,7 @@ export const getRequestedTasks = () => authenticated(api).get("/tasks/requested_
 export const processAllImagery = (data: Record<string, any>) => {
   const { projectId, capacityType } = data;
   return authenticated(api).post(
-    `/projects/process_all_imagery/${projectId}/`,
+    `/projects/process_all_imagery/${projectId}`,
     capacityType ? { capacity_type: capacityType } : undefined,
     { headers: { "Content-Type": "application/json" } },
   );
@@ -38,7 +38,7 @@ export const processAllImagery = (data: Record<string, any>) => {
 export const saveGcpFile = (data: { projectId: string; gcp_file: File }) => {
   const formData = new FormData();
   formData.append("gcp_file", data.gcp_file);
-  return authenticated(api).post(`/gcp/save/${data.projectId}/`, formData);
+  return authenticated(api).post(`/gcp/save/${data.projectId}`, formData);
 };
 
 export const deleteProject = (projectId: string) =>

@@ -21,7 +21,7 @@ router = APIRouter(
 )
 
 
-@router.post("/find-project-images/")
+@router.post("/find-project-images")
 async def find_images_for_a_project(
     project_id: uuid.UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -44,7 +44,7 @@ async def find_images_for_a_project(
     )
 
 
-@router.post("/save/{project_id}/")
+@router.post("/save/{project_id}")
 async def save_gcp_file(
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)

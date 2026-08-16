@@ -53,7 +53,7 @@ export default function Login() {
       localStorage.setItem("token", res.data.access_token);
       localStorage.setItem("refresh", res.data.refresh_token);
       toast.success(m.auth_login_success());
-      const userDetailsUrl = `${API_URL}/users/my-info/`;
+      const userDetailsUrl = `${API_URL}/users/my-info`;
       const response2 = await fetch(userDetailsUrl, {
         credentials: "include",
         headers: { "access-token": res.data.access_token },

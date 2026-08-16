@@ -293,7 +293,7 @@ async def delete_project_by_id(
     return {"message": f"Project successfully deleted {project_id}"}
 
 
-@router.post("/", tags=["Projects"])
+@router.post("", tags=["Projects"])
 async def create_project(
     project_info: project_schemas.ProjectIn,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -391,7 +391,7 @@ async def upload_project_task_boundaries(
     }
 
 
-@router.post("/preview-split-by-square/", tags=["Projects"])
+@router.post("/preview-split-by-square", tags=["Projects"])
 async def preview_split_by_square(
     db: Annotated[Connection, Depends(database.get_db)],
     user: Annotated[AuthUser, Depends(login_required)],
@@ -434,7 +434,7 @@ async def preview_split_by_square(
     return await project_logic.preview_split_by_square(result_geojson, dimension)
 
 
-@router.post("/normalize-aoi/", tags=["Projects"])
+@router.post("/normalize-aoi", tags=["Projects"])
 async def normalize_project_aoi(
     user: Annotated[AuthUser, Depends(login_required)],
     aoi: Annotated[geojson.FeatureCollection, Depends(normalize_aoi)],
@@ -443,7 +443,7 @@ async def normalize_project_aoi(
     return aoi
 
 
-@router.get("/", tags=["Projects"], response_model=project_schemas.ProjectOut)
+@router.get("", tags=["Projects"], response_model=project_schemas.ProjectOut)
 async def read_projects(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -505,7 +505,7 @@ async def read_project(
     return project
 
 
-@router.post("/process_imagery/{project_id}/{task_id}/", tags=["Image Processing"])
+@router.post("/process_imagery/{project_id}/{task_id}", tags=["Image Processing"])
 async def process_imagery(
     task_id: uuid.UUID,
     project: Annotated[
@@ -542,7 +542,7 @@ async def process_imagery(
     return {"message": "Processing started", "job_id": job.job_id}
 
 
-@router.post("/retry_transfer/{project_id}/{task_id}/", tags=["Image Processing"])
+@router.post("/retry_transfer/{project_id}/{task_id}", tags=["Image Processing"])
 async def retry_imagery_transfer(
     task_id: uuid.UUID,
     project: Annotated[
@@ -586,7 +586,7 @@ async def retry_imagery_transfer(
     }
 
 
-@router.post("/process_all_imagery/{project_id}/", tags=["Image Processing"])
+@router.post("/process_all_imagery/{project_id}", tags=["Image Processing"])
 async def process_all_imagery(
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
@@ -675,7 +675,7 @@ async def process_all_imagery(
     }
 
 
-@router.post("/regulator/comment/{project_id}/", tags=["regulator"])
+@router.post("/regulator/comment/{project_id}", tags=["regulator"])
 async def regulator_approval(
     project_id: str,
     data: dict,
@@ -740,7 +740,7 @@ async def regulator_approval(
         )
 
 
-@router.post("/waypoints/", tags=["Projects"])
+@router.post("/waypoints", tags=["Projects"])
 async def get_project_waypoints_counts(
     side_overlap: float,
     front_overlap: float,
@@ -770,7 +770,7 @@ async def get_project_waypoints_counts(
 
 
 @router.get(
-    "/assets/{project_id}/",
+    "/assets/{project_id}",
     tags=["Image Processing"],
 )
 async def get_assets_info(
@@ -899,7 +899,7 @@ async def qfield_project_status(
     return {"exists": True, "url": url}
 
 
-@router.post("/initiate-multipart-upload/", tags=["Image Upload"])
+@router.post("/initiate-multipart-upload", tags=["Image Upload"])
 async def initiate_upload(
     user: Annotated[AuthUser, Depends(login_required)],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -958,7 +958,7 @@ async def initiate_upload(
         )
 
 
-@router.post("/sign-part-upload/", tags=["Image Upload"])
+@router.post("/sign-part-upload", tags=["Image Upload"])
 async def sign_part_upload(
     user: Annotated[AuthUser, Depends(login_required)],
     data: project_schemas.SignPartUploadRequest,
@@ -991,7 +991,7 @@ async def sign_part_upload(
         )
 
 
-@router.post("/complete-multipart-upload/", tags=["Image Upload"])
+@router.post("/complete-multipart-upload", tags=["Image Upload"])
 async def complete_upload(
     user: Annotated[AuthUser, Depends(login_required)],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -1108,7 +1108,7 @@ async def complete_upload(
         )
 
 
-@router.post("/abort-multipart-upload/", tags=["Image Upload"])
+@router.post("/abort-multipart-upload", tags=["Image Upload"])
 async def abort_upload(
     user: Annotated[AuthUser, Depends(login_required)],
     data: project_schemas.AbortMultipartUploadRequest,
@@ -1138,7 +1138,7 @@ async def abort_upload(
         )
 
 
-@router.get("/list-parts/", tags=["Image Upload"])
+@router.get("/list-parts", tags=["Image Upload"])
 async def get_uploaded_parts(
     user: Annotated[AuthUser, Depends(login_required)],
     upload_id: str = Query(..., description="The upload ID"),
@@ -1172,11 +1172,11 @@ async def get_uploaded_parts(
 
 
 @router.get(
-    "/odm/export/{project_id}/{task_id}/orthophoto/",
+    "/odm/export/{project_id}/{task_id}/orthophoto",
     tags=["Image Processing"],
 )
 @router.get(
-    "/odm/export/{project_id}/orthophoto/",
+    "/odm/export/{project_id}/orthophoto",
     tags=["Image Processing"],
 )
 async def export_odm_orthophoto(
@@ -1264,7 +1264,7 @@ def _stream_s3_object_response(
 
 
 @router.get(
-    "/odm/export/{project_id}/dsm/",
+    "/odm/export/{project_id}/dsm",
     tags=["Image Processing"],
 )
 async def export_odm_dsm(
@@ -1283,7 +1283,7 @@ async def export_odm_dsm(
 
 
 @router.get(
-    "/odm/export/{project_id}/dtm/",
+    "/odm/export/{project_id}/dtm",
     tags=["Image Processing"],
 )
 async def export_odm_dtm(
@@ -1302,7 +1302,7 @@ async def export_odm_dtm(
 
 
 @router.get(
-    "/odm/export/{project_id}/pointcloud/",
+    "/odm/export/{project_id}/pointcloud",
     tags=["Image Processing"],
 )
 async def export_odm_pointcloud(
@@ -1321,11 +1321,11 @@ async def export_odm_pointcloud(
 
 
 @router.get(
-    "/odm/export/{project_id}/{task_id}/",
+    "/odm/export/{project_id}/{task_id}",
     tags=["Image Processing"],
 )
 @router.get(
-    "/odm/export/{project_id}/",
+    "/odm/export/{project_id}",
     tags=["Image Processing"],
 )
 async def export_odm_assets(

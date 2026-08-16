@@ -28,7 +28,7 @@ async def test_create_project_with_files(
     }
 
     files = {k: v for k, v in files.items() if v is not None}
-    response = await client.post("/api/projects/", files=files)
+    response = await client.post("/api/projects", files=files)
     assert response.status_code == 200
     return response.json()
 
@@ -110,7 +110,7 @@ async def test_upload_project_task_boundaries(client, create_test_project):
 @pytest.mark.asyncio
 async def test_read_projects(client):
     """Test reading all projects."""
-    response = await client.get("/api/projects/")
+    response = await client.get("/api/projects")
     assert response.status_code == 200
     assert "results" in response.json()
 
@@ -314,7 +314,7 @@ async def test_create_terrain_follow_project_succeeds_when_redis_unavailable(
     monkeypatch.setattr(project_routes, "get_redis_pool", fake_get_redis_pool)
 
     response = await client.post(
-        "/api/projects/",
+        "/api/projects",
         files={"project_info": (None, project_info_json, "application/json")},
     )
     assert response.status_code == 200
@@ -361,7 +361,7 @@ async def test_preview_split_by_square_returns_422_for_invalid_geometry(
     ).encode("utf-8")
 
     response = await client.post(
-        "/api/projects/preview-split-by-square/",
+        "/api/projects/preview-split-by-square",
         files={
             "project_geojson": (
                 "aoi.geojson",
@@ -433,7 +433,7 @@ async def test_preview_split_multi_feature(client):
         ),
     }
     response = await client.post(
-        "/api/projects/preview-split-by-square/",
+        "/api/projects/preview-split-by-square",
         files=files,
         data={"dimension": 100},
     )
@@ -493,7 +493,7 @@ async def test_normalize_aoi_merges_multi_feature_upload(client):
             "application/geo+json",
         ),
     }
-    response = await client.post("/api/projects/normalize-aoi/", files=files)
+    response = await client.post("/api/projects/normalize-aoi", files=files)
 
     assert response.status_code == 200
     body = response.json()
@@ -547,7 +547,7 @@ async def test_normalize_aoi_converts_multipolygon_upload(client):
             "application/geo+json",
         ),
     }
-    response = await client.post("/api/projects/normalize-aoi/", files=files)
+    response = await client.post("/api/projects/normalize-aoi", files=files)
 
     assert response.status_code == 200
     body = response.json()
@@ -794,7 +794,7 @@ async def test_assign_task_accepts_unmatched_image(
     )
 
     response = await client.post(
-        f"/api/projects/{project_id}/images/{image_id}/assign-task/",
+        f"/api/projects/{project_id}/images/{image_id}/assign-task",
         json={"task_id": task_id},
     )
 
@@ -817,7 +817,7 @@ async def test_assign_task_rejects_non_unmatched_image(
     )
 
     response = await client.post(
-        f"/api/projects/{project_id}/images/{image_id}/assign-task/",
+        f"/api/projects/{project_id}/images/{image_id}/assign-task",
         json={"task_id": task_id},
     )
 
@@ -845,7 +845,7 @@ async def test_process_imagery_blocks_while_task_images_transfer(
     )
 
     response = await client.post(
-        f"/api/projects/process_imagery/{project_id}/{task_id}/"
+        f"/api/projects/process_imagery/{project_id}/{task_id}"
     )
 
     assert response.status_code == 409
@@ -886,7 +886,7 @@ async def test_process_imagery_enqueues_when_transfer_complete(
     app.dependency_overrides[get_redis_pool] = lambda: fake_redis
 
     response = await client.post(
-        f"/api/projects/process_imagery/{project_id}/{task_id}/"
+        f"/api/projects/process_imagery/{project_id}/{task_id}"
     )
 
     assert response.status_code == 200
@@ -944,7 +944,7 @@ async def test_process_all_imagery_blocks_when_all_ready_tasks_transferring(
         )
     await db.commit()
 
-    response = await client.post(f"/api/projects/process_all_imagery/{project_id}/")
+    response = await client.post(f"/api/projects/process_all_imagery/{project_id}")
 
     assert response.status_code == 409
     assert response.json()["detail"] == (
@@ -1013,7 +1013,7 @@ async def test_process_all_imagery_blocks_when_ready_tasks_are_mixed_transfer_st
     fake_redis = FakeRedis()
     app.dependency_overrides[get_redis_pool] = lambda: fake_redis
 
-    response = await client.post(f"/api/projects/process_all_imagery/{project_id}/")
+    response = await client.post(f"/api/projects/process_all_imagery/{project_id}")
 
     assert response.status_code == 409
     assert response.json()["detail"] == (
