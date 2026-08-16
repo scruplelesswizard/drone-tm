@@ -116,6 +116,15 @@ async def test_read_projects(client):
 
 
 @pytest.mark.asyncio
+async def test_trailing_slash_no_longer_matches(client):
+    """redirect_slashes=False means a trailing-slash URL is a 404, not a
+    redirect - routes were standardized on no trailing slash, so the old
+    "/api/projects/" form must not silently keep working."""
+    response = await client.get("/api/projects/")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_read_project(client, create_test_project):
     """Test reading a single project."""
     project_id = create_test_project

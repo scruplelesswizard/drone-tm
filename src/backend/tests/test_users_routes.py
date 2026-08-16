@@ -43,7 +43,7 @@ async def test_reset_password_success(client, auth_user):
 @pytest.mark.asyncio
 async def test_get_users_default_returns_list(client):
     """GET /users/ returns a list containing the authenticated user."""
-    response = await client.get("/api/users/")
+    response = await client.get("/api/users")
     assert response.status_code == 200
     users = response.json()
     assert isinstance(users, list)
@@ -63,7 +63,7 @@ async def test_get_users_respects_limit(client, db, auth_user):
             ),
         )
 
-    response = await client.get("/api/users/?limit=2")
+    response = await client.get("/api/users?limit=2")
     assert response.status_code == 200
     assert len(response.json()) == 2
 
@@ -71,15 +71,15 @@ async def test_get_users_respects_limit(client, db, auth_user):
 @pytest.mark.asyncio
 async def test_get_users_rejects_invalid_limit(client):
     """limit is bounded (1-500); out-of-range values are a validation error, not a silent clamp."""
-    response = await client.get("/api/users/?limit=0")
+    response = await client.get("/api/users?limit=0")
     assert response.status_code == 422
 
-    response = await client.get("/api/users/?limit=501")
+    response = await client.get("/api/users?limit=501")
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_get_users_rejects_negative_skip(client):
     """skip must be >= 0."""
-    response = await client.get("/api/users/?skip=-1")
+    response = await client.get("/api/users?skip=-1")
     assert response.status_code == 422
