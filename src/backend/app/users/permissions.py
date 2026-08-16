@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from enum import Enum
 from typing import Any
 
 from app.projects import project_schemas
@@ -7,15 +6,6 @@ from app.users.user_deps import login_dependency
 from app.users.user_schemas import DbUser
 from fastapi import Depends, HTTPException, status
 from pydantic import BaseModel
-
-
-class PermissionType(str, Enum):
-    VIEW = "view"
-    CREATE = "create"
-    EDIT = "update"
-    DELETE = "delete"
-    UPLOAD = "upload"
-    MANAGE = "manage"
 
 
 class BasePermission:
@@ -101,31 +91,13 @@ class IsProjectCreator(BasePermission):
         return obj.author_id == user.id
 
 
-class HasObjectPermission(BasePermission):
-    def __init__(self, permission_type: PermissionType | str):
-        self.permission_type = (
-            permission_type.value
-            if isinstance(permission_type, PermissionType)
-            else permission_type
-        )
-        self.error_message = f"Missing required permission: {self.permission_type}"
+class IsSelf(BasePermission):
+    """Check the authenticated user matches the target user id (obj)."""
 
-    async def has_permission(self, user: DbUser | None, obj: Any | None = None) -> bool:
-        if not user:
-            return False
+    error_message = "You are not authorized to modify this profile"
 
-        if user.is_superuser:
-            return True
-
-        if not obj:
-            return False
-
-        permissions = await self.get_user_permissions(user.id, obj)
-        return self.permission_type in permissions
-
-    async def get_user_permissions(self, user_id: int, obj: BaseModel) -> list[str]:
-        # Implement actual permission checking logic here
-        return []
+    async def has_permission(self, user: DbUser | None, obj: str | None = None) -> bool:
+        return bool(user) and user.id == obj
 
 
 def check_permissions(

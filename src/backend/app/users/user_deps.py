@@ -65,6 +65,14 @@ async def login_dependency(
     return await DbUser.get_or_create_user(db, AuthUser(**user_dict))
 
 
+def get_user_id_from_path(user_id: str) -> str:
+    """Passthrough dependency exposing the `user_id` path param as an obj
+
+    for `check_permissions(..., get_obj=...)` (e.g. IsSelf checks).
+    """
+    return user_id
+
+
 def create_reset_password_token(email: str):
     expire = datetime.now(UTC) + timedelta(
         minutes=settings.RESET_PASSWORD_TOKEN_EXPIRE_MINUTES

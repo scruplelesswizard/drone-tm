@@ -8,7 +8,12 @@ from app.config import get_password_hash, settings, verify_password
 from app.db import database
 from app.models.enums import HTTPStatus
 from app.users import user_deps, user_logic, user_schemas
-from app.users.user_deps import init_google_auth, login_required
+from app.users.permissions import IsSelf, check_permissions
+from app.users.user_deps import (
+    get_user_id_from_path,
+    init_google_auth,
+    login_required,
+)
 from app.users.user_schemas import (
     AuthUser,
     Base64Request,
@@ -91,7 +96,9 @@ async def create_user_profile(
     user_id: str,
     profile_update: UserProfileCreate,
     db: Annotated[Connection, Depends(database.get_db)],
-    user_data: Annotated[AuthUser, Depends(login_required)],
+    _: Annotated[
+        str, Depends(check_permissions(IsSelf(), get_obj=get_user_id_from_path))
+    ],
 ):
     """Create user profile based on provided user_id and profile_update data.
 
@@ -105,13 +112,6 @@ async def create_user_profile(
     Raises:
         HTTPException: If user with given user_id is not found in the database.
     """
-    user = await user_schemas.DbUser.get_user_by_id(db, user_id)
-    if user_data.id != user_id:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail="You are not authorized to update profile",
-        )
-
     user = await user_schemas.DbUserProfile.create(db, user_id, profile_update)
     return JSONResponse(
         status_code=HTTPStatus.OK,
@@ -124,7 +124,9 @@ async def update_user_profile(
     user_id: str,
     profile_update: UserProfileUpdate,
     db: Annotated[Connection, Depends(database.get_db)],
-    user_data: Annotated[AuthUser, Depends(login_required)],
+    _: Annotated[
+        str, Depends(check_permissions(IsSelf(), get_obj=get_user_id_from_path))
+    ],
 ):
     """Update user profile based on provided user_id and profile_update data.
 
@@ -139,12 +141,6 @@ async def update_user_profile(
         HTTPException: If user with given user_id is not found in the database.
     """
     user = await user_schemas.DbUser.get_user_by_id(db, user_id)
-    if user_data.id != user_id:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail="You are not authorized to update profile",
-        )
-
     if profile_update.old_password and profile_update.password:
         # Check if user has a local password (not SSO user)
         if not user.get("password"):
