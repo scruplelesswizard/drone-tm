@@ -48,7 +48,7 @@ requires-python = ">=3.11"
 license = { text = "AGPL-3.0-only" }
 
 [dependency-groups]
-dev = ["pre-commit>=4.5.1", "commitizen>=4.13.7"]
+dev = ["pre-commit>=4.5.1", "commitizen>=4.13.7", "mypy>=1.13.0"]
 test = [
   "pytest==8.3.3",
   "pytest-asyncio==0.24.0",
@@ -105,6 +105,19 @@ write-changes = true
 
 [tool.pytest.ini_options]
 markers = ["integration: marks tests that exercise integrated services or workflows"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+exclude = ["app/migrations/", "packages/", "scripts/2026/"]
+# Gradual-typing baseline: don't require annotations everywhere yet, but do
+# type-check the bodies of unannotated functions so real bugs still surface.
+# Tighten (disallow_untyped_defs, etc.) incrementally as coverage improves.
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
 
 [tool.ruff]
 # Preserve the source roots Ruff inferred before this backend-local config existed.
