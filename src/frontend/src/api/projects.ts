@@ -70,7 +70,8 @@ export const useGetUsersQuery = (queryOptions?: Partial<UseQueryOptions<ProjectU
     queryKey: ["users-list"],
     queryFn: async () => {
       const res = await getUsers();
-      return res.data as ProjectUser[];
+      // Backend now returns { results, pagination } instead of a bare list.
+      return res.data.results as ProjectUser[];
     },
     ...queryOptions,
   });

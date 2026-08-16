@@ -15,6 +15,7 @@ from app.models.enums import (
     ProjectVisibility,
     RegulatorApprovalStatus,
 )
+from app.pagination import PaginationMeta
 from app.projects.s3_paths import (
     cloudnative_3d_tileset_browser_url,
     cloudnative_orthophoto_cog_browser_url,
@@ -699,28 +700,6 @@ class DbProject(BaseModel):
             return deleted_project_id[0]
 
 
-class Pagination(BaseModel):
-    has_next: bool
-    has_prev: bool
-    next_num: int | None
-    prev_num: int | None
-    page: int
-    per_page: int
-    total: int
-
-    @model_validator(mode="before")
-    def calculate_pagination(cls, values):
-        page = values.get("page", 1)
-        total = values.get("total", 1)
-
-        values["has_next"] = page < total
-        values["has_prev"] = page > 1
-        values["next_num"] = page + 1 if values["has_next"] else None
-        values["prev_num"] = page - 1 if values["has_prev"] else None
-
-        return values
-
-
 def safe_url(callable_fn, *, label: str):
     """
     Check if a URL is valid & also avoid error if S3 pre-sign fails.
@@ -1005,7 +984,7 @@ class ProjectOut(BaseModel):
     """Base project model."""
 
     results: list[ProjectInfo] | None = []
-    pagination: Pagination | None = {}
+    pagination: PaginationMeta | None = None
 
 
 class MultipartUploadRequest(BaseModel):
