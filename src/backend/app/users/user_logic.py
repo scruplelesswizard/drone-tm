@@ -60,7 +60,7 @@ async def authenticate(
     return db_user
 
 
-async def get_oam_token_for_user(db: Connection, user_id: str) -> str:
+async def get_oam_token_for_user(db: Connection, user_id: str) -> str | None:
     query = """
             SELECT oam_api_token
             FROM user_profile
@@ -69,4 +69,4 @@ async def get_oam_token_for_user(db: Connection, user_id: str) -> str:
     async with db.cursor() as cur:
         await cur.execute(query, {"user_id": user_id})
         data = await cur.fetchone()
-        return data[0]
+        return data[0] if data else None
