@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from loguru import logger as log
 
 
-def _problem(status_code: int, detail: str, **extra: object) -> JSONResponse:
+def _problem(status_code: int, detail: object, **extra: object) -> JSONResponse:
     try:
         title = http.HTTPStatus(status_code).phrase
     except ValueError:
@@ -32,9 +32,14 @@ def _problem(status_code: int, detail: str, **extra: object) -> JSONResponse:
 
 
 async def handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:
-    """Render a raised HTTPException as an RFC 7807 problem+json body."""
-    detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
-    return _problem(exc.status_code, detail)
+    """Render a raised HTTPException as an RFC 7807 problem+json body.
+
+    `detail` is passed through as-is rather than coerced to a string: a few
+    routes deliberately raise a structured dict detail (e.g. {"code": ...})
+    for the frontend to branch on programmatically, and str()-ing it would
+    silently turn that into an unusable Python-repr string.
+    """
+    return _problem(exc.status_code, exc.detail)
 
 
 async def handle_validation_error(

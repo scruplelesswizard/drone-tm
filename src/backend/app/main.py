@@ -242,6 +242,19 @@ def get_application() -> FastAPI:
         # OSM OAuth router for account linking
         _app.include_router(osm_router, prefix="/api")
 
+    # RFC 7807 (application/problem+json) handlers. Registered here (not at
+    # module scope on the `api` singleton below) so every app instance this
+    # factory produces gets them - including the fresh one the `app` test
+    # fixture builds by calling get_application() again, which otherwise
+    # silently got FastAPI's default (non-problem+json) handlers instead.
+    _app.add_exception_handler(HTTPException, handle_http_exception)
+    _app.add_exception_handler(RequestValidationError, handle_validation_error)
+    if not settings.DEBUG:
+        # In DEBUG mode, leave unhandled exceptions to Starlette's
+        # interactive traceback page (FastAPI(debug=...)) instead of
+        # swallowing them here.
+        _app.add_exception_handler(Exception, handle_unexpected_error)
+
     return _app
 
 
@@ -376,13 +389,6 @@ async def custom_404_handler(request: Request, _):
         return JSONResponse(status_code=404, content={"detail": "Not found"})
 
 
-# RFC 7807 (application/problem+json) handlers for everything else. The 404
-# handler above is registered by status code, which Starlette dispatches
-# ahead of these class-based handlers, so SPA-fallback behaviour for 404s
-# is unaffected.
-api.add_exception_handler(HTTPException, handle_http_exception)
-api.add_exception_handler(RequestValidationError, handle_validation_error)
-if not settings.DEBUG:
-    # In DEBUG mode, leave unhandled exceptions to Starlette's interactive
-    # traceback page (FastAPI(debug=...)) instead of swallowing them here.
-    api.add_exception_handler(Exception, handle_unexpected_error)
+# custom_404_handler above is registered by status code, which Starlette
+# dispatches ahead of the class-based RFC 7807 handlers registered inside
+# get_application(), so SPA-fallback behaviour for 404s is unaffected.
