@@ -678,7 +678,7 @@ async def process_all_imagery(
 @router.post("/regulator/comment/{project_id}", tags=["regulator"])
 async def regulator_approval(
     project_id: str,
-    data: dict,
+    data: project_schemas.RegulatorCommentIn,
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
     response: Response,
@@ -687,8 +687,7 @@ async def regulator_approval(
 
     Args:
         project_id (str): The unique identifier of the project.
-        data (dict): A dictionary containing the regulator's comment.
-        Expected key: 'regulator_comment' and 'regulator_approval_status.
+        data (RegulatorCommentIn): The regulator's comment and approval decision.
         db (Connection): Database connection instance, provided via dependency injection.
         user_data (AuthUser): Authenticated user data, provided via dependency injection.
         response (Response): FastAPI Response object to set custom status codes.
@@ -725,8 +724,8 @@ async def regulator_approval(
             await cur.execute(
                 sql,
                 {
-                    "comment": data["regulator_comment"],
-                    "regulator_approval_status": data["regulator_approval_status"],
+                    "comment": data.regulator_comment,
+                    "regulator_approval_status": data.regulator_approval_status,
                     "user_id": user_data.id,
                     "project_id": project_id,
                 },
@@ -819,7 +818,9 @@ async def upload_imagery_to_oam(
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
     ],
     background_tasks: BackgroundTasks,
-    tags: dict[str, list[str]] = Body(default={"tags": []}),
+    tags: project_schemas.OamUploadTagsIn = Body(
+        default_factory=project_schemas.OamUploadTagsIn
+    ),
 ):
     """Upload project orthophoto to OpenAerialMap."""
     if project.author_id != user_data.id:
@@ -843,7 +844,7 @@ async def upload_imagery_to_oam(
         db, project.id, OAMUploadStatus.UPLOADING
     )
 
-    background_tasks.add_task(upload_to_oam, db, project, user_data, tags)
+    background_tasks.add_task(upload_to_oam, db, project, user_data, tags.model_dump())
     return {"message": "Uploading to OAM Started", "status": OAMUploadStatus.UPLOADING}
 
 
