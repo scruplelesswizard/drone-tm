@@ -16,6 +16,7 @@ from app.models.enums import (
     OAMUploadStatus,
     ProjectCompletionStatus,
 )
+from app.pagination import PaginationParams, paginate, pagination_params
 from app.projects import project_deps, project_logic, project_schemas
 from app.projects.oam import upload_to_oam
 from app.projects.project_deps import normalize_aoi
@@ -454,40 +455,22 @@ async def read_projects(
         None, description="Filter projects by status"
     ),
     search: str | None = Query(None, description="Search projects by name"),
-    page: int = Query(1, ge=1, description="Page number"),
-    results_per_page: int = Query(
-        20, gt=0, le=100, description="Number of results per page"
-    ),
+    pagination: PaginationParams = Depends(pagination_params),
 ):
     """Get all projects with task count."""
     try:
         user_id = user_data.id if filter_by_owner else None
-        skip = (page - 1) * results_per_page
         projects, total_count = await project_schemas.DbProject.all(
             db,
             user_id=user_id,
             search=search,
             status=status,
-            skip=skip,
-            limit=results_per_page,
+            skip=pagination.skip,
+            limit=pagination.per_page,
         )
-        if not projects:
-            return {
-                "results": [],
-                "pagination": {
-                    "page": page,
-                    "per_page": results_per_page,
-                    "total": total_count,
-                },
-            }
-
         return {
-            "results": projects,
-            "pagination": {
-                "page": page,
-                "per_page": results_per_page,
-                "total": total_count,
-            },
+            "results": projects or [],
+            "pagination": paginate(pagination, total_count),
         }
     except KeyError as e:
         raise HTTPException(status_code=HTTPStatus.UNPROCESSABLE_ENTITY) from e

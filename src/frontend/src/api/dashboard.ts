@@ -25,7 +25,8 @@ export const useGetTaskListQuery = (queryOptions?: Partial<UseQueryOptions>) => 
   return useQuery({
     queryKey: ["task-list"],
     queryFn: getTaskList,
-    select: (res: any) => res.data,
+    // Backend now returns { results, pagination } instead of a bare list.
+    select: (res: any) => res.data.results,
     ...queryOptions,
   });
 };

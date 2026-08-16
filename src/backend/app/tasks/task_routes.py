@@ -4,6 +4,7 @@ from typing import Annotated
 
 from app.db import database
 from app.models.enums import HTTPStatus
+from app.pagination import PaginationParams, paginate, pagination_params
 from app.projects import project_deps, project_schemas
 from app.tasks import task_logic, task_schemas
 from app.users.user_deps import login_required
@@ -75,12 +76,14 @@ async def get_task_stats(
 async def list_tasks(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
-    skip: int = 0,
-    limit: int = 50,
+    pagination: Annotated[PaginationParams, Depends(pagination_params)],
 ):
     """Get all tasks for a user."""
     user_id = user_data.id
-    return await task_schemas.UserTasksOut.get_tasks_by_user(db, user_id, skip, limit)
+    results, total = await task_schemas.UserTasksOut.get_tasks_by_user(
+        db, user_id, pagination.skip, pagination.per_page
+    )
+    return {"results": results, "pagination": paginate(pagination, total)}
 
 
 @router.get("/states/{project_id}")
