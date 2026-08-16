@@ -26,7 +26,9 @@ async def test_create_project_image_with_location(db, auth_user, create_test_pro
 
 
 @pytest.mark.asyncio
-async def test_create_project_image_without_location(db, auth_user, create_test_project):
+async def test_create_project_image_without_location(
+    db, auth_user, create_test_project
+):
     """No location dict at all -> location stays NULL, no error."""
     image_data = ProjectImageCreate(
         project_id=UUID(create_test_project),
