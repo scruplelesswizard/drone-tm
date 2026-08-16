@@ -125,6 +125,69 @@ async def test_trailing_slash_no_longer_matches(client):
 
 
 @pytest.mark.asyncio
+async def test_regulator_comment_rejects_invalid_approval_status(
+    client, create_test_project
+):
+    """regulator_approval_status is a Literal; an out-of-set value is now a
+    422 validation error instead of being accepted as an arbitrary string."""
+    project_id = create_test_project
+    response = await client.post(
+        f"/api/projects/regulator/comment/{project_id}",
+        json={"regulator_comment": "looks fine", "regulator_approval_status": "MAYBE"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_regulator_comment_rejects_missing_comment(client, create_test_project):
+    """regulator_comment is required; omitting it is a 422, not a KeyError."""
+    project_id = create_test_project
+    response = await client.post(
+        f"/api/projects/regulator/comment/{project_id}",
+        json={"regulator_approval_status": "APPROVED"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_regulator_comment_valid_body_reaches_authorization_check(
+    client, create_test_project
+):
+    """A well-formed body parses successfully and reaches the route's own
+    REGULATOR-role check (403), rather than failing body validation (422) -
+    the boundary this endpoint's typed schema is responsible for."""
+    project_id = create_test_project
+    response = await client.post(
+        f"/api/projects/regulator/comment/{project_id}",
+        json={"regulator_comment": "looks fine", "regulator_approval_status": "APPROVED"},
+    )
+    assert response.status_code == 403
+    assert response.json()["details"] == "You are not authorized to perform the action"
+
+
+@pytest.mark.asyncio
+async def test_oam_upload_tags_rejects_wrong_shape(client, create_test_project):
+    """tags is list[str]; a non-list value is now a 422 instead of an
+    unvalidated dict shape reaching the OAM upload task."""
+    project_id = create_test_project
+    response = await client.post(
+        f"/api/projects/{project_id}/upload-to-oam",
+        json={"tags": "not-a-list"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_oam_upload_tags_defaults_to_empty_list(client, create_test_project):
+    """Omitting the body entirely still parses (default_factory) instead of
+    failing body validation - whatever happens next is the route's own
+    business logic, not a 422."""
+    project_id = create_test_project
+    response = await client.post(f"/api/projects/{project_id}/upload-to-oam")
+    assert response.status_code != 422
+
+
+@pytest.mark.asyncio
 async def test_read_project(client, create_test_project):
     """Test reading a single project."""
     project_id = create_test_project
