@@ -40,5 +40,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
         working-directory: src
 
+      # Compiles message catalogs to src/paraglide (gitignored). Not an
+      # npm-style `pretest` hook - it's literally named "prebuild" (for
+      # `vite build`) and vitest doesn't invoke it, so any test importing
+      # from @/paraglide/messages would otherwise fail on a fresh checkout.
+      - run: pnpm run prebuild
+        working-directory: src/frontend
+
       - run: pnpm run test
         working-directory: src/frontend
