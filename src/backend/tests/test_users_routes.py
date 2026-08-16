@@ -83,3 +83,34 @@ async def test_get_users_rejects_negative_skip(client):
     """skip must be >= 0."""
     response = await client.get("/api/users?skip=-1")
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_profile_for_another_user_forbidden(client):
+    """The IsSelf permission check must still block creating another user's
+    profile, matching the behavior of the inline check it replaced."""
+    response = await client.post(
+        "/api/users/some-other-user-id/profile",
+        json={"password": "SomePassword123!"},
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_create_own_profile_allowed(client, auth_user):
+    """A user creating their own profile passes the IsSelf check."""
+    response = await client.post(
+        f"/api/users/{auth_user.id}/profile",
+        json={"password": "SomePassword123!"},
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_update_profile_for_another_user_forbidden(client):
+    """Same IsSelf gate on the PATCH route."""
+    response = await client.patch(
+        "/api/users/some-other-user-id/profile",
+        json={"city": "Kathmandu"},
+    )
+    assert response.status_code == 403
