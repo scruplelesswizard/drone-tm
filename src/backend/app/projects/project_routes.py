@@ -1444,7 +1444,8 @@ _GENERATING_COLUMNS = {"cloud_ortho_generating", "cloud_mesh_generating"}
 async def _set_generating_flag(
     db: Connection, project_id: uuid.UUID, column: str
 ) -> None:
-    assert column in _GENERATING_COLUMNS  # hardcoded; not user input
+    if column not in _GENERATING_COLUMNS:  # hardcoded; not user input
+        raise ValueError(f"Invalid generating column: {column!r}")
     await db.execute(
         f"UPDATE projects SET {column} = true WHERE id = %(pid)s",
         {"pid": project_id},
@@ -1455,7 +1456,8 @@ async def _set_generating_flag(
 async def _clear_generating_flag(
     db: Connection, project_id: uuid.UUID, column: str
 ) -> None:
-    assert column in _GENERATING_COLUMNS
+    if column not in _GENERATING_COLUMNS:  # hardcoded; not user input
+        raise ValueError(f"Invalid generating column: {column!r}")
     await db.execute(
         f"UPDATE projects SET {column} = false WHERE id = %(pid)s",
         {"pid": project_id},

@@ -25,9 +25,7 @@ class PaginationParams(BaseModel):
 
 def pagination_params(
     page: Annotated[int, Query(ge=1, description="Page number")] = 1,
-    per_page: Annotated[
-        int, Query(gt=0, le=100, description="Results per page")
-    ] = 20,
+    per_page: Annotated[int, Query(gt=0, le=100, description="Results per page")] = 20,
 ) -> PaginationParams:
     return PaginationParams(page=page, per_page=per_page)
 
