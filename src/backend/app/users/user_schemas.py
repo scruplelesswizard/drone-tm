@@ -378,8 +378,15 @@ class DbUser(BaseModel):
     profile_img: str | None = None
 
     @staticmethod
-    async def all(db: Connection, skip: int = 0, limit: int = 200):
+    async def all(
+        db: Connection, skip: int = 0, limit: int = 200
+    ) -> tuple[list["DbUser"], int]:
         """Fetch a page of users, ordered by id for stable pagination."""
+        async with db.cursor(row_factory=dict_row) as cur:
+            await cur.execute("SELECT COUNT(*) AS total FROM users;")
+            total_row = await cur.fetchone()
+            total = total_row["total"] if total_row else 0
+
         async with db.cursor(row_factory=class_row(DbUser)) as cur:
             await cur.execute(
                 """
@@ -387,7 +394,7 @@ class DbUser(BaseModel):
                 """,
                 {"skip": skip, "limit": limit},
             )
-            return await cur.fetchall()
+            return await cur.fetchall(), total
 
     @staticmethod
     async def one(db: Connection, user_id: str):
