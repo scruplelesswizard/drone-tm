@@ -162,7 +162,26 @@ class Settings(BaseSettings):
             default_origins += val
             return default_origins
 
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: str | None = None
+
+    @field_validator("SECRET_KEY", mode="before")
+    @classmethod
+    def validate_secret_key(cls, v: str | None, info: ValidationInfo) -> str:
+        """Require an explicit SECRET_KEY outside of DEBUG.
+
+        A random per-process key is fine for local/dev, but with DEBUG=False
+        (production) it must be set explicitly: a freshly generated key is
+        unique to each process, so with multiple backend replicas (or on
+        every restart) JWT/session validation would break silently.
+        """
+        if v:
+            return v
+        if info.data.get("DEBUG"):
+            return secrets.token_urlsafe(32)
+        raise ValueError(
+            "SECRET_KEY must be set explicitly when DEBUG=False (production). "
+            "A random per-process default breaks auth across replicas/restarts."
+        )
 
     POSTGRES_HOST: str | None = "db"
     POSTGRES_USER: str | None = "dtm"
