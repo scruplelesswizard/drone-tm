@@ -19,7 +19,15 @@ from app.users.user_schemas import (
     UserProfileUpdate,
 )
 from app.utils import send_reset_password_email
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+)
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from loguru import logger as log
@@ -69,8 +77,13 @@ async def login_access_token(
 async def get_user(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(gt=0, le=500)] = 200,
 ):
-    return await user_schemas.DbUser.all(db)
+    # NOTE limit default/max chosen to avoid changing behaviour for existing
+    # callers (e.g. user-mention pickers) that today expect "all users" back.
+    # Revisit once real pagination lands here (see todo.md).
+    return await user_schemas.DbUser.all(db, skip, limit)
 
 
 @router.post("/{user_id}/profile")

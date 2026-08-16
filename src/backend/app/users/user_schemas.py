@@ -378,13 +378,14 @@ class DbUser(BaseModel):
     profile_img: str | None = None
 
     @staticmethod
-    async def all(db: Connection):
-        """Fetch  all users."""
+    async def all(db: Connection, skip: int = 0, limit: int = 200):
+        """Fetch a page of users, ordered by id for stable pagination."""
         async with db.cursor(row_factory=class_row(DbUser)) as cur:
             await cur.execute(
                 """
-                SELECT * FROM users;
-                """
+                SELECT * FROM users ORDER BY id OFFSET %(skip)s LIMIT %(limit)s;
+                """,
+                {"skip": skip, "limit": limit},
             )
             return await cur.fetchall()
 
