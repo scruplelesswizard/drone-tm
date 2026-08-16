@@ -1,4 +1,4 @@
-name: Test Frontend
+name: Frontend CI
 
 on:
   push:
@@ -48,4 +48,63 @@ jobs:
         working-directory: src/frontend
 
       - run: pnpm run test
+        working-directory: src/frontend
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: src/frontend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: src/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: src
+
+      # gcp-editor is a workspace-linked sibling package the frontend
+      # imports from its build output, not its source - must be built
+      # first (matches frontend/Dockerfile's build stage).
+      - run: pnpm run build
+        working-directory: src/gcp-editor
+
+      # `build` runs `tsc && vite build` - typecheck and production build
+      # in one gate, previously only ever exercised inside the release
+      # Docker image.
+      - run: pnpm run build
+        working-directory: src/frontend
+
+  lint:
+    runs-on: ubuntu-latest
+    # Non-blocking: ~6600 pre-existing violations surfaced by the ESLint v9
+    # migration are tracked in todo.md as their own triage pass, not
+    # something a new PR should be blocked on fixing. Flip this to a normal
+    # gate once that backlog is cleared.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: src/frontend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: src/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: src
+
+      - run: pnpm run prebuild
+        working-directory: src/frontend
+
+      - run: ./node_modules/.bin/eslint .
         working-directory: src/frontend
