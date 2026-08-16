@@ -88,6 +88,17 @@ backend:
     #   cpu: 100m
     #   memory: 256Mi
 
+  # Covers slow startup (migrations, DB pool warm-up) so liveness doesn't
+  # trip before the app is actually up. Once this succeeds once, kubelet
+  # switches to liveness/readiness as normal.
+  startupProbe:
+    httpGet:
+      path: /__heartbeat__
+      port: http
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 30 # 150s budget before liveness takes over
+
   # Is process alive?
   livenessProbe:
     httpGet:
@@ -179,6 +190,18 @@ worker:
     # requests:
     #   cpu: 500m
     #   memory: 512Mi
+
+  # Covers slow startup (job queue connection, DB pool warm-up) so liveness
+  # doesn't trip before the worker is actually up.
+  startupProbe:
+    exec:
+      command:
+        - sh
+        - -c
+        - pgrep -f "arq app.arq.tasks.WorkerSettings" >/dev/null
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 30 # 300s budget before liveness takes over
 
   # Is process alive?
   livenessProbe:

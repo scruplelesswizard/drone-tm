@@ -69,6 +69,8 @@ spec:
             {{- include "drone-tm.renderEnvOmit" (dict "env" (.Values.env | default dict) "omit" (dict "DRAGONFLY_DSN" true "LOG_LEVEL" true)) | nindent 12 }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.backend.startupProbe | nindent 12 }}
           livenessProbe:
             {{- toYaml .Values.backend.livenessProbe | nindent 12 }}
           readinessProbe:
