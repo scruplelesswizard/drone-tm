@@ -3,7 +3,8 @@
 Source: engineering audit, 2026-08-15 (full backlog published as an artifact —
 ask for the link if needed). Originally scoped to Backend/Frontend P0/P1 only;
 expanded 2026-08-16 to track every item from the audit, across all six
-domains and all priority tiers.
+domains and all priority tiers, plus a seventh domain (Accessibility &
+Design System) added the same day from a separate standards audit request.
 
 Each item gets its own commit (and, on the `scruplelesswizard/drone-tm` fork,
 its own stacked PR, except where noted). Checked = committed. Follow-ups
@@ -217,6 +218,98 @@ inline on the original item.
       original audit, not a direct change - needs the spike's findings
       before any removal.
 
+## Accessibility & Design System (WCAG 2.2 AA)
+
+New backlog domain, added 2026-08-16 from a standards audit (WHATWG HTML,
+WCAG 2.2 AA, ARIA APG, ISO 9241-110/210, OWASP ASVS, Core Web Vitals,
+i18n) requested against `src/frontend`. Findings below are from a fast
+targeted scan, not the full multi-day audit the standards list implies -
+each is a real, file-specific issue, but this is a punch list to start
+from, not exhaustive coverage of every category (performance and OWASP
+ASVS in particular haven't been scanned yet).
+
+### Critical
+
+- [ ] Base `Modal` component has no dialog semantics, no Escape handler, no
+      focus trap (`components/common/Modal/index.tsx`, used by 7+ callers
+      incl. `DeleteProjectConfirmation`, `UnlockTaskPromptDialog`,
+      `ChooseProcessingParameter`, `UploadToOAM`). Has `tabIndex={-1}` but
+      no `role="dialog"`/`aria-modal`/`aria-labelledby`; Tab can leave the
+      dialog into background content. WCAG 2.4.3, 4.1.2; ARIA APG Dialog
+      pattern.
+- [ ] `Icon` component's keyboard handler is a no-op
+      (`components/common/Icon/index.tsx:17-26`): `role="button"
+      tabIndex={0} onKeyUp={() => {}}` — looks accessible but Enter/Space
+      does nothing. Every icon-only control built on it (57 usages: close,
+      delete, sync, download, zoom, etc.) is keyboard-unusable, and none
+      pass `aria-label` (accessible name falls back to the icon ligature
+      text, e.g. "close", fragile if the icon font fails to load). WCAG
+      2.1.1, 4.1.2.
+
+### High
+
+- [ ] `Breadcrumb` keyboard handler is also a no-op
+      (`components/common/Breadcrumb/index.tsx:20-23`) - real navigation
+      only happens in `onClick`. WCAG 2.1.1.
+- [ ] `ProjectCard`'s clickable div uses `role="presentation"` (removes it
+      from the accessibility tree) and has no `tabIndex`/`onKeyDown`
+      (`components/Projects/ProjectCard/index.tsx:33-37`) - the main
+      navigation target for every project in the grid is unreachable by
+      keyboard/screen reader. WCAG 2.1.1, 4.1.2.
+
+### Medium
+
+- [ ] Heading hierarchy: three `<h1>`s in one section
+      (`components/IndividualProject/ExportSection/index.tsx:16,48,55`).
+      Should be one `h1` + `h2`/`h3` for subsections. WCAG 1.3.1, 2.4.6.
+- [ ] `SearchInput`/`Select` rely on `placeholder` only, no
+      `<label>`/`aria-label` (`components/common/FormUI/SearchInput/index.tsx:27-34`,
+      `components/common/FormUI/Input/index.tsx`,
+      `components/common/FormUI/Select/index.tsx:113-117`). Placeholder
+      text isn't a reliable accessible name (it disappears on input). WCAG
+      1.3.1, 4.1.2.
+- [ ] `Drawer` has `role="dialog"`/`aria-modal`/Escape handling (good) but
+      no focus trap or initial focus on open
+      (`components/common/Drawer/index.tsx`) - Tab can still leave the
+      panel. WCAG 2.4.3.
+- [ ] Fixed-width label containers risk text clipping on longer-language
+      translations:
+      `components/RegulatorsApprovalPage/Description/DescriptionSection.tsx:156,168,183`
+      (`w-[146px]`) and
+      `components/IndividualProject/ExportSection/index.tsx:22,25,30,33,38,41`
+      (`w-28`) on translated field labels - should be `min-w` not fixed
+      `w-`. i18n text-expansion guidance.
+- [ ] No `prefers-reduced-motion` or `prefers-color-scheme` support
+      anywhere (confirmed via repo-wide grep - zero matches).
+      `tailwind.config.js` defines several transform/scale/opacity
+      animations with no reduced-motion variant.  `darkMode: "class"` is
+      configured but no toggle mechanism was found using it. WCAG 2.3.3.
+
+### Low
+
+- [ ] Verify `dangerouslySetInnerHTML` usages are sanitized, not raw
+      API/user data: `components/IndividualProject/QFieldExport/index.tsx`,
+      `components/common/MapLibreComponents/{AsyncPopup,NewAsyncPopup}/index.tsx`
+      (MapLibre popups render feature-derived content),
+      `components/Dashboard/RequestLogs/index.tsx`. OWASP ASVS (XSS).
+- [ ] `alt=""` on a meaningful profile image in the task-lock user list
+      (`components/IndividualProject/ModalContent/LockTaskDialog.tsx:209-213`)
+      - other avatars in the codebase use descriptive alt text; this one
+      conveys user identity but is marked decorative.
+
+### Checked and clean (no action needed)
+
+No `<img>` missing `alt` outright (some empty/decorative by design).
+`StatusChip` pairs color with visible text, not color-only. `TaskOrthoCogViewer`
+correctly implements `role="dialog"`/`aria-modal`.
+
+### Not yet scanned
+
+Performance (Core Web Vitals), OWASP ASVS beyond the XSS check above,
+full keyboard-navigation/focus-order pass across all views, contrast
+audit, and the CSS/design-token consolidation pass - out of scope for
+this fast scan, needed before calling this domain complete.
+
 ## Follow-ups discovered while executing the above
 
 New items surfaced during backend/frontend work, filed separately rather
@@ -259,3 +352,26 @@ than as inline notes on the item that found them:
       package gets picked, see the `/metrics` item above) is added as a
       dependency - same container-based process used for the mypy lockfile
       fix.
+- [x] Fixed two real bugs the RFC 7807 PR's own tests caught: (1) the
+      exception handlers were only registered on the module-level `api`
+      singleton, not inside `get_application()` itself, so any other
+      caller of the factory (including every test) silently got FastAPI's
+      default handlers instead - moved registration inside the factory;
+      (2) `handle_http_exception` was unconditionally `str()`-ing non-string
+      `detail`, breaking routes (e.g. waypoint's `MISSING_TERRAIN_DEM`
+      check) that deliberately raise a structured dict detail for the
+      frontend to branch on - now passed through as-is. Confirmed via a
+      real `just test backend`-equivalent run (this sandbox got Docker
+      BuildKit working via a user-level `docker-buildx` CLI plugin install,
+      no root needed) - full suite green, 257/257.
+- [ ] **Needs interaction:** every PR that triggers a test workflow should
+      have tests exercising both expected and failure conditions - done
+      for the backend PR stack (#2-#33) this pass; frontend PRs beyond the
+      ErrorBoundary/AppErrorFallback test are still light (ESLint-v9 and
+      redux-saga-deletion PRs are config/deletion-only, no new tests
+      needed, but ProjectCard/Modal/Breadcrumb keyboard-accessibility gaps
+      below have no regression tests either once fixed). "Add additional
+      linting for FE and BE code" also requested - no specific new rules
+      picked yet; needs a decision on what beyond the existing ruff/ESLint
+      configs is wanted (stricter mypy, more ESLint plugins, etc.) before
+      it's actionable.
