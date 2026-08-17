@@ -68,8 +68,14 @@ inline on the original item.
       non-blocking even once branch protection requires the check) since
       the ~6600 pre-existing violations below aren't this PR's to fix.
       Flip `lint` to blocking once that backlog clears.
-- [ ] Turn on dependency vulnerability scanning (no Renovate/Dependabot,
-      no CodeQL, on either the Python or JS dependency graph)
+- [x] Turn on dependency vulnerability scanning — added Dependabot
+      (`.github/dependabot.yml`) for `uv` (backend + drone-flightplan
+      workspace member), `npm` (pnpm workspace: frontend + gcp-editor),
+      `github-actions`, and `docker` (backend + frontend release images).
+      `contrib/pg-upgrade/Dockerfile` deliberately excluded — it pins
+      specific PostGIS major versions as upgrade-path steps, not a
+      normal deployed image. CodeQL not covered by this item — no code-
+      scanning config added.
 - [ ] Turn on container image scanning (`tag_build.yml:19` explicitly sets
       `scan_image: false` for the backend image)
 
@@ -338,16 +344,22 @@ than as inline notes on the item that found them:
 - [ ] Give `GET /users` a real paged UI/UX instead of the large
       default/max page size (200/500) it currently uses to avoid breaking
       the user-mention picker, which expects "all users" back in one page.
-- [ ] Reformat/fix `vite.config.ts` to the project's own prettier style
-      (single quotes etc.) — it was in `.eslintignore` entirely before the
-      ESLint v9 migration, so it was never actually linted; now it accounts
-      for ~60 of the pre-existing violation count surfaced by that migration.
-- [ ] Triage and fix the ~6600 pre-existing ESLint problems across the
-      frontend that `eslint .` now reports for real (lint has never run in
-      CI — see the ESLint v9 migration item above). This needs its own
-      deliberate, reviewed pass (almost 6000 are auto-fixable, but running
-      `--fix` across the whole tree in one shot is exactly what went wrong
-      mid-session here — do it in reviewable batches, not one commit).
+- [x] Reformat/fix `vite.config.ts` to the project's own prettier style —
+      covered by the `eslint --fix` pass below (it's no longer excluded
+      from linting since the ESLint v9 migration).
+- [x] Ran `eslint --fix` across the frontend tree in one PR (explicit
+      user direction, overriding the caution originally noted here about
+      doing it in reviewable batches): fixed ~5836 auto-fixable errors +
+      48 warnings (99% prettier formatting, plus a handful of safe
+      mechanical rules — see the PR for the full list). Verified `pnpm
+      run build` clean and the Vitest suite unchanged (5/5) before
+      committing, fixer output only, no manual edits.
+- [ ] Triage the remaining 698 errors + 21 warnings `eslint .` still
+      reports (mostly `@typescript-eslint/no-explicit-any`, plus a few
+      `@ts-ignore`/`no-shadow`/`consistent-return` sites) — not auto-
+      fixable, needs individual review. Do this in reviewable batches as
+      separate PRs (per the original caution above, which still applies
+      to the non-auto-fixable remainder).
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
       HTTP request that triggered it. Needs touching every enqueue call
