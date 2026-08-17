@@ -354,13 +354,12 @@ than as inline notes on the item that found them:
       mechanical rules — see the PR for the full list). Verified `pnpm
       run build` clean and the Vitest suite unchanged (5/5) before
       committing, fixer output only, no manual edits.
-- [ ] Triage the remaining ~687 errors + 21 warnings `eslint .` still
+- [ ] Triage the remaining ~640 errors + 21 warnings `eslint .` still
       reports (mostly `@typescript-eslint/no-explicit-any` at 448 sites,
-      `@typescript-eslint/ban-ts-comment` at 78, `no-unused-vars` at 46,
-      plus a long tail — `no-nested-ternary`, `consistent-return`,
-      `no-shadow`, `jsx-a11y/*`, etc.) — not auto-fixable, needs
-      individual review. Doing this in reviewable batches as separate
-      PRs, mechanical/low-risk rules first:
+      `@typescript-eslint/ban-ts-comment` at 78, plus a long tail —
+      `no-nested-ternary`, `consistent-return`, `no-shadow`,
+      `jsx-a11y/*`, etc.) — not auto-fixable, needs individual review.
+      Doing this in reviewable batches, mechanical/low-risk rules first:
       - [x] `no-console` (12 sites) — allow `warn`/`error` in config (all
             existing sites were legitimate diagnostics, not debug
             leftovers); kept 4 genuine `console.log` breadcrumbs in
@@ -369,6 +368,17 @@ than as inline notes on the item that found them:
       - [x] `react/button-has-type` (20 sites) — added explicit
             `type="button"`; verified no affected file contains a
             `<form>`, so none needed `type="submit"` instead.
+      - [x] `no-unused-vars` (46 sites) — found and fixed a real config
+            bug along the way: the base (non-TS-aware) rule was active
+            instead of `@typescript-eslint/no-unused-vars`, producing
+            false positives on TS declaration-merged `.d.ts` files and
+            type-only callback signatures in prop interfaces. Swapped
+            rules (with `argsIgnorePattern`/`varsIgnorePattern: '^_'`,
+            matching this codebase's existing convention), added a
+            `src/**/*.d.ts` override, and `eslint --fix` cleaned up 30+
+            now-stale `eslint-disable no-unused-vars` comments left over
+            from before the swap. Fixed the ~26 real findings the
+            correct rule then surfaced.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
