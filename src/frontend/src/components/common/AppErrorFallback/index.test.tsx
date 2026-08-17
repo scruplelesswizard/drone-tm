@@ -13,9 +13,7 @@ describe('AppErrorFallback', () => {
 
     expect(screen.getByText('An error occurred')).toBeInTheDocument();
     expect(screen.getByText('Error: boom')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Retry' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('calls resetErrorBoundary when retry is clicked', () => {
@@ -34,7 +32,10 @@ describe('AppErrorFallback', () => {
 
   it('omits the message line for a non-Error thrown value', () => {
     render(
-      <AppErrorFallback error="not an Error instance" resetErrorBoundary={vi.fn()} />,
+      <AppErrorFallback
+        error="not an Error instance"
+        resetErrorBoundary={vi.fn()}
+      />,
     );
 
     expect(screen.getByText('An error occurred')).toBeInTheDocument();
