@@ -1,4 +1,4 @@
-import { m } from "@/paraglide/messages";
+import { m } from '@/paraglide/messages';
 
 const UploadsInformation = ({ data }: { data: Record<string, any>[] }) => {
   return (
@@ -10,13 +10,18 @@ const UploadsInformation = ({ data }: { data: Record<string, any>[] }) => {
           </p>
         </div>
 
-        {data.map((information) => (
-          <div className="naxatw-flex naxatw-w-full naxatw-gap-2" key={information?.name}>
+        {data.map(information => (
+          <div
+            className="naxatw-flex naxatw-w-full naxatw-gap-2"
+            key={information?.name}
+          >
             <p className="naxatw-w-[6.875rem] naxatw-text-[0.75rem] naxatw-text-[#484848]">
               {information?.name}
             </p>
             <p className="naxatw-text-[0.75rem] naxatw-text-[#484848]">:</p>
-            <p className="naxatw-text-[0.75rem] naxatw-text-[#484848]">{information?.value}</p>
+            <p className="naxatw-text-[0.75rem] naxatw-text-[#484848]">
+              {information?.value}
+            </p>
           </div>
         ))}
       </div>

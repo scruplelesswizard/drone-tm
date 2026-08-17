@@ -1,14 +1,14 @@
 /* eslint-disable no-unused-vars */
-import { FlexRow } from "@Components/common/Layouts";
+import { FlexRow } from '@Components/common/Layouts';
 // import Icon from '@Components/common/Icon';
-import Image from "@Components/RadixComponents/Image";
-import JamaicaFlyingLabsLogo from "@Assets/images/LandingPage/JamaicaFlyingLabs_Logo.png";
-import naxaLogo from "@Assets/images/LandingPage/Naxa-logo.png";
-import hotLogo from "@Assets/images/LandingPage/HOT-logo.png";
-import { Button } from "@Components/RadixComponents/Button";
-import { motion } from "framer-motion";
-import { fadeUpVariant } from "@Constants/animations";
-import { m } from "@/paraglide/messages";
+import Image from '@Components/RadixComponents/Image';
+import JamaicaFlyingLabsLogo from '@Assets/images/LandingPage/JamaicaFlyingLabs_Logo.png';
+import naxaLogo from '@Assets/images/LandingPage/Naxa-logo.png';
+import hotLogo from '@Assets/images/LandingPage/HOT-logo.png';
+import { Button } from '@Components/RadixComponents/Button';
+import { motion } from 'framer-motion';
+import { fadeUpVariant } from '@Constants/animations';
+import { m } from '@/paraglide/messages';
 
 export default function Footer() {
   return (
@@ -46,7 +46,9 @@ export default function Footer() {
           className="naxatw-flex naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-between naxatw-gap-8 naxatw-border-b naxatw-border-t naxatw-border-landing-white naxatw-px-5 naxatw-py-8 naxatw-text-landing-grey md:naxatw-flex-row md:naxatw-px-9 lg:naxatw-px-32"
         >
           <div className="naxatw-text-center md:naxatw-text-start">
-            <span className="naxatw-font-medium">{m.landing_footer_developed_designed_by()}</span>
+            <span className="naxatw-font-medium">
+              {m.landing_footer_developed_designed_by()}
+            </span>
             <FlexRow className="naxatw-mt-3 naxatw-items-center" gap={10}>
               <Image src={hotLogo} />
               <Image src={naxaLogo} />

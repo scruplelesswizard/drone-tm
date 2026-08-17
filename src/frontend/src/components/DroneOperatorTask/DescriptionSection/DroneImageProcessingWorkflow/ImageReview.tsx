@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Map as MapLibreMap,
   NavigationControl,
   AttributionControl,
   LngLatBoundsLike,
   Popup,
-} from "maplibre-gl";
-import bbox from "@turf/bbox";
+} from 'maplibre-gl';
+import bbox from '@turf/bbox';
 import {
   getProjectReview,
   getProjectMapData,
@@ -25,27 +25,27 @@ import {
   TaskGroupSummary,
   TaskGroupImage,
   ImageUrls,
-} from "@Services/classification";
-import { FlexColumn, FlexRow } from "@Components/common/Layouts";
-import Accordion from "@Components/common/Accordion";
-import { Button } from "@Components/RadixComponents/Button";
-import { toast } from "react-toastify";
-import MapContainer from "@Components/common/MapLibreComponents/MapContainer";
-import VectorLayer from "@Components/common/MapLibreComponents/Layers/VectorLayer";
-import BaseLayerSwitcherUI from "@Components/common/BaseLayerSwitcher";
-import { GeojsonType } from "@Components/common/MapLibreComponents/types";
-import { m } from "@/paraglide/messages";
-import TaskVerificationModal from "./TaskVerificationModal";
+} from '@Services/classification';
+import { FlexColumn, FlexRow } from '@Components/common/Layouts';
+import Accordion from '@Components/common/Accordion';
+import { Button } from '@Components/RadixComponents/Button';
+import { toast } from 'react-toastify';
+import MapContainer from '@Components/common/MapLibreComponents/MapContainer';
+import VectorLayer from '@Components/common/MapLibreComponents/Layers/VectorLayer';
+import BaseLayerSwitcherUI from '@Components/common/BaseLayerSwitcher';
+import { GeojsonType } from '@Components/common/MapLibreComponents/types';
+import { m } from '@/paraglide/messages';
+import TaskVerificationModal from './TaskVerificationModal';
 
 interface ImageReviewProps {
   projectId: string;
 }
 
-const hasIssueStatus = (status?: string) => status !== "assigned";
-const canManuallyMatchImage = (status?: string) => status === "unmatched";
+const hasIssueStatus = (status?: string) => status !== 'assigned';
+const canManuallyMatchImage = (status?: string) => status === 'unmatched';
 const canOverrideImageRejection = (status?: string) =>
-  status === "rejected" || status === "invalid_exif";
-const canRejectImage = (status?: string) => status === "assigned";
+  status === 'rejected' || status === 'invalid_exif';
+const canRejectImage = (status?: string) => status === 'assigned';
 
 // Run async `worker` over `items` with at most `limit` in-flight at a time.
 // Each worker rejection is counted, never thrown - caller gets success/fail tallies.
@@ -58,17 +58,20 @@ const runWithConcurrency = async <T,>(
   let successCount = 0;
   let failCount = 0;
   let cursor = 0;
-  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (cursor < items.length) {
-      const idx = cursor++;
-      try {
-        await worker(items[idx]);
-        successCount++;
-      } catch {
-        failCount++;
+  const runners = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (cursor < items.length) {
+        const idx = cursor++;
+        try {
+          await worker(items[idx]);
+          successCount++;
+        } catch {
+          failCount++;
+        }
       }
-    }
-  });
+    },
+  );
   await Promise.all(runners);
   return { successCount, failCount };
 };
@@ -105,7 +108,10 @@ const TaskAccordionContent = ({
     groupKey: string,
     imageUrls?: Record<string, ImageUrls>,
   ) => void;
-  onImageDoubleClick: (image: TaskGroupImage, imageUrls?: Record<string, ImageUrls>) => void;
+  onImageDoubleClick: (
+    image: TaskGroupImage,
+    imageUrls?: Record<string, ImageUrls>,
+  ) => void;
 }) => {
   const COLS = 6;
   const ROW_H = 110;
@@ -113,10 +119,16 @@ const TaskAccordionContent = ({
   // Fetch presigned URLs only when accordion is open
   // For assigned tasks, use the task endpoint; for unassigned, use bulk by image IDs
   const { data: urlsData } = useTaskImageUrls(projectId, group.task_id, isOpen);
-  const groupImageIds = useMemo(() => group.images.map((i) => i.id), [group.images]);
-  const bulkKey = useMemo(() => [...groupImageIds].sort().join(","), [groupImageIds]);
+  const groupImageIds = useMemo(
+    () => group.images.map(i => i.id),
+    [group.images],
+  );
+  const bulkKey = useMemo(
+    () => [...groupImageIds].sort().join(','),
+    [groupImageIds],
+  );
   const { data: bulkUrlsData } = useQuery({
-    queryKey: ["bulkImageUrls", projectId, bulkKey],
+    queryKey: ['bulkImageUrls', projectId, bulkKey],
     queryFn: () => getBulkImageUrls(projectId, groupImageIds),
     enabled: isOpen && !group.task_id && groupImageIds.length > 0,
     staleTime: 30 * 60 * 1000,
@@ -159,7 +171,7 @@ const TaskAccordionContent = ({
             variant="ghost"
             className="naxatw-bg-green-600 naxatw-text-white hover:naxatw-bg-green-700"
             leftIcon="map"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onVerifyTask(group.task_id!, group.project_task_index || 0);
             }}
@@ -173,7 +185,7 @@ const TaskAccordionContent = ({
             variant="ghost"
             className="naxatw-bg-red naxatw-text-white"
             leftIcon="delete"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onCleanup();
             }}
@@ -192,26 +204,26 @@ const TaskAccordionContent = ({
         <div
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
+            width: '100%',
+            position: 'relative',
           }}
         >
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          {rowVirtualizer.getVirtualItems().map(virtualRow => {
             const rowImages = rows[virtualRow.index];
             return (
               <div
                 key={virtualRow.key}
                 style={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 0,
                   left: 0,
-                  width: "100%",
+                  width: '100%',
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
                 className="naxatw-grid naxatw-grid-cols-6 naxatw-gap-2 naxatw-px-0.5"
               >
-                {rowImages.map((image) => {
+                {rowImages.map(image => {
                   const urls = imageUrlMap[image.id];
                   const thumbSrc = urls?.thumbnail_url || urls?.url;
                   const isSelected = selectedImageIds.has(image.id);
@@ -219,27 +231,38 @@ const TaskAccordionContent = ({
                   return (
                     <div
                       key={image.id}
-                      ref={(el) => {
+                      ref={el => {
                         imageRefs.current[image.id] = el;
                       }}
                       className={`naxatw-group naxatw-relative naxatw-aspect-square naxatw-cursor-pointer naxatw-overflow-hidden naxatw-rounded naxatw-border-2 naxatw-transition-all hover:naxatw-shadow-md ${
                         isAnchor
-                          ? "naxatw-border-amber-600 naxatw-ring-2 naxatw-ring-amber-400"
+                          ? 'naxatw-border-amber-600 naxatw-ring-2 naxatw-ring-amber-400'
                           : isSelected
-                            ? "naxatw-border-violet-600 naxatw-ring-2 naxatw-ring-violet-300"
+                            ? 'naxatw-border-violet-600 naxatw-ring-2 naxatw-ring-violet-300'
                             : highlightedImageId === image.id
-                              ? "naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-300"
-                              : image.status === "rejected" || image.status === "invalid_exif"
-                                ? "naxatw-border-red-300 hover:naxatw-border-red-500"
-                                : image.status === "unmatched"
-                                  ? "naxatw-border-yellow-300 hover:naxatw-border-yellow-500"
-                                  : image.status === "duplicate"
-                                    ? "naxatw-border-gray-400 naxatw-opacity-60 hover:naxatw-border-gray-600"
-                                    : "naxatw-border-gray-200 hover:naxatw-border-blue-500"
+                              ? 'naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-300'
+                              : image.status === 'rejected' ||
+                                  image.status === 'invalid_exif'
+                                ? 'naxatw-border-red-300 hover:naxatw-border-red-500'
+                                : image.status === 'unmatched'
+                                  ? 'naxatw-border-yellow-300 hover:naxatw-border-yellow-500'
+                                  : image.status === 'duplicate'
+                                    ? 'naxatw-border-gray-400 naxatw-opacity-60 hover:naxatw-border-gray-600'
+                                    : 'naxatw-border-gray-200 hover:naxatw-border-blue-500'
                       }`}
-                      onClick={(e) => onImageClick(image, e, group.images, groupKey, imageUrlMap)}
-                      onDoubleClick={() => onImageDoubleClick(image, imageUrlMap)}
-                      title={`${image.filename}${image.rejection_reason ? ` - ${image.rejection_reason}` : ""}`}
+                      onClick={e =>
+                        onImageClick(
+                          image,
+                          e,
+                          group.images,
+                          groupKey,
+                          imageUrlMap,
+                        )
+                      }
+                      onDoubleClick={() =>
+                        onImageDoubleClick(image, imageUrlMap)
+                      }
+                      title={`${image.filename}${image.rejection_reason ? ` - ${image.rejection_reason}` : ''}`}
                     >
                       {thumbSrc ? (
                         <img
@@ -248,9 +271,11 @@ const TaskAccordionContent = ({
                           className="naxatw-h-full naxatw-w-full naxatw-object-cover"
                           loading="lazy"
                         />
-                      ) : image.status === "duplicate" ? (
+                      ) : image.status === 'duplicate' ? (
                         <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-center naxatw-bg-gray-100 naxatw-text-gray-400">
-                          <span className="material-icons naxatw-text-2xl">content_copy</span>
+                          <span className="material-icons naxatw-text-2xl">
+                            content_copy
+                          </span>
                           <span className="naxatw-mt-0.5 naxatw-text-[9px]">
                             {m.common_duplicate()}
                           </span>
@@ -260,17 +285,18 @@ const TaskAccordionContent = ({
                           <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-500" />
                         </div>
                       )}
-                      {(image.status === "rejected" || image.status === "invalid_exif") && (
+                      {(image.status === 'rejected' ||
+                        image.status === 'invalid_exif') && (
                         <div className="naxatw-bg-red-500 naxatw-absolute naxatw-bottom-0 naxatw-left-0 naxatw-right-0 naxatw-truncate naxatw-bg-opacity-75 naxatw-px-1 naxatw-py-0.5 naxatw-text-center naxatw-text-[10px] naxatw-text-white">
                           {image.rejection_reason || m.common_rejected()}
                         </div>
                       )}
-                      {image.status === "unmatched" && (
+                      {image.status === 'unmatched' && (
                         <div className="naxatw-absolute naxatw-bottom-0 naxatw-left-0 naxatw-right-0 naxatw-bg-yellow-500 naxatw-bg-opacity-75 naxatw-px-1 naxatw-py-0.5 naxatw-text-center naxatw-text-[10px] naxatw-text-white">
                           {m.common_unmatched()}
                         </div>
                       )}
-                      {image.status === "duplicate" && (
+                      {image.status === 'duplicate' && (
                         <div className="naxatw-absolute naxatw-bottom-0 naxatw-left-0 naxatw-right-0 naxatw-bg-gray-500 naxatw-bg-opacity-75 naxatw-px-1 naxatw-py-0.5 naxatw-text-center naxatw-text-[10px] naxatw-text-white">
                           {m.common_duplicate()}
                         </div>
@@ -289,9 +315,13 @@ const TaskAccordionContent = ({
 };
 
 // Hook to fetch presigned URLs for a task on demand
-const useTaskImageUrls = (projectId: string, taskId: string | null, enabled: boolean) => {
+const useTaskImageUrls = (
+  projectId: string,
+  taskId: string | null,
+  enabled: boolean,
+) => {
   return useQuery({
-    queryKey: ["taskImageUrls", projectId, taskId],
+    queryKey: ['taskImageUrls', projectId, taskId],
     queryFn: () => getTaskImageUrls(projectId, taskId!),
     enabled: enabled && !!taskId,
     staleTime: 30 * 60 * 1000, // 30 min (presigned URLs last 1 hour)
@@ -338,7 +368,10 @@ const VirtualizedAccordionList = ({
     groupKey: string,
     imageUrls?: Record<string, ImageUrls>,
   ) => void;
-  onImageDoubleClick: (image: TaskGroupImage, imageUrls?: Record<string, ImageUrls>) => void;
+  onImageDoubleClick: (
+    image: TaskGroupImage,
+    imageUrls?: Record<string, ImageUrls>,
+  ) => void;
 }) => {
   const parentRef = useRef<HTMLDivElement | null>(null);
   // Approximate collapsed-row height; open rows are measured dynamically.
@@ -348,7 +381,7 @@ const VirtualizedAccordionList = ({
     getScrollElement: () => parentRef.current,
     estimateSize: () => ESTIMATED_ROW_H,
     overscan: 4,
-    getItemKey: (i) => groups[i].task_id || `unassigned-${i}`,
+    getItemKey: i => groups[i].task_id || `unassigned-${i}`,
   });
 
   return (
@@ -356,13 +389,14 @@ const VirtualizedAccordionList = ({
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
-          width: "100%",
-          position: "relative",
+          width: '100%',
+          position: 'relative',
         }}
       >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
+        {virtualizer.getVirtualItems().map(virtualRow => {
           const group = groups[virtualRow.index];
-          const accordionKey = group.task_id || `unassigned-${virtualRow.index}`;
+          const accordionKey =
+            group.task_id || `unassigned-${virtualRow.index}`;
           const isAccordionOpen = openAccordions.has(accordionKey);
           return (
             <div
@@ -370,10 +404,10 @@ const VirtualizedAccordionList = ({
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               style={{
-                position: "absolute",
+                position: 'absolute',
                 top: 0,
                 left: 0,
-                width: "100%",
+                width: '100%',
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
@@ -383,7 +417,7 @@ const VirtualizedAccordionList = ({
                 headerClassName="!naxatw-items-start"
                 contentClassName="naxatw-mt-4"
                 onToggle={(open: boolean) => {
-                  setOpenAccordions((prev) => {
+                  setOpenAccordions(prev => {
                     const next = new Set(prev);
                     if (open) next.add(accordionKey);
                     else next.delete(accordionKey);
@@ -395,17 +429,21 @@ const VirtualizedAccordionList = ({
                     <h4 className="naxatw-text-base naxatw-font-semibold naxatw-text-gray-900">
                       {group.task_id
                         ? m.common_task_number({
-                            index: group.project_task_index ?? "",
+                            index: group.project_task_index ?? '',
                           })
                         : m.image_review_unassigned_images()}
                     </h4>
                     <span className="naxatw-rounded-full naxatw-bg-blue-100 naxatw-px-3 naxatw-py-1 naxatw-text-sm naxatw-font-medium naxatw-text-blue-800">
                       {showOnlyIssueImages
                         ? `${group.images.length} ${
-                            group.images.length === 1 ? m.common_issue() : m.common_issues_lower()
+                            group.images.length === 1
+                              ? m.common_issue()
+                              : m.common_issues_lower()
                           }`
                         : `${group.images.length} ${
-                            group.images.length === 1 ? m.common_image() : m.common_images_lower()
+                            group.images.length === 1
+                              ? m.common_image()
+                              : m.common_images_lower()
                           }`}
                     </span>
                     {group.is_verified && (
@@ -424,7 +462,8 @@ const VirtualizedAccordionList = ({
                   highlightedImageId={highlightedImageId}
                   selectedImageIds={selectedImageIds}
                   anchorImageId={
-                    sequenceSelectMode && sequenceAnchor?.groupKey === accordionKey
+                    sequenceSelectMode &&
+                    sequenceAnchor?.groupKey === accordionKey
                       ? sequenceAnchor.imageId
                       : null
                   }
@@ -456,7 +495,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     error: mapDataError,
     isError: isMapDataError,
   } = useQuery<ProjectMapData>({
-    queryKey: ["projectMapData", projectId],
+    queryKey: ['projectMapData', projectId],
     queryFn: () => getProjectMapData(projectId),
     enabled: !!projectId,
   });
@@ -467,7 +506,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     error: reviewError,
     isError: isReviewError,
   } = useQuery<ProjectReviewData>({
-    queryKey: ["projectReview", projectId],
+    queryKey: ['projectReview', projectId],
     queryFn: () => getProjectReview(projectId),
     enabled: !!projectId,
   });
@@ -486,17 +525,19 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       const taskId: string | null = props.task_id ?? null;
       const img: TaskGroupImage = {
         id: props.id,
-        filename: props.filename || "Unknown",
+        filename: props.filename || 'Unknown',
         status: props.status,
         rejection_reason: props.rejection_reason,
-        uploaded_at: "",
+        uploaded_at: '',
       };
       const existing = result.get(taskId);
       if (existing) existing.push(img);
       else result.set(taskId, [img]);
     }
     for (const arr of result.values()) {
-      arr.sort((a, b) => a.filename.localeCompare(b.filename, undefined, { numeric: true }));
+      arr.sort((a, b) =>
+        a.filename.localeCompare(b.filename, undefined, { numeric: true }),
+      );
     }
     return result;
   }, [mapData]);
@@ -518,7 +559,11 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
   // Gate the spinner on map data only - the sidebar paints in a second pass
   // once the review summary arrives, so users see the map immediately.
   const isLoading = isMapDataLoading;
-  const error = isMapDataError ? mapDataError : isReviewError ? reviewError : null;
+  const error = isMapDataError
+    ? mapDataError
+    : isReviewError
+      ? reviewError
+      : null;
 
   // Reset fit bounds when data source changes
   useEffect(() => {
@@ -532,7 +577,9 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     status: string;
     rejection_reason?: string;
   } | null>(null);
-  const [highlightedImageId, setHighlightedImageId] = useState<string | null>(null);
+  const [highlightedImageId, setHighlightedImageId] = useState<string | null>(
+    null,
+  );
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
@@ -542,7 +589,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     taskIndex: number;
   }>({
     isOpen: false,
-    taskId: "",
+    taskId: '',
     taskIndex: 0,
   });
   // Task matching state
@@ -571,12 +618,14 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
   const [boxSelectedImages, setBoxSelectedImages] = useState<
     Array<{ id: string; filename: string; status: string }>
   >([]);
-  const boxSelectedImagesRef = useRef<Array<{ id: string; filename: string; status: string }>>([]);
+  const boxSelectedImagesRef = useRef<
+    Array<{ id: string; filename: string; status: string }>
+  >([]);
   useEffect(() => {
     boxSelectedImagesRef.current = boxSelectedImages;
   }, [boxSelectedImages]);
   const selectedImageIds = useMemo(
-    () => new Set(boxSelectedImages.map((i) => i.id)),
+    () => new Set(boxSelectedImages.map(i => i.id)),
     [boxSelectedImages],
   );
   // Sequence-select mode: user clicks two thumbnails to select everything
@@ -626,7 +675,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     }
 
     const mapInstance = new MapLibreMap({
-      container: container,
+      container,
       style: { version: 8, sources: {}, layers: [] },
       center: [0, 0],
       zoom: 1,
@@ -639,7 +688,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
 
     mapInstance.setStyle({ version: 8, sources: {}, layers: [] });
 
-    mapInstance.on("load", () => {
+    mapInstance.on('load', () => {
       setIsMapLoaded(true);
       mapInstance.resize();
     });
@@ -655,7 +704,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         try {
           mapInstance.remove();
         } catch (e) {
-          console.warn("Error removing map instance:", e);
+          console.warn('Error removing map instance:', e);
         }
       }
     };
@@ -680,7 +729,8 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
 
   // Fit map to task extent when ready
   useEffect(() => {
-    if (!map || !isMapLoaded || !mapData?.tasks || hasFitBoundsRef.current) return;
+    if (!map || !isMapLoaded || !mapData?.tasks || hasFitBoundsRef.current)
+      return;
     hasFitBoundsRef.current = true;
     try {
       const [minLng, minLat, maxLng, maxLat] = bbox(mapData.tasks);
@@ -703,12 +753,12 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
   // Add map controls when loaded
   useEffect(() => {
     if (isMapLoaded && map) {
-      map.addControl(new NavigationControl(), "top-right");
+      map.addControl(new NavigationControl(), 'top-right');
       map.addControl(
         new AttributionControl({
           compact: true,
         }),
-        "bottom-right",
+        'bottom-right',
       );
     }
   }, [isMapLoaded, map]);
@@ -717,37 +767,37 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
   useEffect(() => {
     if (!map || !isMapLoaded) return;
 
-    const layerId = "review-image-points-layer";
+    const layerId = 'review-image-points-layer';
 
     const onMouseEnter = () => {
-      map.getCanvas().style.cursor = "pointer";
+      map.getCanvas().style.cursor = 'pointer';
     };
     const onMouseLeave = () => {
-      map.getCanvas().style.cursor = "";
+      map.getCanvas().style.cursor = '';
     };
 
-    map.on("mouseenter", layerId, onMouseEnter);
-    map.on("mouseleave", layerId, onMouseLeave);
+    map.on('mouseenter', layerId, onMouseEnter);
+    map.on('mouseleave', layerId, onMouseLeave);
 
     return () => {
-      map.off("mouseenter", layerId, onMouseEnter);
-      map.off("mouseleave", layerId, onMouseLeave);
+      map.off('mouseenter', layerId, onMouseEnter);
+      map.off('mouseleave', layerId, onMouseLeave);
     };
   }, [map, isMapLoaded]);
 
   const escapeHtml = (str: string): string => {
-    const div = document.createElement("div");
+    const div = document.createElement('div');
     div.appendChild(document.createTextNode(str));
     return div.innerHTML;
   };
 
   const escapeAttr = (str: string): string =>
     str
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
 
   const buildPopupHtml = (props: {
     id: string;
@@ -756,28 +806,30 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     rejection_reason?: string;
   }) => {
     const statusColors: Record<string, string> = {
-      assigned: "#22c55e",
-      rejected: "#D73F3F",
-      unmatched: "#eab308",
-      invalid_exif: "#f97316",
-      duplicate: "#6b7280",
+      assigned: '#22c55e',
+      rejected: '#D73F3F',
+      unmatched: '#eab308',
+      invalid_exif: '#f97316',
+      duplicate: '#6b7280',
     };
-    const dotColor = statusColors[props.status] || "#3b82f6";
+    const dotColor = statusColors[props.status] || '#3b82f6';
     const showMatchBtn = canManuallyMatchImage(props.status);
     const btnStyle =
-      "display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:none;margin-top:8px;margin-right:6px;";
-    const safeFilename = escapeHtml(props.filename || "Unknown");
-    const safeFilenameAttr = escapeAttr(props.filename || "");
-    const safeReason = props.rejection_reason ? escapeHtml(props.rejection_reason) : "";
+      'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:none;margin-top:8px;margin-right:6px;';
+    const safeFilename = escapeHtml(props.filename || 'Unknown');
+    const safeFilenameAttr = escapeAttr(props.filename || '');
+    const safeReason = props.rejection_reason
+      ? escapeHtml(props.rejection_reason)
+      : '';
     const safeId = escapeAttr(props.id);
     return `
       <div style="min-width:180px;max-width:280px;font-family:system-ui,sans-serif;">
         <div style="font-size:13px;font-weight:600;margin-bottom:4px;word-break:break-all;">${safeFilename}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;">
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};"></span>
-          ${escapeHtml((props.status || "unknown").replace("_", " "))}
+          ${escapeHtml((props.status || 'unknown').replace('_', ' '))}
         </div>
-${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(props.status) ? `<div style="font-size:11px;color:#b91c1c;margin-top:4px;">${safeReason}</div>` : ""}
+${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(props.status) ? `<div style="font-size:11px;color:#b91c1c;margin-top:4px;">${safeReason}</div>` : ''}
         <div>
           <button data-inspect-image-id="${safeId}" style="${btnStyle}background:#2563eb;color:white;">
             <span class="material-icons" style="font-size:14px;">visibility</span> Inspect
@@ -787,7 +839,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
               ? `<button data-match-image-id="${safeId}" data-match-image-filename="${safeFilenameAttr}" style="${btnStyle}background:#eab308;color:white;">
             <span class="material-icons" style="font-size:14px;">my_location</span> Match to task
           </button>`
-              : ""
+              : ''
           }
         </div>
       </div>
@@ -798,10 +850,10 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
   useEffect(() => {
     const handlePopupClick = async (e: MouseEvent) => {
       const inspectBtn = (e.target as HTMLElement).closest(
-        "[data-inspect-image-id]",
+        '[data-inspect-image-id]',
       ) as HTMLElement | null;
       if (inspectBtn) {
-        const imageId = inspectBtn.getAttribute("data-inspect-image-id");
+        const imageId = inspectBtn.getAttribute('data-inspect-image-id');
         if (!imageId || !mapData?.images?.features) return;
         const feature = mapData.images.features.find(
           (f: GeoJSON.Feature<any>) => f.properties?.id === imageId,
@@ -813,7 +865,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
             const urls = await getImageUrl(projectId, imageId);
             setSelectedImage({
               id: p.id,
-              url: urls.url || urls.thumbnail_url || "",
+              url: urls.url || urls.thumbnail_url || '',
               filename: p.filename,
               status: p.status,
               rejection_reason: p.rejection_reason,
@@ -821,7 +873,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
           } catch {
             setSelectedImage({
               id: p.id,
-              url: "",
+              url: '',
               filename: p.filename,
               status: p.status,
               rejection_reason: p.rejection_reason,
@@ -832,11 +884,11 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       }
 
       const matchBtn = (e.target as HTMLElement).closest(
-        "[data-match-image-id]",
+        '[data-match-image-id]',
       ) as HTMLElement | null;
       if (matchBtn) {
-        const imageId = matchBtn.getAttribute("data-match-image-id");
-        const filename = matchBtn.getAttribute("data-match-image-filename");
+        const imageId = matchBtn.getAttribute('data-match-image-id');
+        const filename = matchBtn.getAttribute('data-match-image-filename');
         if (imageId && filename) {
           setTaskMatchingImage({ id: imageId, filename });
           if (popupRef.current) {
@@ -847,15 +899,15 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       }
     };
 
-    document.addEventListener("click", handlePopupClick);
-    return () => document.removeEventListener("click", handlePopupClick);
+    document.addEventListener('click', handlePopupClick);
+    return () => document.removeEventListener('click', handlePopupClick);
   }, [mapData, projectId]);
 
   // Custom popup on map click (replaces AsyncPopup for reliable close behavior)
   useEffect(() => {
     if (!map || !isMapLoaded) return;
 
-    const layerId = "review-image-points-layer";
+    const layerId = 'review-image-points-layer';
 
     const handleClick = (e: any) => {
       if (boxSelectModeRef.current) return;
@@ -902,8 +954,8 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
         closeButton: true,
         closeOnClick: false,
         offset: 12,
-        anchor: "bottom",
-        maxWidth: "300px",
+        anchor: 'bottom',
+        maxWidth: '300px',
       })
         .setLngLat(coords)
         .setHTML(html)
@@ -918,15 +970,15 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       setTimeout(() => {
         const el = imageRefs.current[props.id];
         if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       }, 100);
     };
 
-    map.on("click", layerId, handleClick);
+    map.on('click', layerId, handleClick);
 
     return () => {
-      map.off("click", layerId, handleClick);
+      map.off('click', layerId, handleClick);
       if (popupRef.current) {
         popupRef.current.remove();
         popupRef.current = null;
@@ -938,54 +990,54 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
   useEffect(() => {
     if (!map || !isMapLoaded) return;
 
-    const layerId = "review-image-points-layer";
+    const layerId = 'review-image-points-layer';
 
     try {
       if (!map.getLayer(layerId)) return;
 
       if (boxSelectedImages.length > 0) {
-        const ids = boxSelectedImages.map((i) => i.id);
-        map.setPaintProperty(layerId, "circle-stroke-width", [
-          "case",
-          ["in", ["get", "id"], ["literal", ids]],
+        const ids = boxSelectedImages.map(i => i.id);
+        map.setPaintProperty(layerId, 'circle-stroke-width', [
+          'case',
+          ['in', ['get', 'id'], ['literal', ids]],
           4,
           2,
         ]);
-        map.setPaintProperty(layerId, "circle-stroke-color", [
-          "case",
-          ["in", ["get", "id"], ["literal", ids]],
-          "#7c3aed",
-          "#ffffff",
+        map.setPaintProperty(layerId, 'circle-stroke-color', [
+          'case',
+          ['in', ['get', 'id'], ['literal', ids]],
+          '#7c3aed',
+          '#ffffff',
         ]);
-        map.setPaintProperty(layerId, "circle-radius", [
-          "case",
-          ["in", ["get", "id"], ["literal", ids]],
+        map.setPaintProperty(layerId, 'circle-radius', [
+          'case',
+          ['in', ['get', 'id'], ['literal', ids]],
           8,
           5,
         ]);
       } else if (highlightedImageId) {
-        map.setPaintProperty(layerId, "circle-stroke-width", [
-          "case",
-          ["==", ["get", "id"], highlightedImageId],
+        map.setPaintProperty(layerId, 'circle-stroke-width', [
+          'case',
+          ['==', ['get', 'id'], highlightedImageId],
           4,
           2,
         ]);
-        map.setPaintProperty(layerId, "circle-stroke-color", [
-          "case",
-          ["==", ["get", "id"], highlightedImageId],
-          "#2563eb",
-          "#ffffff",
+        map.setPaintProperty(layerId, 'circle-stroke-color', [
+          'case',
+          ['==', ['get', 'id'], highlightedImageId],
+          '#2563eb',
+          '#ffffff',
         ]);
-        map.setPaintProperty(layerId, "circle-radius", [
-          "case",
-          ["==", ["get", "id"], highlightedImageId],
+        map.setPaintProperty(layerId, 'circle-radius', [
+          'case',
+          ['==', ['get', 'id'], highlightedImageId],
           8,
           5,
         ]);
       } else {
-        map.setPaintProperty(layerId, "circle-stroke-width", 2);
-        map.setPaintProperty(layerId, "circle-stroke-color", "#ffffff");
-        map.setPaintProperty(layerId, "circle-radius", 5);
+        map.setPaintProperty(layerId, 'circle-stroke-width', 2);
+        map.setPaintProperty(layerId, 'circle-stroke-color', '#ffffff');
+        map.setPaintProperty(layerId, 'circle-radius', 5);
       }
     } catch {
       // Layer might not exist yet
@@ -996,7 +1048,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
   useEffect(() => {
     if (!map || !isMapLoaded) return;
 
-    const fillLayerId = "review-task-polygons-layer";
+    const fillLayerId = 'review-task-polygons-layer';
     const isPickerActive = () =>
       !!taskMatchingImageRef.current || !!bulkTaskMatchingImagesRef.current;
 
@@ -1005,18 +1057,18 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       const features = map.queryRenderedFeatures(e.point, {
         layers: [fillLayerId],
       });
-      map.getCanvas().style.cursor = features?.length ? "pointer" : "crosshair";
+      map.getCanvas().style.cursor = features?.length ? 'pointer' : 'crosshair';
       try {
         if (features?.length) {
           const hoveredId = features[0].properties?.id;
-          map.setPaintProperty(fillLayerId, "fill-opacity", [
-            "case",
-            ["==", ["get", "id"], hoveredId],
+          map.setPaintProperty(fillLayerId, 'fill-opacity', [
+            'case',
+            ['==', ['get', 'id'], hoveredId],
             0.7,
             0.4,
           ]);
         } else {
-          map.setPaintProperty(fillLayerId, "fill-opacity", 0.4);
+          map.setPaintProperty(fillLayerId, 'fill-opacity', 0.4);
         }
       } catch {
         /* layer may not exist */
@@ -1026,7 +1078,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
     const onMouseLeave = () => {
       if (!isPickerActive()) return;
       try {
-        map.setPaintProperty(fillLayerId, "fill-opacity", 0.4);
+        map.setPaintProperty(fillLayerId, 'fill-opacity', 0.4);
       } catch {
         /* */
       }
@@ -1050,21 +1102,21 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
         });
       } else if (bulkMatching && taskProps) {
         setConfirmBulkMatch({
-          imageIds: bulkMatching.map((i) => i.id),
+          imageIds: bulkMatching.map(i => i.id),
           taskId: taskProps.id,
           taskIndex: taskProps.task_index,
         });
       }
     };
 
-    map.on("mousemove", fillLayerId, onMouseMove);
-    map.on("mouseleave", fillLayerId, onMouseLeave);
-    map.on("click", fillLayerId, onClick);
+    map.on('mousemove', fillLayerId, onMouseMove);
+    map.on('mouseleave', fillLayerId, onMouseLeave);
+    map.on('click', fillLayerId, onClick);
 
     return () => {
-      map.off("mousemove", fillLayerId, onMouseMove);
-      map.off("mouseleave", fillLayerId, onMouseLeave);
-      map.off("click", fillLayerId, onClick);
+      map.off('mousemove', fillLayerId, onMouseMove);
+      map.off('mouseleave', fillLayerId, onMouseLeave);
+      map.off('click', fillLayerId, onClick);
     };
   }, [map, isMapLoaded]);
 
@@ -1072,9 +1124,9 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
   useEffect(() => {
     if (!map) return;
     if (taskMatchingImage || bulkTaskMatchingImages) {
-      map.getCanvas().style.cursor = "crosshair";
+      map.getCanvas().style.cursor = 'crosshair';
     } else if (!boxSelectMode) {
-      map.getCanvas().style.cursor = "";
+      map.getCanvas().style.cursor = '';
     }
   }, [map, taskMatchingImage, bulkTaskMatchingImages, boxSelectMode]);
 
@@ -1099,17 +1151,23 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       if (boxOverlayRef.current) {
         boxOverlayRef.current.style.left = `${dragStart.x}px`;
         boxOverlayRef.current.style.top = `${dragStart.y}px`;
-        boxOverlayRef.current.style.width = "0px";
-        boxOverlayRef.current.style.height = "0px";
-        boxOverlayRef.current.style.display = "block";
+        boxOverlayRef.current.style.width = '0px';
+        boxOverlayRef.current.style.height = '0px';
+        boxOverlayRef.current.style.display = 'block';
       }
     };
 
     const onMouseMove = (e: MouseEvent) => {
       if (!dragStart) return;
       const rect = canvas.getBoundingClientRect();
-      const curX = Math.max(0, Math.min(e.clientX - rect.left, canvas.offsetWidth));
-      const curY = Math.max(0, Math.min(e.clientY - rect.top, canvas.offsetHeight));
+      const curX = Math.max(
+        0,
+        Math.min(e.clientX - rect.left, canvas.offsetWidth),
+      );
+      const curY = Math.max(
+        0,
+        Math.min(e.clientY - rect.top, canvas.offsetHeight),
+      );
       if (boxOverlayRef.current) {
         boxOverlayRef.current.style.left = `${Math.min(dragStart.x, curX)}px`;
         boxOverlayRef.current.style.top = `${Math.min(dragStart.y, curY)}px`;
@@ -1121,28 +1179,43 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
     const onMouseUp = (e: MouseEvent) => {
       if (!dragStart) return;
       const rect = canvas.getBoundingClientRect();
-      const endX = Math.max(0, Math.min(e.clientX - rect.left, canvas.offsetWidth));
-      const endY = Math.max(0, Math.min(e.clientY - rect.top, canvas.offsetHeight));
+      const endX = Math.max(
+        0,
+        Math.min(e.clientX - rect.left, canvas.offsetWidth),
+      );
+      const endY = Math.max(
+        0,
+        Math.min(e.clientY - rect.top, canvas.offsetHeight),
+      );
 
       if (boxOverlayRef.current) {
-        boxOverlayRef.current.style.display = "none";
+        boxOverlayRef.current.style.display = 'none';
       }
 
-      if (Math.abs(endX - dragStart.x) > 5 || Math.abs(endY - dragStart.y) > 5) {
-        const sw: [number, number] = [Math.min(dragStart.x, endX), Math.min(dragStart.y, endY)];
-        const ne: [number, number] = [Math.max(dragStart.x, endX), Math.max(dragStart.y, endY)];
+      if (
+        Math.abs(endX - dragStart.x) > 5 ||
+        Math.abs(endY - dragStart.y) > 5
+      ) {
+        const sw: [number, number] = [
+          Math.min(dragStart.x, endX),
+          Math.min(dragStart.y, endY),
+        ];
+        const ne: [number, number] = [
+          Math.max(dragStart.x, endX),
+          Math.max(dragStart.y, endY),
+        ];
         const features = map.queryRenderedFeatures([sw, ne], {
-          layers: ["review-image-points-layer"],
+          layers: ['review-image-points-layer'],
         });
 
         const seen = new Set<string>();
         const selected = features
-          .map((f) => ({
+          .map(f => ({
             id: f.properties?.id as string,
             filename: f.properties?.filename as string,
             status: f.properties?.status as string,
           }))
-          .filter((i) => {
+          .filter(i => {
             if (!i.id || seen.has(i.id)) return false;
             seen.add(i.id);
             return true;
@@ -1154,17 +1227,17 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       dragStart = null;
     };
 
-    canvas.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
 
     return () => {
-      canvas.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      canvas.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
       map.dragPan.enable();
       if (boxOverlayRef.current) {
-        boxOverlayRef.current.style.display = "none";
+        boxOverlayRef.current.style.display = 'none';
       }
     };
   }, [map, isMapLoaded, boxSelectMode]);
@@ -1172,7 +1245,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
   // Escape: cancel bulk picker → clear selection → exit selection modes
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
+      if (e.key !== 'Escape') return;
       if (bulkTaskMatchingImagesRef.current) {
         setBulkTaskMatchingImages(null);
       } else if (boxSelectedImagesRef.current.length > 0) {
@@ -1185,30 +1258,32 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
         setBoxSelectMode(false);
       }
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
   const acceptMutation = useMutation({
     mutationFn: (imageId: string) => acceptImage(projectId, imageId),
-    onSuccess: (data) => {
-      if (data.status === "unmatched") {
+    onSuccess: data => {
+      if (data.status === 'unmatched') {
         toast.warning(data.message);
       } else {
         toast.success(m.image_review_image_accepted_success());
       }
-      queryClient.invalidateQueries({ queryKey: ["projectReview", projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
       queryClient.invalidateQueries({
-        queryKey: ["projectMapData", projectId],
+        queryKey: ['projectMapData', projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["project-task-states", projectId],
+        queryKey: ['project-task-states', projectId],
       });
       setSelectedImage(null);
     },
     onError: (error: any) => {
       const message =
-        error?.response?.data?.detail || error.message || m.image_review_failed_accept_image();
+        error?.response?.data?.detail ||
+        error.message ||
+        m.image_review_failed_accept_image();
       toast.error(message);
     },
   });
@@ -1217,18 +1292,20 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
     mutationFn: (imageId: string) => rejectImage(projectId, imageId),
     onSuccess: () => {
       toast.success(m.image_review_image_rejected_success());
-      queryClient.invalidateQueries({ queryKey: ["projectReview", projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
       queryClient.invalidateQueries({
-        queryKey: ["projectMapData", projectId],
+        queryKey: ['projectMapData', projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["project-task-states", projectId],
+        queryKey: ['project-task-states', projectId],
       });
       setSelectedImage(null);
     },
     onError: (error: any) => {
       const message =
-        error?.response?.data?.detail || error.message || m.image_review_failed_reject_image();
+        error?.response?.data?.detail ||
+        error.message ||
+        m.image_review_failed_reject_image();
       toast.error(message);
     },
   });
@@ -1238,19 +1315,21 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       assignImageToTask(projectId, imageId, taskId),
     onSuccess: () => {
       toast.success(m.image_review_image_assigned_success());
-      queryClient.invalidateQueries({ queryKey: ["projectReview", projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
       queryClient.invalidateQueries({
-        queryKey: ["projectMapData", projectId],
+        queryKey: ['projectMapData', projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["project-task-states", projectId],
+        queryKey: ['project-task-states', projectId],
       });
       setConfirmMatch(null);
       setTaskMatchingImage(null);
     },
     onError: (error: any) => {
       const message =
-        error?.response?.data?.detail || error.message || m.image_review_failed_assign_image();
+        error?.response?.data?.detail ||
+        error.message ||
+        m.image_review_failed_assign_image();
       toast.error(message);
     },
   });
@@ -1259,23 +1338,23 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
 
   const cleanupInvalidMutation = useMutation({
     mutationFn: () => deleteInvalidImages(projectId),
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.failed_count) {
         toast.error(data.message);
       } else {
         toast.success(
           m.image_review_deleted_invalid_images({
             count: data.deleted_count,
-            suffix: data.deleted_count === 1 ? "" : "s",
+            suffix: data.deleted_count === 1 ? '' : 's',
           }),
         );
       }
-      queryClient.invalidateQueries({ queryKey: ["projectReview", projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
       queryClient.invalidateQueries({
-        queryKey: ["projectMapData", projectId],
+        queryKey: ['projectMapData', projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["project-task-states", projectId],
+        queryKey: ['project-task-states', projectId],
       });
       setShowCleanupConfirm(false);
     },
@@ -1289,10 +1368,13 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
     },
   });
 
-  const handleImageClick = async (image: TaskGroupImage, imageUrls?: Record<string, ImageUrls>) => {
+  const handleImageClick = async (
+    image: TaskGroupImage,
+    imageUrls?: Record<string, ImageUrls>,
+  ) => {
     const urls = imageUrls?.[image.id];
     // Show thumbnail immediately while we fetch full-resolution
-    const thumbUrl = urls?.thumbnail_url || "";
+    const thumbUrl = urls?.thumbnail_url || '';
     setSelectedImage({
       id: image.id,
       url: urls?.url || thumbUrl,
@@ -1304,9 +1386,9 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
     if (!urls?.url) {
       try {
         const fetched = await getImageUrl(projectId, image.id);
-        setSelectedImage((prev) =>
+        setSelectedImage(prev =>
           prev?.id === image.id
-            ? { ...prev, url: fetched.url || fetched.thumbnail_url || "" }
+            ? { ...prev, url: fetched.url || fetched.thumbnail_url || '' }
             : prev,
         );
       } catch {
@@ -1328,24 +1410,27 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
   ): boolean => {
     if (!sequenceSelectMode) return false;
     const sameGroupAnchor =
-      sequenceAnchor && sequenceAnchor.groupKey === groupKey ? sequenceAnchor : null;
+      sequenceAnchor && sequenceAnchor.groupKey === groupKey
+        ? sequenceAnchor
+        : null;
     const sorted = [...groupImages].sort((a, b) =>
       a.filename.localeCompare(b.filename, undefined, { numeric: true }),
     );
     const anchorIdx = sameGroupAnchor
-      ? sorted.findIndex((i) => i.id === sameGroupAnchor.imageId)
+      ? sorted.findIndex(i => i.id === sameGroupAnchor.imageId)
       : -1;
-    const clickIdx = sorted.findIndex((i) => i.id === image.id);
+    const clickIdx = sorted.findIndex(i => i.id === image.id);
 
     if (anchorIdx !== -1 && clickIdx !== -1 && anchorIdx !== clickIdx) {
-      const [lo, hi] = anchorIdx <= clickIdx ? [anchorIdx, clickIdx] : [clickIdx, anchorIdx];
-      const range = sorted.slice(lo, hi + 1).map((i) => ({
+      const [lo, hi] =
+        anchorIdx <= clickIdx ? [anchorIdx, clickIdx] : [clickIdx, anchorIdx];
+      const range = sorted.slice(lo, hi + 1).map(i => ({
         id: i.id,
         filename: i.filename,
         status: i.status,
       }));
-      setBoxSelectedImages((prev) => {
-        const merged = new Map(prev.map((p) => [p.id, p]));
+      setBoxSelectedImages(prev => {
+        const merged = new Map(prev.map(p => [p.id, p]));
         for (const item of range) merged.set(item.id, item);
         return Array.from(merged.values());
       });
@@ -1355,10 +1440,13 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
 
     if (clickIdx !== -1) {
       setSequenceAnchor({ imageId: image.id, groupKey });
-      setBoxSelectedImages((prev) =>
-        prev.some((p) => p.id === image.id)
+      setBoxSelectedImages(prev =>
+        prev.some(p => p.id === image.id)
           ? prev
-          : [...prev, { id: image.id, filename: image.filename, status: image.status }],
+          : [
+              ...prev,
+              { id: image.id, filename: image.filename, status: image.status },
+            ],
       );
     }
     return true;
@@ -1383,11 +1471,14 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
     }
 
     if (event.ctrlKey || event.metaKey) {
-      setBoxSelectedImages((prev) => {
-        if (prev.some((p) => p.id === image.id)) {
-          return prev.filter((p) => p.id !== image.id);
+      setBoxSelectedImages(prev => {
+        if (prev.some(p => p.id === image.id)) {
+          return prev.filter(p => p.id !== image.id);
         }
-        return [...prev, { id: image.id, filename: image.filename, status: image.status }];
+        return [
+          ...prev,
+          { id: image.id, filename: image.filename, status: image.status },
+        ];
       });
       return;
     }
@@ -1397,9 +1488,10 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
     // Find the image's coordinates on the map and fly to it
     if (map && mapData?.images?.features) {
       const feature = mapData.images.features.find(
-        (f: GeoJSON.Feature<any>) => f.properties?.id === image.id && f.geometry,
+        (f: GeoJSON.Feature<any>) =>
+          f.properties?.id === image.id && f.geometry,
       );
-      if (feature && feature.geometry && "coordinates" in feature.geometry) {
+      if (feature && feature.geometry && 'coordinates' in feature.geometry) {
         const coords = (feature.geometry as GeoJSON.Point).coordinates;
 
         // Close existing popup
@@ -1418,8 +1510,8 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
           closeButton: true,
           closeOnClick: false,
           offset: 12,
-          anchor: "bottom",
-          maxWidth: "300px",
+          anchor: 'bottom',
+          maxWidth: '300px',
         })
           .setLngLat(coords as [number, number])
           .setHTML(html)
@@ -1453,47 +1545,57 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
   };
 
   const handleBulkOverrideRejection = async () => {
-    const toOverride = boxSelectedImages.filter((i) => canOverrideImageRejection(i.status));
+    const toOverride = boxSelectedImages.filter(i =>
+      canOverrideImageRejection(i.status),
+    );
     if (!toOverride.length) return;
     setIsBulkProcessing(true);
     const { successCount, failCount } = await runWithConcurrency(
       toOverride,
       BULK_CONCURRENCY,
-      (img) => acceptImage(projectId, img.id).then(() => undefined),
+      img => acceptImage(projectId, img.id).then(() => undefined),
     );
     setIsBulkProcessing(false);
     if (failCount > 0) {
-      toast.error(`Accepted ${successCount}, failed to accept ${failCount} images.`);
+      toast.error(
+        `Accepted ${successCount}, failed to accept ${failCount} images.`,
+      );
     } else {
-      toast.success(`${successCount} image${successCount > 1 ? "s" : ""} accepted`);
+      toast.success(
+        `${successCount} image${successCount > 1 ? 's' : ''} accepted`,
+      );
     }
-    queryClient.invalidateQueries({ queryKey: ["projectReview", projectId] });
-    queryClient.invalidateQueries({ queryKey: ["projectMapData", projectId] });
+    queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['projectMapData', projectId] });
     queryClient.invalidateQueries({
-      queryKey: ["project-task-states", projectId],
+      queryKey: ['project-task-states', projectId],
     });
     setBoxSelectedImages([]);
   };
 
   const handleBulkRejectImages = async () => {
-    const toReject = boxSelectedImages.filter((i) => canRejectImage(i.status));
+    const toReject = boxSelectedImages.filter(i => canRejectImage(i.status));
     if (!toReject.length) return;
     setIsBulkProcessing(true);
     const { successCount, failCount } = await runWithConcurrency(
       toReject,
       BULK_CONCURRENCY,
-      (img) => rejectImage(projectId, img.id).then(() => undefined),
+      img => rejectImage(projectId, img.id).then(() => undefined),
     );
     setIsBulkProcessing(false);
     if (failCount > 0) {
-      toast.error(`Rejected ${successCount}, failed to reject ${failCount} images.`);
+      toast.error(
+        `Rejected ${successCount}, failed to reject ${failCount} images.`,
+      );
     } else {
-      toast.success(`${successCount} image${successCount > 1 ? "s" : ""} rejected`);
+      toast.success(
+        `${successCount} image${successCount > 1 ? 's' : ''} rejected`,
+      );
     }
-    queryClient.invalidateQueries({ queryKey: ["projectReview", projectId] });
-    queryClient.invalidateQueries({ queryKey: ["projectMapData", projectId] });
+    queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['projectMapData', projectId] });
     queryClient.invalidateQueries({
-      queryKey: ["project-task-states", projectId],
+      queryKey: ['project-task-states', projectId],
     });
     setBoxSelectedImages([]);
   };
@@ -1505,20 +1607,23 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
     const { successCount, failCount } = await runWithConcurrency(
       imageIds,
       BULK_CONCURRENCY,
-      (imageId) => assignImageToTask(projectId, imageId, taskId).then(() => undefined),
+      imageId =>
+        assignImageToTask(projectId, imageId, taskId).then(() => undefined),
     );
     setIsBulkProcessing(false);
     if (failCount > 0) {
-      toast.error(`Assigned ${successCount}, failed to assign ${failCount} images.`);
+      toast.error(
+        `Assigned ${successCount}, failed to assign ${failCount} images.`,
+      );
     } else {
       toast.success(
-        `${successCount} image${successCount > 1 ? "s" : ""} assigned to Task #${taskIndex}`,
+        `${successCount} image${successCount > 1 ? 's' : ''} assigned to Task #${taskIndex}`,
       );
     }
-    queryClient.invalidateQueries({ queryKey: ["projectReview", projectId] });
-    queryClient.invalidateQueries({ queryKey: ["projectMapData", projectId] });
+    queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['projectMapData', projectId] });
     queryClient.invalidateQueries({
-      queryKey: ["project-task-states", projectId],
+      queryKey: ['project-task-states', projectId],
     });
     setConfirmBulkMatch(null);
     setBulkTaskMatchingImages(null);
@@ -1550,7 +1655,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
 
   const locatedImagesGeojson = useMemo<GeoJSON.FeatureCollection>(
     () => ({
-      type: "FeatureCollection",
+      type: 'FeatureCollection',
       features: filteredLocatedImages as GeoJSON.Feature<any>[],
     }),
     [filteredLocatedImages],
@@ -1566,30 +1671,35 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       .map((summary: TaskGroupSummary) => {
         const images = imagesByTaskId.get(summary.task_id) || [];
         const filteredImages = showOnlyIssueImages
-          ? images.filter((image) => hasIssueStatus(image.status))
+          ? images.filter(image => hasIssueStatus(image.status))
           : images;
         return { ...summary, images: filteredImages };
       })
-      .filter((group) => !showOnlyIssueImages || group.images.length > 0);
+      .filter(group => !showOnlyIssueImages || group.images.length > 0);
   }, [reviewData, imagesByTaskId, showOnlyIssueImages]);
 
   const totalIssueImages = useMemo(() => {
     if (!reviewData) return 0;
-    return reviewData.task_groups.reduce((count: number, group: TaskGroupSummary) => {
-      const c = group.status_counts;
-      return count + c.rejected + c.invalid_exif + c.duplicate + c.unmatched;
-    }, 0);
+    return reviewData.task_groups.reduce(
+      (count: number, group: TaskGroupSummary) => {
+        const c = group.status_counts;
+        return count + c.rejected + c.invalid_exif + c.duplicate + c.unmatched;
+      },
+      0,
+    );
   }, [reviewData]);
 
   const visibleTaskCount = useMemo(
-    () => displayedTaskGroups.filter((g) => g.task_id).length,
+    () => displayedTaskGroups.filter(g => g.task_id).length,
     [displayedTaskGroups],
   );
 
   if (isLoading) {
     return (
       <div className="naxatw-flex naxatw-min-h-[400px] naxatw-items-center naxatw-justify-center">
-        <p className="naxatw-text-gray-500">{m.image_review_loading_review_data()}</p>
+        <p className="naxatw-text-gray-500">
+          {m.image_review_loading_review_data()}
+        </p>
       </div>
     );
   }
@@ -1599,7 +1709,8 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       <div className="naxatw-flex naxatw-min-h-[400px] naxatw-items-center naxatw-justify-center">
         <p className="naxatw-text-red-500">
           {m.image_review_error_loading_review_data({
-            message: error instanceof Error ? error.message : m.common_unknown_error(),
+            message:
+              error instanceof Error ? error.message : m.common_unknown_error(),
           })}
         </p>
       </div>
@@ -1610,15 +1721,20 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
   if (reviewData && reviewData.task_groups.length === 0) {
     return (
       <div className="naxatw-flex naxatw-min-h-[400px] naxatw-items-center naxatw-justify-center">
-        <p className="naxatw-text-gray-500">{m.image_review_no_classified_images()}</p>
+        <p className="naxatw-text-gray-500">
+          {m.image_review_no_classified_images()}
+        </p>
       </div>
     );
   }
 
-  const isRejectedImage = selectedImage && canOverrideImageRejection(selectedImage.status);
-  const isAssignedImage = selectedImage && selectedImage.status === "assigned";
-  const isUnmatchedImage = selectedImage && selectedImage.status === "unmatched";
-  const isDuplicateImage = selectedImage && selectedImage.status === "duplicate";
+  const isRejectedImage =
+    selectedImage && canOverrideImageRejection(selectedImage.status);
+  const isAssignedImage = selectedImage && selectedImage.status === 'assigned';
+  const isUnmatchedImage =
+    selectedImage && selectedImage.status === 'unmatched';
+  const isDuplicateImage =
+    selectedImage && selectedImage.status === 'duplicate';
   const canOverride = isRejectedImage && !isDuplicateImage;
   const canReject = isAssignedImage;
   const canMatch = isUnmatchedImage;
@@ -1642,15 +1758,17 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
                 }
               }}
               title={
-                boxSelectMode ? m.common_cancel_escape() : m.image_review_select_multiple_help()
+                boxSelectMode
+                  ? m.common_cancel_escape()
+                  : m.image_review_select_multiple_help()
               }
               className={`naxatw-flex naxatw-items-center naxatw-gap-1.5 naxatw-rounded naxatw-border naxatw-px-2.5 naxatw-py-1 naxatw-text-xs naxatw-font-medium naxatw-transition-colors ${
                 boxSelectMode
-                  ? "naxatw-border-violet-600 naxatw-bg-violet-600 naxatw-text-white"
-                  : "naxatw-border-gray-300 naxatw-bg-white naxatw-text-gray-700 hover:naxatw-border-violet-400 hover:naxatw-text-violet-600"
+                  ? 'naxatw-border-violet-600 naxatw-bg-violet-600 naxatw-text-white'
+                  : 'naxatw-border-gray-300 naxatw-bg-white naxatw-text-gray-700 hover:naxatw-border-violet-400 hover:naxatw-text-violet-600'
               }`}
             >
-              <span className="material-icons" style={{ fontSize: "14px" }}>
+              <span className="material-icons" style={{ fontSize: '14px' }}>
                 select_all
               </span>
               {m.image_review_select_multiple()}
@@ -1671,11 +1789,11 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
               }
               className={`naxatw-flex naxatw-items-center naxatw-gap-1.5 naxatw-rounded naxatw-border naxatw-px-2.5 naxatw-py-1 naxatw-text-xs naxatw-font-medium naxatw-transition-colors ${
                 sequenceSelectMode
-                  ? "naxatw-border-amber-600 naxatw-bg-amber-600 naxatw-text-white"
-                  : "naxatw-border-gray-300 naxatw-bg-white naxatw-text-gray-700 hover:naxatw-border-amber-500 hover:naxatw-text-amber-700"
+                  ? 'naxatw-border-amber-600 naxatw-bg-amber-600 naxatw-text-white'
+                  : 'naxatw-border-gray-300 naxatw-bg-white naxatw-text-gray-700 hover:naxatw-border-amber-500 hover:naxatw-text-amber-700'
               }`}
             >
-              <span className="material-icons" style={{ fontSize: "14px" }}>
+              <span className="material-icons" style={{ fontSize: '14px' }}>
                 linear_scale
               </span>
               {m.image_review_select_sequence()}
@@ -1696,9 +1814,9 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
           <div
             className="naxatw-relative naxatw-flex-1"
             style={{
-              display: "flex",
-              flexDirection: "column",
-              minHeight: "400px",
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '400px',
             }}
           >
             <MapContainer
@@ -1707,8 +1825,8 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
               isMapLoaded={isMapLoaded}
               containerId="image-review-map"
               style={{
-                width: "100%",
-                height: "100%",
+                width: '100%',
+                height: '100%',
                 flex: 1,
               }}
             >
@@ -1717,18 +1835,18 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
               {/* Task polygons */}
               {map && isMapLoaded && mapData?.tasks && (
                 <VectorLayer
-                  key={`task-polygons-${mapData?.total_images_with_gps || "pending"}`}
+                  key={`task-polygons-${mapData?.total_images_with_gps || 'pending'}`}
                   map={map}
                   isMapLoaded={isMapLoaded}
                   id="review-task-polygons"
                   geojson={mapData.tasks as GeojsonType}
-                  visibleOnMap={true}
+                  visibleOnMap
                   layerOptions={{
-                    type: "fill",
+                    type: 'fill',
                     paint: {
-                      "fill-color": "#98BBC8",
-                      "fill-outline-color": "#484848",
-                      "fill-opacity": 0.4,
+                      'fill-color': '#98BBC8',
+                      'fill-outline-color': '#484848',
+                      'fill-opacity': 0.4,
                     },
                   }}
                 />
@@ -1737,74 +1855,76 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
               {/* Task polygon outlines for better visibility */}
               {map && isMapLoaded && mapData?.tasks && (
                 <VectorLayer
-                  key={`task-outlines-${mapData?.total_images_with_gps || "pending"}`}
+                  key={`task-outlines-${mapData?.total_images_with_gps || 'pending'}`}
                   map={map}
                   isMapLoaded={isMapLoaded}
                   id="review-task-outlines"
                   geojson={mapData.tasks as GeojsonType}
-                  visibleOnMap={true}
+                  visibleOnMap
                   layerOptions={{
-                    type: "line",
+                    type: 'line',
                     paint: {
-                      "line-color": "#484848",
-                      "line-width": 2,
+                      'line-color': '#484848',
+                      'line-width': 2,
                     },
                   }}
                 />
               )}
 
               {/* Image point markers */}
-              {map && isMapLoaded && locatedImagesGeojson?.features?.length > 0 && (
-                <VectorLayer
-                  key={`image-points-${mapData?.total_images_with_gps}`}
-                  map={map}
-                  isMapLoaded={isMapLoaded}
-                  id="review-image-points"
-                  geojson={locatedImagesGeojson as GeojsonType}
-                  visibleOnMap={true}
-                  layerOptions={{
-                    type: "circle",
-                    layout: {
-                      "circle-sort-key": [
-                        "match",
-                        ["get", "status"],
-                        "assigned",
-                        4,
-                        "unmatched",
-                        3,
-                        "rejected",
-                        2,
-                        "invalid_exif",
-                        1,
-                        "duplicate",
-                        0,
-                        0,
-                      ],
-                    },
-                    paint: {
-                      "circle-color": [
-                        "match",
-                        ["get", "status"],
-                        "assigned",
-                        "#22c55e",
-                        "rejected",
-                        "#D73F3F",
-                        "unmatched",
-                        "#eab308",
-                        "invalid_exif",
-                        "#f97316",
-                        "duplicate",
-                        "#6b7280",
-                        "#3b82f6",
-                      ],
-                      "circle-radius": 5,
-                      "circle-stroke-width": 2,
-                      "circle-stroke-color": "#ffffff",
-                      "circle-stroke-opacity": 0.8,
-                    },
-                  }}
-                />
-              )}
+              {map &&
+                isMapLoaded &&
+                locatedImagesGeojson?.features?.length > 0 && (
+                  <VectorLayer
+                    key={`image-points-${mapData?.total_images_with_gps}`}
+                    map={map}
+                    isMapLoaded={isMapLoaded}
+                    id="review-image-points"
+                    geojson={locatedImagesGeojson as GeojsonType}
+                    visibleOnMap
+                    layerOptions={{
+                      type: 'circle',
+                      layout: {
+                        'circle-sort-key': [
+                          'match',
+                          ['get', 'status'],
+                          'assigned',
+                          4,
+                          'unmatched',
+                          3,
+                          'rejected',
+                          2,
+                          'invalid_exif',
+                          1,
+                          'duplicate',
+                          0,
+                          0,
+                        ],
+                      },
+                      paint: {
+                        'circle-color': [
+                          'match',
+                          ['get', 'status'],
+                          'assigned',
+                          '#22c55e',
+                          'rejected',
+                          '#D73F3F',
+                          'unmatched',
+                          '#eab308',
+                          'invalid_exif',
+                          '#f97316',
+                          'duplicate',
+                          '#6b7280',
+                          '#3b82f6',
+                        ],
+                        'circle-radius': 5,
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#ffffff',
+                        'circle-stroke-opacity': 0.8,
+                      },
+                    }}
+                  />
+                )}
             </MapContainer>
 
             {/* Loading Overlay - appears while data is fetching */}
@@ -1825,106 +1945,125 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
             <div
               ref={boxOverlayRef}
               style={{
-                position: "absolute",
-                pointerEvents: "none",
+                position: 'absolute',
+                pointerEvents: 'none',
                 zIndex: 15,
-                border: "2px dashed #7c3aed",
-                backgroundColor: "rgba(124, 58, 237, 0.1)",
-                display: "none",
+                border: '2px dashed #7c3aed',
+                backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                display: 'none',
               }}
             />
 
             {/* Bulk action bar */}
-            {boxSelectedImages.length > 0 && !bulkTaskMatchingImages && !taskMatchingImage && (
-              <div className="naxatw-absolute naxatw-left-2 naxatw-right-2 naxatw-top-2 naxatw-z-20 naxatw-rounded naxatw-bg-violet-600 naxatw-px-3 naxatw-py-2 naxatw-shadow-lg">
-                <div className="naxatw-mb-2 naxatw-flex naxatw-items-center naxatw-justify-between">
-                  <span className="naxatw-text-sm naxatw-font-medium naxatw-text-white">
-                    {m.image_review_selected_images({
-                      count: boxSelectedImages.length,
-                      label:
-                        boxSelectedImages.length > 1 ? m.common_images_lower() : m.common_image(),
-                    })}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setBoxSelectedImages([]);
-                      setSequenceAnchor(null);
-                    }}
-                    className="naxatw-rounded naxatw-bg-white naxatw-bg-opacity-20 naxatw-px-2 naxatw-py-0.5 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-opacity-30"
-                  >
-                    {m.common_clear_escape()}
-                  </button>
+            {boxSelectedImages.length > 0 &&
+              !bulkTaskMatchingImages &&
+              !taskMatchingImage && (
+                <div className="naxatw-absolute naxatw-left-2 naxatw-right-2 naxatw-top-2 naxatw-z-20 naxatw-rounded naxatw-bg-violet-600 naxatw-px-3 naxatw-py-2 naxatw-shadow-lg">
+                  <div className="naxatw-mb-2 naxatw-flex naxatw-items-center naxatw-justify-between">
+                    <span className="naxatw-text-sm naxatw-font-medium naxatw-text-white">
+                      {m.image_review_selected_images({
+                        count: boxSelectedImages.length,
+                        label:
+                          boxSelectedImages.length > 1
+                            ? m.common_images_lower()
+                            : m.common_image(),
+                      })}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setBoxSelectedImages([]);
+                        setSequenceAnchor(null);
+                      }}
+                      className="naxatw-rounded naxatw-bg-white naxatw-bg-opacity-20 naxatw-px-2 naxatw-py-0.5 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-opacity-30"
+                    >
+                      {m.common_clear_escape()}
+                    </button>
+                  </div>
+                  <div className="naxatw-flex naxatw-flex-wrap naxatw-gap-2">
+                    {(() => {
+                      const overridable = boxSelectedImages.filter(i =>
+                        canOverrideImageRejection(i.status),
+                      );
+                      const matchable = boxSelectedImages.filter(i =>
+                        canManuallyMatchImage(i.status),
+                      );
+                      const rejectable = boxSelectedImages.filter(i =>
+                        canRejectImage(i.status),
+                      );
+                      return (
+                        <>
+                          {overridable.length > 0 && (
+                            <button
+                              onClick={handleBulkOverrideRejection}
+                              disabled={isBulkProcessing}
+                              className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-green-600 naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-green-700 disabled:naxatw-opacity-50"
+                            >
+                              <span
+                                className="material-icons"
+                                style={{ fontSize: '12px' }}
+                              >
+                                check
+                              </span>
+                              {m.image_review_override_rejection_count({
+                                count: overridable.length,
+                              })}
+                            </button>
+                          )}
+                          {rejectable.length > 0 && (
+                            <button
+                              onClick={handleBulkRejectImages}
+                              disabled={isBulkProcessing}
+                              className="hover:naxatw-bg-red-600 naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-red naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white disabled:naxatw-opacity-50"
+                            >
+                              <span
+                                className="material-icons"
+                                style={{ fontSize: '12px' }}
+                              >
+                                block
+                              </span>
+                              {m.image_review_reject_count({
+                                count: rejectable.length,
+                              })}
+                            </button>
+                          )}
+                          {matchable.length > 0 && (
+                            <button
+                              onClick={() => {
+                                setBoxSelectMode(false);
+                                setBulkTaskMatchingImages(matchable);
+                              }}
+                              disabled={isBulkProcessing}
+                              className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-yellow-500 naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-yellow-600 disabled:naxatw-opacity-50"
+                            >
+                              <span
+                                className="material-icons"
+                                style={{ fontSize: '12px' }}
+                              >
+                                my_location
+                              </span>
+                              {m.image_review_assign_to_task_count({
+                                count: matchable.length,
+                              })}
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
-                <div className="naxatw-flex naxatw-flex-wrap naxatw-gap-2">
-                  {(() => {
-                    const overridable = boxSelectedImages.filter((i) =>
-                      canOverrideImageRejection(i.status),
-                    );
-                    const matchable = boxSelectedImages.filter((i) =>
-                      canManuallyMatchImage(i.status),
-                    );
-                    const rejectable = boxSelectedImages.filter((i) => canRejectImage(i.status));
-                    return (
-                      <>
-                        {overridable.length > 0 && (
-                          <button
-                            onClick={handleBulkOverrideRejection}
-                            disabled={isBulkProcessing}
-                            className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-green-600 naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-green-700 disabled:naxatw-opacity-50"
-                          >
-                            <span className="material-icons" style={{ fontSize: "12px" }}>
-                              check
-                            </span>
-                            {m.image_review_override_rejection_count({
-                              count: overridable.length,
-                            })}
-                          </button>
-                        )}
-                        {rejectable.length > 0 && (
-                          <button
-                            onClick={handleBulkRejectImages}
-                            disabled={isBulkProcessing}
-                            className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-red naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-red-600 disabled:naxatw-opacity-50"
-                          >
-                            <span className="material-icons" style={{ fontSize: "12px" }}>
-                              block
-                            </span>
-                            {m.image_review_reject_count({
-                              count: rejectable.length,
-                            })}
-                          </button>
-                        )}
-                        {matchable.length > 0 && (
-                          <button
-                            onClick={() => {
-                              setBoxSelectMode(false);
-                              setBulkTaskMatchingImages(matchable);
-                            }}
-                            disabled={isBulkProcessing}
-                            className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-yellow-500 naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-yellow-600 disabled:naxatw-opacity-50"
-                          >
-                            <span className="material-icons" style={{ fontSize: "12px" }}>
-                              my_location
-                            </span>
-                            {m.image_review_assign_to_task_count({
-                              count: matchable.length,
-                            })}
-                          </button>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
+              )}
 
             {/* Bulk task picker mode banner */}
             {bulkTaskMatchingImages && (
               <div className="naxatw-absolute naxatw-left-2 naxatw-right-2 naxatw-top-2 naxatw-z-20 naxatw-flex naxatw-items-center naxatw-justify-between naxatw-rounded naxatw-bg-yellow-500 naxatw-px-4 naxatw-py-2 naxatw-shadow-lg">
                 <div className="naxatw-flex naxatw-items-center naxatw-gap-2 naxatw-text-sm naxatw-font-medium naxatw-text-white">
-                  <span className="material-icons naxatw-text-base">my_location</span>
-                  {m.image_review_click_task_area_assign()}{" "}
-                  <span className="naxatw-font-bold">{bulkTaskMatchingImages.length} images</span>
+                  <span className="material-icons naxatw-text-base">
+                    my_location
+                  </span>
+                  {m.image_review_click_task_area_assign()}{' '}
+                  <span className="naxatw-font-bold">
+                    {bulkTaskMatchingImages.length} images
+                  </span>
                 </div>
                 <button
                   onClick={() => setBulkTaskMatchingImages(null)}
@@ -1939,9 +2078,13 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
             {taskMatchingImage && (
               <div className="naxatw-absolute naxatw-left-2 naxatw-right-2 naxatw-top-2 naxatw-z-20 naxatw-flex naxatw-items-center naxatw-justify-between naxatw-rounded naxatw-bg-yellow-500 naxatw-px-4 naxatw-py-2 naxatw-shadow-lg">
                 <div className="naxatw-flex naxatw-items-center naxatw-gap-2 naxatw-text-sm naxatw-font-medium naxatw-text-white">
-                  <span className="material-icons naxatw-text-base">my_location</span>
-                  {m.image_review_click_task_area_assign()}{" "}
-                  <span className="naxatw-font-bold">{taskMatchingImage.filename}</span>
+                  <span className="material-icons naxatw-text-base">
+                    my_location
+                  </span>
+                  {m.image_review_click_task_area_assign()}{' '}
+                  <span className="naxatw-font-bold">
+                    {taskMatchingImage.filename}
+                  </span>
                 </div>
                 <button
                   onClick={() => setTaskMatchingImage(null)}
@@ -1961,30 +2104,32 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
                 <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
                   <div
                     className="naxatw-h-3 naxatw-w-3 naxatw-rounded-full"
-                    style={{ backgroundColor: "#22c55e" }}
+                    style={{ backgroundColor: '#22c55e' }}
                   />
                   <span className="naxatw-text-xs">{m.common_assigned()}</span>
                 </div>
                 <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
                   <div
                     className="naxatw-h-3 naxatw-w-3 naxatw-rounded-full"
-                    style={{ backgroundColor: "#D73F3F" }}
+                    style={{ backgroundColor: '#D73F3F' }}
                   />
                   <span className="naxatw-text-xs">{m.common_rejected()}</span>
                 </div>
                 <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
                   <div
                     className="naxatw-h-3 naxatw-w-3 naxatw-rounded-full"
-                    style={{ backgroundColor: "#eab308" }}
+                    style={{ backgroundColor: '#eab308' }}
                   />
                   <span className="naxatw-text-xs">{m.common_unmatched()}</span>
                 </div>
                 <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
                   <div
                     className="naxatw-h-3 naxatw-w-3 naxatw-rounded-full"
-                    style={{ backgroundColor: "#f97316" }}
+                    style={{ backgroundColor: '#f97316' }}
                   />
-                  <span className="naxatw-text-xs">{m.common_invalid_exif()}</span>
+                  <span className="naxatw-text-xs">
+                    {m.common_invalid_exif()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1993,7 +2138,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
 
         {/* List Section - outer is a flex column with non-scrolling header and
             the virtualized accordion list owning its own scroll container. */}
-        <div className="naxatw-flex naxatw-w-1/2 naxatw-min-h-0 naxatw-flex-col naxatw-pr-2">
+        <div className="naxatw-flex naxatw-min-h-0 naxatw-w-1/2 naxatw-flex-col naxatw-pr-2">
           <FlexRow className="naxatw-mb-3 naxatw-shrink-0 naxatw-items-center naxatw-justify-between">
             <div className="naxatw-flex naxatw-flex-col naxatw-gap-2">
               <p className="naxatw-text-sm naxatw-text-[#484848]">
@@ -2009,12 +2154,16 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
                 <span
                   className={`naxatw-flex naxatw-h-4 naxatw-w-4 naxatw-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded naxatw-border-2 naxatw-text-white naxatw-transition-colors ${
                     showOnlyIssueImages
-                      ? "naxatw-border-red naxatw-bg-red"
-                      : "naxatw-border-gray-400 naxatw-bg-white"
+                      ? 'naxatw-border-red naxatw-bg-red'
+                      : 'naxatw-border-gray-400 naxatw-bg-white'
                   }`}
                 >
                   {showOnlyIssueImages && (
-                    <svg className="naxatw-h-3 naxatw-w-3" viewBox="0 0 12 12" fill="none">
+                    <svg
+                      className="naxatw-h-3 naxatw-w-3"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                    >
                       <path
                         d="M2 6l3 3 5-5"
                         stroke="currentColor"
@@ -2029,7 +2178,9 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
                   type="checkbox"
                   className="naxatw-sr-only"
                   checked={showOnlyIssueImages}
-                  onChange={(event) => setShowOnlyIssueImages(event.target.checked)}
+                  onChange={event =>
+                    setShowOnlyIssueImages(event.target.checked)
+                  }
                 />
                 {m.image_review_show_only_images_with_issues({
                   count: totalIssueImages,
@@ -2039,20 +2190,22 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
             <FlexRow className="naxatw-items-start naxatw-gap-3 naxatw-text-xs">
               <span className="naxatw-text-gray-600">
                 <span className="naxatw-font-semibold naxatw-text-gray-900">
-                  {showOnlyIssueImages ? visibleTaskCount : (reviewData?.total_tasks ?? "-")}
-                </span>{" "}
+                  {showOnlyIssueImages
+                    ? visibleTaskCount
+                    : (reviewData?.total_tasks ?? '-')}
+                </span>{' '}
                 {m.common_tasks()}
               </span>
               <span className="naxatw-text-gray-600">
                 <span className="naxatw-font-semibold naxatw-text-gray-900">
                   {filteredLocatedImages.length}
-                </span>{" "}
+                </span>{' '}
                 {m.common_on_map()}
               </span>
               <span className="naxatw-text-gray-600">
                 <span className="naxatw-font-semibold naxatw-text-gray-900">
                   {totalIssueImages}
-                </span>{" "}
+                </span>{' '}
                 {m.common_issues()}
               </span>
             </FlexRow>
@@ -2099,7 +2252,7 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
         >
           <div
             className="naxatw-relative naxatw-max-h-[90vh] naxatw-max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <button
               className="naxatw-absolute naxatw-right-4 naxatw-top-4 naxatw-rounded-full naxatw-bg-white naxatw-p-2 naxatw-text-gray-800 naxatw-shadow-lg hover:naxatw-bg-gray-100"
@@ -2116,7 +2269,8 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
               <div className="naxatw-rounded naxatw-bg-black naxatw-bg-opacity-75 naxatw-px-4 naxatw-py-2 naxatw-text-white">
                 <p>{selectedImage.filename}</p>
                 <p className="naxatw-mb-1 naxatw-text-xs naxatw-uppercase naxatw-tracking-wider naxatw-text-gray-300">
-                  {m.common_status_label()} {selectedImage.status.replace("_", " ")}
+                  {m.common_status_label()}{' '}
+                  {selectedImage.status.replace('_', ' ')}
                 </p>
                 {selectedImage.rejection_reason && (
                   <p className="naxatw-text-red-300 naxatw-text-sm">
@@ -2181,19 +2335,21 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
       {/* Task Verification Modal */}
       <TaskVerificationModal
         isOpen={verificationModal.isOpen}
-        onClose={() => setVerificationModal({ isOpen: false, taskId: "", taskIndex: 0 })}
+        onClose={() =>
+          setVerificationModal({ isOpen: false, taskId: '', taskIndex: 0 })
+        }
         projectId={projectId}
         taskId={verificationModal.taskId}
         taskIndex={verificationModal.taskIndex}
         onVerified={() => {
           queryClient.invalidateQueries({
-            queryKey: ["projectReview", projectId],
+            queryKey: ['projectReview', projectId],
           });
           queryClient.invalidateQueries({
-            queryKey: ["projectMapData", projectId],
+            queryKey: ['projectMapData', projectId],
           });
           queryClient.invalidateQueries({
-            queryKey: ["project-task-states", projectId],
+            queryKey: ['project-task-states', projectId],
           });
         }}
       />
@@ -2239,7 +2395,9 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
                 disabled={assignTaskMutation.isPending}
                 leftIcon="check"
               >
-                {assignTaskMutation.isPending ? m.common_assigning() : m.common_confirm()}
+                {assignTaskMutation.isPending
+                  ? m.common_assigning()
+                  : m.common_confirm()}
               </Button>
             </div>
           </div>
@@ -2297,7 +2455,9 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
         <div className="naxatw-fixed naxatw-inset-0 naxatw-z-[10000] naxatw-flex naxatw-items-center naxatw-justify-center naxatw-bg-black naxatw-bg-opacity-50">
           <div className="naxatw-w-full naxatw-max-w-md naxatw-rounded-lg naxatw-bg-white naxatw-p-6 naxatw-shadow-xl">
             <div className="naxatw-mb-4 naxatw-flex naxatw-items-center naxatw-gap-3">
-              <span className="material-icons naxatw-text-red-500 naxatw-text-3xl">warning</span>
+              <span className="material-icons naxatw-text-red-500 naxatw-text-3xl">
+                warning
+              </span>
               <h3 className="naxatw-text-lg naxatw-font-semibold naxatw-text-gray-900">
                 {m.image_review_cleanup_invalid_imagery()}
               </h3>
@@ -2321,7 +2481,9 @@ ${safeReason && ["rejected", "unmatched", "invalid_exif", "duplicate"].includes(
                 disabled={cleanupInvalidMutation.isPending}
                 leftIcon="delete"
               >
-                {cleanupInvalidMutation.isPending ? m.common_deleting() : m.common_confirm()}
+                {cleanupInvalidMutation.isPending
+                  ? m.common_deleting()
+                  : m.common_confirm()}
               </Button>
             </div>
           </div>

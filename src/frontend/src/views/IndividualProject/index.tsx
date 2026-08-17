@@ -1,41 +1,49 @@
-/* eslint-disable jsx-a11y/interactive-supports-focus */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import centroid from "@turf/centroid";
-import html2canvas from "html2canvas";
-import { useGetProjectsDetailQuery, useGetUserDetailsQuery } from "@Api/projects";
-import BreadCrumb from "@Components/common/Breadcrumb";
-import Tab from "@Components/common/Tabs";
-import { Contributions, Instructions, MapSection, Tasks } from "@Components/IndividualProject";
-import ExportSection from "@Components/IndividualProject/ExportSection";
-import GcpEditor from "@Components/IndividualProject/GcpEditor";
-import ProjectPromptDialog from "@Components/IndividualProject/ModalContent";
-import DeleteProjectPromptDialog from "@Components/IndividualProject/ModalContent/DeleteProjectConfirmation";
-import { Button } from "@Components/RadixComponents/Button";
-import Skeleton from "@Components/RadixComponents/Skeleton";
-import DescriptionSection from "@Components/RegulatorsApprovalPage/Description/DescriptionSection";
-import { projectOptions } from "@Constants/index";
-import { deleteProject } from "@Services/project";
-import { triggerMeshConversion, triggerOrthophotoConversion } from "@Services/createproject";
-import { setProjectState } from "@Store/actions/project";
-import { useTypedDispatch, useTypedSelector } from "@Store/hooks";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { buildDownloadUrl } from "@Utils/index";
-import hasErrorBoundary from "@Utils/hasErrorBoundary";
-import QFieldExportDialog from "@Components/IndividualProject/QFieldExport";
-import QFieldLogo from "@Components/IndividualProject/QFieldExport/QFieldLogo";
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import centroid from '@turf/centroid';
+import html2canvas from 'html2canvas';
+import {
+  useGetProjectsDetailQuery,
+  useGetUserDetailsQuery,
+} from '@Api/projects';
+import BreadCrumb from '@Components/common/Breadcrumb';
+import Tab from '@Components/common/Tabs';
+import {
+  Contributions,
+  Instructions,
+  MapSection,
+  Tasks,
+} from '@Components/IndividualProject';
+import ExportSection from '@Components/IndividualProject/ExportSection';
+import GcpEditor from '@Components/IndividualProject/GcpEditor';
+import ProjectPromptDialog from '@Components/IndividualProject/ModalContent';
+import DeleteProjectPromptDialog from '@Components/IndividualProject/ModalContent/DeleteProjectConfirmation';
+import { Button } from '@Components/RadixComponents/Button';
+import Skeleton from '@Components/RadixComponents/Skeleton';
+import DescriptionSection from '@Components/RegulatorsApprovalPage/Description/DescriptionSection';
+import { projectOptions } from '@Constants/index';
+import { deleteProject } from '@Services/project';
+import {
+  triggerMeshConversion,
+  triggerOrthophotoConversion,
+} from '@Services/createproject';
+import { setProjectState } from '@Store/actions/project';
+import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { buildDownloadUrl } from '@Utils/index';
+import hasErrorBoundary from '@Utils/hasErrorBoundary';
+import QFieldExportDialog from '@Components/IndividualProject/QFieldExport';
+import QFieldLogo from '@Components/IndividualProject/QFieldExport/QFieldLogo';
 import {
   UploadImageryDialog,
   ClassifyImageryDialog,
   VerifyImageryDialog,
-} from "@Components/DroneOperatorTask/DescriptionSection/DroneImageProcessingWorkflow";
-import { getRuntimeConfig } from "@/runtimeConfig";
-import { m } from "@/paraglide/messages";
+} from '@Components/DroneOperatorTask/DescriptionSection/DroneImageProcessingWorkflow';
+import { getRuntimeConfig } from '@/runtimeConfig';
+import { m } from '@/paraglide/messages';
 
-// eslint-disable-next-line camelcase
-const API_URL = getRuntimeConfig("VITE_API_URL", "/api");
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
 
 // function to render the content based on active tab
 const getActiveTabContent = (
@@ -44,14 +52,14 @@ const getActiveTabContent = (
   isProjectDataLoading: boolean,
   // eslint-disable-next-line no-unused-vars
   handleTableRowClick: (rowData: any) => {},
-  // eslint-disable-next-line no-unused-vars
+
   onOpenUpload?: () => void,
-  // eslint-disable-next-line no-unused-vars
+
   onOpenClassify?: () => void,
-  // eslint-disable-next-line no-unused-vars
+
   onOpenVerify?: () => void,
 ) => {
-  if (activeTab === "about")
+  if (activeTab === 'about')
     return (
       <DescriptionSection
         projectData={data}
@@ -62,13 +70,26 @@ const getActiveTabContent = (
         onOpenVerify={onOpenVerify}
       />
     );
-  if (activeTab === "tasks")
-    return <Tasks isFetching={isProjectDataLoading} handleTableRowClick={handleTableRowClick} />;
-  if (activeTab === "instructions")
-    return <Instructions projectData={data} isProjectDataLoading={isProjectDataLoading} />;
-  if (activeTab === "contributions")
+  if (activeTab === 'tasks')
     return (
-      <Contributions isFetching={isProjectDataLoading} handleTableRowClick={handleTableRowClick} />
+      <Tasks
+        isFetching={isProjectDataLoading}
+        handleTableRowClick={handleTableRowClick}
+      />
+    );
+  if (activeTab === 'instructions')
+    return (
+      <Instructions
+        projectData={data}
+        isProjectDataLoading={isProjectDataLoading}
+      />
+    );
+  if (activeTab === 'contributions')
+    return (
+      <Contributions
+        isFetching={isProjectDataLoading}
+        handleTableRowClick={handleTableRowClick}
+      />
     );
   return <></>;
 };
@@ -81,23 +102,26 @@ const IndividualProject = () => {
   const exportRef = useRef<any>(null);
   const [exportingContent, setExportingContent] = useState(false);
   const [showProjectDeletePrompt, setShowProjectDeletePrompt] = useState(false);
-  const [showDownloadOptions, setShowDownloadOptions] = useState<boolean>(false);
+  const [showDownloadOptions, setShowDownloadOptions] =
+    useState<boolean>(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isClassifyDialogOpen, setIsClassifyDialogOpen] = useState(false);
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false);
   const [showQFieldDialog, setShowQFieldDialog] = useState(false);
-  const Token = localStorage.getItem("token");
+  const Token = localStorage.getItem('token');
 
   const individualProjectActiveTab = useTypedSelector(
-    (state) => state.project.individualProjectActiveTab,
+    state => state.project.individualProjectActiveTab,
   );
-  const tasksList = useTypedSelector((state) => state.project.tasksData);
-  const showGcpEditor = useTypedSelector((state) => state.project.showGcpEditor);
+  const tasksList = useTypedSelector(state => state.project.tasksData);
+  const showGcpEditor = useTypedSelector(state => state.project.showGcpEditor);
 
   const { data: userDetails }: Record<string, any> = useGetUserDetailsQuery();
 
-  const { data: projectData, isFetching: isProjectDataFetching }: Record<string, any> =
-    useGetProjectsDetailQuery(id as string);
+  const {
+    data: projectData,
+    isFetching: isProjectDataFetching,
+  }: Record<string, any> = useGetProjectsDetailQuery(id as string);
   useEffect(() => {
     if (projectData) {
       dispatch(
@@ -124,7 +148,8 @@ const IndividualProject = () => {
   // Hold Ctrl/Cmd to reveal the 3D Tiles controls in place of the GLB viewer.
   const [showTilesControls, setShowTilesControls] = useState(false);
   useEffect(() => {
-    const isModifier = (e: KeyboardEvent) => e.key === "Control" || e.key === "Meta";
+    const isModifier = (e: KeyboardEvent) =>
+      e.key === 'Control' || e.key === 'Meta';
     const onKeyDown = (e: KeyboardEvent) => {
       if (isModifier(e)) setShowTilesControls(true);
     };
@@ -133,22 +158,22 @@ const IndividualProject = () => {
     };
     // keyup can be missed if the window loses focus mid-hold.
     const reset = () => setShowTilesControls(false);
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("blur", reset);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', reset);
     return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("blur", reset);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', reset);
     };
   }, []);
 
   const { mutate, isPending } = useMutation({
     mutationFn: (projectId: string) => deleteProject(projectId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects-list"] });
+      queryClient.invalidateQueries({ queryKey: ['projects-list'] });
       toast.error(m.individual_project_project_deleted_success());
-      navigate("/projects");
+      navigate('/projects');
     },
   });
 
@@ -156,17 +181,18 @@ const IndividualProject = () => {
   // flips to "Converting" immediately. We don't poll for completion - the
   // user refreshes manually once the conversion finishes (repaint churn
   // from polling was worse UX than asking for a refresh).
-  const { mutate: convertOrthophoto, isPending: isOrthophotoTriggering } = useMutation({
-    mutationFn: (projectId: string) => triggerOrthophotoConversion(projectId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-detail", id] });
-    },
-    onError: () => toast.error(m.individual_project_convert_failed()),
-  });
+  const { mutate: convertOrthophoto, isPending: isOrthophotoTriggering } =
+    useMutation({
+      mutationFn: (projectId: string) => triggerOrthophotoConversion(projectId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['project-detail', id] });
+      },
+      onError: () => toast.error(m.individual_project_convert_failed()),
+    });
   const { mutate: convertMesh, isPending: isMeshTriggering } = useMutation({
     mutationFn: (projectId: string) => triggerMeshConversion(projectId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ['project-detail', id] });
     },
     onError: () => toast.error(m.individual_project_convert_failed()),
   });
@@ -207,17 +233,21 @@ const IndividualProject = () => {
   const downloadProjectTaskGeojson = () => {
     fetch(
       `${API_URL}/projects/${projectData?.id}/download-boundaries?split_area=true&export_type=geojson`,
-      { method: "GET", headers: { "Access-token": Token || "" }, credentials: "include" },
+      {
+        method: 'GET',
+        headers: { 'Access-token': Token || '' },
+        credentials: 'include',
+      },
     )
-      .then((response) => {
+      .then(response => {
         if (!response.ok) {
           throw new Error(`Network response was ${response.statusText}`);
         }
         return response.blob();
       })
-      .then((blob) => {
+      .then(blob => {
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.href = url;
         link.download = `project-${projectData?.name}-tasks.geojson`;
         document.body.appendChild(link);
@@ -225,18 +255,22 @@ const IndividualProject = () => {
         link.remove();
         window.URL.revokeObjectURL(url);
       })
-      .catch((error) => toast.error(m.individual_project_download_error({ error: String(error) })));
+      .catch(error =>
+        toast.error(
+          m.individual_project_download_error({ error: String(error) }),
+        ),
+      );
   };
 
   const downloadTerrainDem = () => {
     const projectId = projectData?.id || id;
     if (!projectId) return;
     fetch(`${API_URL}/projects/${projectId}/terrain-dem`, {
-      method: "GET",
-      headers: { "Access-token": Token || "" },
-      credentials: "include",
+      method: 'GET',
+      headers: { 'Access-token': Token || '' },
+      credentials: 'include',
     })
-      .then((response) => {
+      .then(response => {
         if (response.status === 404) {
           throw new Error(m.individual_project_no_terrain_dem_found());
         }
@@ -245,9 +279,9 @@ const IndividualProject = () => {
         }
         return response.blob();
       })
-      .then((blob) => {
+      .then(blob => {
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.href = url;
         link.download = `terrain_dem-${projectData?.name || projectId}.tif`;
         document.body.appendChild(link);
@@ -255,20 +289,29 @@ const IndividualProject = () => {
         link.remove();
         window.URL.revokeObjectURL(url);
       })
-      .catch((error) => toast.error(m.individual_project_download_error({ error: String(error) })));
+      .catch(error =>
+        toast.error(
+          m.individual_project_download_error({ error: String(error) }),
+        ),
+      );
   };
 
-  const downloadOutputFile = (url: string | null | undefined, filename: string) => {
+  const downloadOutputFile = (
+    url: string | null | undefined,
+    filename: string,
+  ) => {
     if (!url) return;
     try {
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = buildDownloadUrl(url);
-      link.setAttribute("download", filename);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
-      toast.error(m.individual_project_download_error({ error: String(error) }));
+      toast.error(
+        m.individual_project_download_error({ error: String(error) }),
+      );
     }
   };
 
@@ -280,7 +323,7 @@ const IndividualProject = () => {
     const downloadUrl = buildDownloadUrl(assetsPath);
 
     try {
-      const response = await fetch(downloadUrl, { method: "HEAD" });
+      const response = await fetch(downloadUrl, { method: 'HEAD' });
       if (response.status === 404) {
         toast.warning(m.individual_project_no_odm_export_found());
         return;
@@ -290,14 +333,16 @@ const IndividualProject = () => {
         return;
       }
 
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = downloadUrl;
-      link.setAttribute("download", `entire_odm_project_${projectId}.zip`);
+      link.setAttribute('download', `entire_odm_project_${projectId}.zip`);
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
-      toast.error(m.individual_project_download_error({ error: String(error) }));
+      toast.error(
+        m.individual_project_download_error({ error: String(error) }),
+      );
     }
   };
 
@@ -307,8 +352,11 @@ const IndividualProject = () => {
         <div className="naxatw-flex naxatw-items-center naxatw-justify-between naxatw-py-3">
           <BreadCrumb
             data={[
-              { name: m.individual_project_breadcrumb_project(), navLink: "/projects" },
-              { name: projectData?.name || "--", navLink: "" },
+              {
+                name: m.individual_project_breadcrumb_project(),
+                navLink: '/projects',
+              },
+              { name: projectData?.name || '--', navLink: '' },
             ]}
           />
           <div className="naxatw-flex naxatw-gap-3">
@@ -323,18 +371,21 @@ const IndividualProject = () => {
             </Button>
             {/* 2D orthophoto: Convert → Converting → View. Hidden entirely
                 until ODM completes. */}
-            {projectData?.image_processing_status === "SUCCESS" &&
+            {projectData?.image_processing_status === 'SUCCESS' &&
               (projectData?.cloud_ortho_ready ? (
                 <Button
                   variant="ghost"
                   className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
                   leftIcon="image"
                   iconClassname="naxatw-text-[1.125rem]"
-                  onClick={() => navigate(`/projects/${projectData?.id || id}/orthophoto`)}
+                  onClick={() =>
+                    navigate(`/projects/${projectData?.id || id}/orthophoto`)
+                  }
                 >
                   {m.individual_project_button_view_orthophoto()}
                 </Button>
-              ) : projectData?.cloud_ortho_generating || isOrthophotoTriggering ? (
+              ) : projectData?.cloud_ortho_generating ||
+                isOrthophotoTriggering ? (
                 <Button
                   variant="ghost"
                   disabled
@@ -350,7 +401,9 @@ const IndividualProject = () => {
                   className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
                   leftIcon="image"
                   iconClassname="naxatw-text-[1.125rem]"
-                  onClick={() => convertOrthophoto(projectData?.id || (id as string))}
+                  onClick={() =>
+                    convertOrthophoto(projectData?.id || (id as string))
+                  }
                 >
                   {m.individual_project_button_convert_orthophoto()}
                 </Button>
@@ -359,7 +412,7 @@ const IndividualProject = () => {
                 OBJ and surfaces mesh_source_available - we gate on that
                 rather than final_output, since ODM produces the mesh on
                 every run regardless of what the user picked at create time. */}
-            {projectData?.image_processing_status === "SUCCESS" &&
+            {projectData?.image_processing_status === 'SUCCESS' &&
               projectData?.mesh_source_available &&
               (() => {
                 const projId = projectData?.id || id;
@@ -372,13 +425,16 @@ const IndividualProject = () => {
                     leftIcon="view_in_ar"
                     iconClassname="naxatw-text-[1.125rem]"
                     onClick={() => {
-                      const viewerBase = getRuntimeConfig("VITE_DRONE_MESH_URL", "/mesh");
+                      const viewerBase = getRuntimeConfig(
+                        'VITE_DRONE_MESH_URL',
+                        '/mesh',
+                      );
                       window.open(
                         `${viewerBase}/index.html?glb=${encodeURIComponent(
                           projectData.mesh_glb_url,
                         )}`,
-                        "_blank",
-                        "noopener",
+                        '_blank',
+                        'noopener',
                       );
                     }}
                   >
@@ -429,7 +485,7 @@ const IndividualProject = () => {
                 className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
                 leftIcon="download"
                 iconClassname="naxatw-text-[1.125rem]"
-                onClick={() => setShowDownloadOptions((prev) => !prev)}
+                onClick={() => setShowDownloadOptions(prev => !prev)}
               >
                 {m.individual_project_button_export()}
               </Button>
@@ -455,7 +511,7 @@ const IndividualProject = () => {
                     onClick={() => {
                       setExportingContent(true);
                       html2canvas(exportRef?.current).then((canvas: any) => {
-                        const link = document.createElement("a");
+                        const link = document.createElement('a');
                         link.download = `${projectData?.name}.png`;
                         link.href = canvas.toDataURL();
                         link.click();
@@ -490,7 +546,9 @@ const IndividualProject = () => {
                         downloadTerrainDem();
                       }}
                     >
-                      <span className="material-icons naxatw-text-base">terrain</span>
+                      <span className="material-icons naxatw-text-base">
+                        terrain
+                      </span>
                       {m.individual_project_export_terrain_dem()}
                     </div>
                   )}
@@ -508,7 +566,9 @@ const IndividualProject = () => {
                         );
                       }}
                     >
-                      <span className="material-icons naxatw-text-base">image</span>
+                      <span className="material-icons naxatw-text-base">
+                        image
+                      </span>
                       {m.proj_desc_output_orthophoto()}
                     </div>
                   )}
@@ -520,10 +580,15 @@ const IndividualProject = () => {
                       onKeyDown={() => {}}
                       onClick={() => {
                         setShowDownloadOptions(false);
-                        downloadOutputFile(projectData.dsm_url, `dsm_${projectData.id}.tif`);
+                        downloadOutputFile(
+                          projectData.dsm_url,
+                          `dsm_${projectData.id}.tif`,
+                        );
                       }}
                     >
-                      <span className="material-icons naxatw-text-base">landscape</span>
+                      <span className="material-icons naxatw-text-base">
+                        landscape
+                      </span>
                       {m.individual_project_export_dsm()}
                     </div>
                   )}
@@ -535,10 +600,15 @@ const IndividualProject = () => {
                       onKeyDown={() => {}}
                       onClick={() => {
                         setShowDownloadOptions(false);
-                        downloadOutputFile(projectData.dtm_url, `dtm_${projectData.id}.tif`);
+                        downloadOutputFile(
+                          projectData.dtm_url,
+                          `dtm_${projectData.id}.tif`,
+                        );
                       }}
                     >
-                      <span className="material-icons naxatw-text-base">terrain</span>
+                      <span className="material-icons naxatw-text-base">
+                        terrain
+                      </span>
                       {m.individual_project_export_dtm()}
                     </div>
                   )}
@@ -556,11 +626,13 @@ const IndividualProject = () => {
                         );
                       }}
                     >
-                      <span className="material-icons naxatw-text-base">scatter_plot</span>
+                      <span className="material-icons naxatw-text-base">
+                        scatter_plot
+                      </span>
                       {m.individual_project_export_pointcloud()}
                     </div>
                   )}
-                  {projectData?.image_processing_status === "SUCCESS" && (
+                  {projectData?.image_processing_status === 'SUCCESS' && (
                     <div
                       className="naxatw-flex naxatw-cursor-pointer naxatw-items-center naxatw-gap-2 naxatw-px-3 naxatw-py-2 hover:naxatw-bg-redlight"
                       role="button"
@@ -571,7 +643,9 @@ const IndividualProject = () => {
                         downloadEntireOdmProject();
                       }}
                     >
-                      <span className="material-icons naxatw-text-base">folder_zip</span>
+                      <span className="material-icons naxatw-text-base">
+                        folder_zip
+                      </span>
                       {m.individual_project_export_entire_odm_project()}
                     </div>
                   )}
@@ -593,7 +667,6 @@ const IndividualProject = () => {
             </button>
             <GcpEditor
               finalButtonText={m.individual_project_button_save_gcp()}
-              // eslint-disable-next-line camelcase
               rawImageUrl={`${API_URL}/gcp/find-project-images?project_id=${projectData?.id || id}`}
             />
           </div>
@@ -655,7 +728,7 @@ const IndividualProject = () => {
         )}
       </section>
       <div
-        className={`naxatw-absolute naxatw-left-0 naxatw-top-0 naxatw-h-full naxatw-w-full naxatw-opacity-0 ${exportingContent ? "naxatw-flex" : "naxatw-hidden"}`}
+        className={`naxatw-absolute naxatw-left-0 naxatw-top-0 naxatw-h-full naxatw-w-full naxatw-opacity-0 ${exportingContent ? 'naxatw-flex' : 'naxatw-hidden'}`}
       >
         <div
           className="naxatw-flex naxatw-w-full naxatw-max-w-[600px] naxatw-justify-center"
@@ -671,7 +744,7 @@ const IndividualProject = () => {
         onClose={() => setShowProjectDeletePrompt(false)}
       >
         <DeleteProjectPromptDialog
-          projectName={projectData?.name || ""}
+          projectName={projectData?.name || ''}
           isLoading={isPending}
           handleDeleteProject={handleDeleteProject}
           setShowUnlockDialog={setShowProjectDeletePrompt}

@@ -1,13 +1,13 @@
-import { useEffect, createElement, useCallback, useState } from "react";
-import { useDispatch } from "react-redux";
-import { setProjectState } from "@Store/actions/project";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { saveGcpFile } from "@Services/project";
-import { useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import { m } from "@/paraglide/messages";
+import { useEffect, createElement, useCallback, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setProjectState } from '@Store/actions/project';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { saveGcpFile } from '@Services/project';
+import { useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { m } from '@/paraglide/messages';
 
-const CUSTOM_EVENT = "save-gcp-click";
+const CUSTOM_EVENT = 'save-gcp-click';
 
 const GcpEditor = ({ cogUrl, finalButtonText, rawImageUrl }: any) => {
   const [loaded, setLoaded] = useState(false);
@@ -18,7 +18,7 @@ const GcpEditor = ({ cogUrl, finalButtonText, rawImageUrl }: any) => {
   const { mutate: saveGcp, isPending } = useMutation({
     mutationFn: saveGcpFile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
+      queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       dispatch(setProjectState({ showGcpEditor: false }));
       toast.success(m.gcp_editor_save_success());
     },
@@ -31,8 +31,8 @@ const GcpEditor = ({ cogUrl, finalButtonText, rawImageUrl }: any) => {
     (data: any) => {
       if (isPending) return;
       const gcpData = data.detail;
-      const blob = new Blob([gcpData], { type: "text/plain;charset=utf-8;" });
-      const gcpFile = new File([blob], "gcp.txt");
+      const blob = new Blob([gcpData], { type: 'text/plain;charset=utf-8;' });
+      const gcpFile = new File([blob], 'gcp.txt');
       saveGcp({ projectId: id!, gcp_file: gcpFile });
     },
     [isPending, id, saveGcp],
@@ -51,7 +51,10 @@ const GcpEditor = ({ cogUrl, finalButtonText, rawImageUrl }: any) => {
       originalDefine(name, ctor, options);
     }) as typeof customElements.define;
 
-    Promise.all([import("@hotosm/gcp-editor"), import("@hotosm/gcp-editor/style.css")]).then(() => {
+    Promise.all([
+      import('@hotosm/gcp-editor'),
+      import('@hotosm/gcp-editor/style.css'),
+    ]).then(() => {
       customElements.define = originalDefine;
       setLoaded(true);
     });
@@ -70,7 +73,7 @@ const GcpEditor = ({ cogUrl, finalButtonText, rawImageUrl }: any) => {
 
   if (!loaded) return null;
 
-  return createElement("gcp-editor", {
+  return createElement('gcp-editor', {
     cogUrl,
     customEvent: CUSTOM_EVENT,
     finalButtonText,

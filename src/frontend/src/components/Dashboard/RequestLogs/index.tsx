@@ -1,17 +1,17 @@
-import { useGetTaskListQuery } from "@Api/dashboard";
-import NoDataComponent from "@Components/common/DataTable/NoDataFound";
-import { FlexColumn } from "@Components/common/Layouts";
-import { Button } from "@Components/RadixComponents/Button";
-import { taskStatusObj } from "@Constants/index";
-import { postTaskStatus } from "@Services/project";
-import { setCommonState, toggleModal } from "@Store/actions/common";
-import { documentDetailType } from "@Store/slices/common";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import hasErrorBoundary from "@Utils/hasErrorBoundary";
-import { getFileExtension } from "@Utils/index";
-import { useDispatch } from "react-redux";
-import { toast } from "react-toastify";
-import { m } from "@/paraglide/messages";
+import { useGetTaskListQuery } from '@Api/dashboard';
+import NoDataComponent from '@Components/common/DataTable/NoDataFound';
+import { FlexColumn } from '@Components/common/Layouts';
+import { Button } from '@Components/RadixComponents/Button';
+import { taskStatusObj } from '@Constants/index';
+import { postTaskStatus } from '@Services/project';
+import { setCommonState, toggleModal } from '@Store/actions/common';
+import { documentDetailType } from '@Store/slices/common';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import hasErrorBoundary from '@Utils/hasErrorBoundary';
+import { getFileExtension } from '@Utils/index';
+import { useDispatch } from 'react-redux';
+import { toast } from 'react-toastify';
+import { m } from '@/paraglide/messages';
 
 const RequestLogs = () => {
   const dispatch = useDispatch();
@@ -27,8 +27,8 @@ const RequestLogs = () => {
     mutationFn: postTaskStatus,
     onSuccess: () => {
       toast.success(m.dashboard_responded_to_request_toast());
-      queryClient.invalidateQueries({ queryKey: ["task-list"] });
-      queryClient.invalidateQueries({ queryKey: ["task-statistics"] });
+      queryClient.invalidateQueries({ queryKey: ['task-list'] });
+      queryClient.invalidateQueries({ queryKey: ['task-statistics'] });
     },
     onError: (err: any) => {
       toast.error(err.message);
@@ -39,7 +39,7 @@ const RequestLogs = () => {
     respondToRequest({
       projectId,
       taskId,
-      data: { event: "reject" },
+      data: { event: 'reject' },
     });
   };
 
@@ -47,7 +47,7 @@ const RequestLogs = () => {
     respondToRequest({
       projectId,
       taskId,
-      data: { event: "fly" },
+      data: { event: 'fly' },
     });
   };
 
@@ -90,13 +90,15 @@ const RequestLogs = () => {
                               ) as documentDetailType,
                             }),
                           );
-                          dispatch(toggleModal("document-preview"));
+                          dispatch(toggleModal('document-preview'));
                         }}
                         role="button"
                         tabIndex={0}
                         onKeyDown={() => {}}
                       >
-                        <i className="material-icons-outlined naxatw-text-red">description</i>
+                        <i className="material-icons-outlined naxatw-text-red">
+                          description
+                        </i>
                         <p className="naxatw-text-sm group-hover:naxatw-underline">
                           {m.dashboard_drone_operator_certificate()}
                         </p>
@@ -113,13 +115,15 @@ const RequestLogs = () => {
                               ) as documentDetailType,
                             }),
                           );
-                          dispatch(toggleModal("document-preview"));
+                          dispatch(toggleModal('document-preview'));
                         }}
                         role="button"
                         tabIndex={0}
                         onKeyDown={() => {}}
                       >
-                        <i className="material-icons-outlined naxatw-text-red">description</i>
+                        <i className="material-icons-outlined naxatw-text-red">
+                          description
+                        </i>
                         <p className="naxatw-text-sm group-hover:naxatw-underline">
                           {m.dashboard_drone_registration_certificate()}
                         </p>

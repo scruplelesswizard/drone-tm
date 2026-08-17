@@ -1,13 +1,12 @@
-/* eslint-disable no-unused-vars */
-import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { Flex } from "@Components/common/Layouts";
-import { toast } from "react-toastify";
-import { getRuntimeConfig } from "@/runtimeConfig";
-import { m } from "@/paraglide/messages";
+import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { Flex } from '@Components/common/Layouts';
+import { toast } from 'react-toastify';
+import { getRuntimeConfig } from '@/runtimeConfig';
+import { m } from '@/paraglide/messages';
 
-const BASE_URL = getRuntimeConfig("VITE_API_URL", "/api");
+const BASE_URL = getRuntimeConfig('VITE_API_URL', '/api');
 
 /**
  * HankoAuth - Callback component after Portal SSO login
@@ -29,22 +28,23 @@ function HankoAuth() {
   const queryClient = useQueryClient();
 
   // Get role from URL query params or localStorage
-  const roleFromUrl = searchParams.get("role");
-  const signedInAs = roleFromUrl || localStorage.getItem("signedInAs") || "PROJECT_CREATOR";
+  const roleFromUrl = searchParams.get('role');
+  const signedInAs =
+    roleFromUrl || localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
 
   // Update localStorage if role came from URL
-  if (roleFromUrl && roleFromUrl !== localStorage.getItem("signedInAs")) {
-    localStorage.setItem("signedInAs", roleFromUrl);
+  if (roleFromUrl && roleFromUrl !== localStorage.getItem('signedInAs')) {
+    localStorage.setItem('signedInAs', roleFromUrl);
   }
 
   useEffect(() => {
     const loginRedirect = async () => {
       // Check if user was already logged in (to avoid showing toast on return from Portal)
-      const wasAlreadyLoggedIn = !!localStorage.getItem("userprofile");
+      const wasAlreadyLoggedIn = !!localStorage.getItem('userprofile');
 
       // Clear any existing user data to prevent stale data from previous session
-      localStorage.removeItem("userprofile");
-      localStorage.removeItem("token"); // Legacy OAuth token
+      localStorage.removeItem('userprofile');
+      localStorage.removeItem('token'); // Legacy OAuth token
 
       // Clear TanStack Query cache to prevent showing previous user's data
       queryClient.clear();
@@ -56,7 +56,7 @@ function HankoAuth() {
         const userDetailsUrl = `${BASE_URL}/users/my-info`;
 
         const userDetailsResponse = await fetch(userDetailsUrl, {
-          credentials: "include", // Include Hanko JWT cookie
+          credentials: 'include', // Include Hanko JWT cookie
         });
 
         if (!userDetailsResponse.ok) {
@@ -66,7 +66,7 @@ function HankoAuth() {
         const userDetails = await userDetailsResponse.json();
 
         // Store user profile in localStorage (matching GoogleAuth flow)
-        localStorage.setItem("userprofile", JSON.stringify(userDetails));
+        localStorage.setItem('userprofile', JSON.stringify(userDetails));
 
         // Navigate based on user profile completion
         // If user has completed profile with ANY role, allow access
@@ -76,9 +76,9 @@ function HankoAuth() {
           Array.isArray(userDetails.role) &&
           userDetails.role.length > 0
         ) {
-          navigate("/projects");
+          navigate('/projects');
         } else {
-          navigate("/complete-profile");
+          navigate('/complete-profile');
         }
 
         // Only show toast on fresh login, not when returning from Portal profile
@@ -86,9 +86,13 @@ function HankoAuth() {
           toast.success(m.auth_login_success());
         }
       } catch (error) {
-        console.error("[HankoAuth] Authentication error:", error);
-        toast.error(error instanceof Error ? error.message : m.auth_hanko_failed_generic());
-        navigate("/login");
+        console.error('[HankoAuth] Authentication error:', error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : m.auth_hanko_failed_generic(),
+        );
+        navigate('/login');
       }
     };
 

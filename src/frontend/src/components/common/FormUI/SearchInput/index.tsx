@@ -1,8 +1,8 @@
-import { ChangeEventHandler } from "react";
-import Icon from "@Components/common/Icon";
-import { FlexRow } from "@Components/common/Layouts";
-import { m } from "@/paraglide/messages";
-import Input from "../Input";
+import { ChangeEventHandler } from 'react';
+import Icon from '@Components/common/Icon';
+import { FlexRow } from '@Components/common/Layouts';
+import { m } from '@/paraglide/messages';
+import Input from '../Input';
 
 interface ISearchInputProps {
   inputValue: string;
@@ -25,7 +25,10 @@ export default function SearchInput({
     <FlexRow
       className={`hover:naxatw-border-b-primary-400 naxatw-group naxatw-relative naxatw-w-full naxatw-items-center naxatw-border-b-2 ${className}`}
     >
-      <Icon name="search" className="group-hover:naxatw-text-primary-400 naxatw-text-grey-500" />
+      <Icon
+        name="search"
+        className="group-hover:naxatw-text-primary-400 naxatw-text-grey-500"
+      />
       <Input
         type="text"
         className="naxatw-w-full naxatw-border-none"

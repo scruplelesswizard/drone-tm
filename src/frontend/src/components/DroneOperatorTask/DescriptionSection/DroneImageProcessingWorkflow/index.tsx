@@ -1,19 +1,19 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify";
-import Modal from "@Components/common/Modal";
-import { Button } from "@Components/RadixComponents/Button";
-import Switch from "@Components/RadixComponents/Switch";
-import { deleteBatch } from "@Services/classification";
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
+import Modal from '@Components/common/Modal';
+import { Button } from '@Components/RadixComponents/Button';
+import Switch from '@Components/RadixComponents/Switch';
+import { deleteBatch } from '@Services/classification';
 import {
   useStartProjectClassificationMutation,
   useIngestExistingUploadsMutation,
   useGetProjectStatusQuery,
   useResetStaleClassificationMutation,
-} from "@Api/projects";
-import { m } from "@/paraglide/messages";
-import ImageUpload from "./ImageUpload";
-import ImageReview from "./ImageReview";
+} from '@Api/projects';
+import { m } from '@/paraglide/messages';
+import ImageUpload from './ImageUpload';
+import ImageReview from './ImageReview';
 
 // ─── Upload Imagery Dialog ───────────────────────────────────────────────────
 // Upload-only: no step navigation, no classification, no review.
@@ -25,7 +25,11 @@ interface IUploadImageryDialogProps {
   projectId: string;
 }
 
-export const UploadImageryDialog = ({ isOpen, onClose, projectId }: IUploadImageryDialogProps) => {
+export const UploadImageryDialog = ({
+  isOpen,
+  onClose,
+  projectId,
+}: IUploadImageryDialogProps) => {
   const queryClient = useQueryClient();
   const [batchIds, setBatchIds] = useState<string[]>([]);
   const [hasUploaded, setHasUploaded] = useState(false);
@@ -55,16 +59,16 @@ export const UploadImageryDialog = ({ isOpen, onClose, projectId }: IUploadImage
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Control") setShowIngestButton(true);
+      if (e.key === 'Control') setShowIngestButton(true);
     };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "Control") setShowIngestButton(false);
+      if (e.key === 'Control') setShowIngestButton(false);
     };
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     };
   }, [isOpen]);
 
@@ -80,13 +84,18 @@ export const UploadImageryDialog = ({ isOpen, onClose, projectId }: IUploadImage
     setIsUploading(true);
   }, []);
 
-  const handleUploadComplete = useCallback((_result: any, uploadedBatchId?: string) => {
-    if (uploadedBatchId) {
-      setBatchIds((prev) => (prev.includes(uploadedBatchId) ? prev : [...prev, uploadedBatchId]));
-    }
-    setIsUploading(false);
-    setHasUploaded(true);
-  }, []);
+  const handleUploadComplete = useCallback(
+    (_result: any, uploadedBatchId?: string) => {
+      if (uploadedBatchId) {
+        setBatchIds(prev =>
+          prev.includes(uploadedBatchId) ? prev : [...prev, uploadedBatchId],
+        );
+      }
+      setIsUploading(false);
+      setHasUploaded(true);
+    },
+    [],
+  );
 
   const handleClose = () => {
     if (batchIds.length > 0 && hasUploaded) {
@@ -94,7 +103,7 @@ export const UploadImageryDialog = ({ isOpen, onClose, projectId }: IUploadImage
       return;
     }
     queryClient.invalidateQueries({
-      queryKey: ["project-task-states", projectId],
+      queryKey: ['project-task-states', projectId],
     });
     setBatchIds([]);
     setHasUploaded(false);
@@ -104,7 +113,7 @@ export const UploadImageryDialog = ({ isOpen, onClose, projectId }: IUploadImage
   const handleKeepAndClose = () => {
     toast.success(m.imagery_upload_keep_success());
     queryClient.invalidateQueries({
-      queryKey: ["project-task-states", projectId],
+      queryKey: ['project-task-states', projectId],
     });
     setShowAbortConfirmation(false);
     setBatchIds([]);
@@ -121,7 +130,7 @@ export const UploadImageryDialog = ({ isOpen, onClose, projectId }: IUploadImage
     if (batchIds.length > 0) {
       setIsDeletingBatches(true);
       try {
-        await Promise.all(batchIds.map((id) => deleteBatch(projectId, id)));
+        await Promise.all(batchIds.map(id => deleteBatch(projectId, id)));
         toast.success(m.imagery_upload_deleted_success());
         setShowAbortConfirmation(false);
         setBatchIds([]);
@@ -254,7 +263,9 @@ export const UploadImageryDialog = ({ isOpen, onClose, projectId }: IUploadImage
                       disabled={isDeletingBatches}
                       leftIcon="delete"
                     >
-                      {isDeletingBatches ? m.common_deleting() : m.imagery_upload_delete_images()}
+                      {isDeletingBatches
+                        ? m.common_deleting()
+                        : m.imagery_upload_delete_images()}
                     </Button>
                     <Button
                       variant="ghost"
@@ -294,7 +305,8 @@ export const ClassifyImageryDialog = ({
   const [isPolling, setIsPolling] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [disableFlightTailDetection, setDisableFlightTailDetection] = useState(true);
+  const [disableFlightTailDetection, setDisableFlightTailDetection] =
+    useState(true);
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -322,9 +334,11 @@ export const ClassifyImageryDialog = ({
   });
 
   const resetStaleMutation = useResetStaleClassificationMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.reset_count > 0) {
-        toast.success(m.classify_imagery_reset_stuck_success({ count: data.reset_count }));
+        toast.success(
+          m.classify_imagery_reset_stuck_success({ count: data.reset_count }),
+        );
       } else {
         toast.info(m.classify_imagery_no_stuck_images());
       }
@@ -332,7 +346,7 @@ export const ClassifyImageryDialog = ({
       setHasStarted(false);
       setIsComplete(false);
       queryClient.invalidateQueries({
-        queryKey: ["project-imagery-status", projectId],
+        queryKey: ['project-imagery-status', projectId],
       });
     },
     onError: (error: any) => {
@@ -345,18 +359,18 @@ export const ClassifyImageryDialog = ({
   });
 
   const scanUploadsMutation = useIngestExistingUploadsMutation({
-    onSuccess: (data) => {
-      const alreadyQueued = data.message.toLowerCase().includes("already");
+    onSuccess: data => {
+      const alreadyQueued = data.message.toLowerCase().includes('already');
       toast.info(
         alreadyQueued
           ? m.classify_imagery_scan_already_running()
           : m.classify_imagery_scan_started(),
       );
       queryClient.invalidateQueries({
-        queryKey: ["project-imagery-status", projectId],
+        queryKey: ['project-imagery-status', projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["project-task-states", projectId],
+        queryKey: ['project-task-states', projectId],
       });
     },
     onError: (error: any) => {
@@ -426,7 +440,7 @@ export const ClassifyImageryDialog = ({
 
   const handleClose = () => {
     queryClient.invalidateQueries({
-      queryKey: ["project-task-states", projectId],
+      queryKey: ['project-task-states', projectId],
     });
     onClose();
   };
@@ -435,7 +449,8 @@ export const ClassifyImageryDialog = ({
 
   const computedStats = useMemo(() => {
     if (!projectStatus) return null;
-    const uploaded = (projectStatus.staged ?? 0) + (projectStatus.uploaded ?? 0);
+    const uploaded =
+      (projectStatus.staged ?? 0) + (projectStatus.uploaded ?? 0);
     const processing = projectStatus.classifying ?? 0;
     const complete = projectStatus.assigned ?? 0;
     const issues =
@@ -444,7 +459,8 @@ export const ClassifyImageryDialog = ({
       (projectStatus.invalid_exif ?? 0);
     const duplicates = projectStatus.duplicate ?? 0;
     const totalClassified = complete + issues + duplicates;
-    const issuePercentage = totalClassified > 0 ? (issues / totalClassified) * 100 : 0;
+    const issuePercentage =
+      totalClassified > 0 ? (issues / totalClassified) * 100 : 0;
     return {
       uploaded,
       processing,
@@ -461,7 +477,8 @@ export const ClassifyImageryDialog = ({
     computedStats.processing === 0 &&
     computedStats.uploaded === 0 &&
     computedStats.totalClassified > 0;
-  const hasHighIssueRate = isClassificationComplete && computedStats.issuePercentage >= 50;
+  const hasHighIssueRate =
+    isClassificationComplete && computedStats.issuePercentage >= 50;
 
   // Sync completion state
   useEffect(() => {
@@ -470,15 +487,23 @@ export const ClassifyImageryDialog = ({
     }
   }, [isClassificationComplete, isComplete, hasStarted]);
 
-  const renderValue = (value: number, showSpinner: boolean, colorClass: string = "") => {
+  const renderValue = (
+    value: number,
+    showSpinner: boolean,
+    colorClass: string = '',
+  ) => {
     if (value === 0 && showSpinner) {
       return (
         <div className="naxatw-flex naxatw-items-center naxatw-justify-center">
-          <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-600"></div>
+          <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-600" />
         </div>
       );
     }
-    return <div className={`naxatw-text-2xl naxatw-font-bold ${colorClass}`}>{value}</div>;
+    return (
+      <div className={`naxatw-text-2xl naxatw-font-bold ${colorClass}`}>
+        {value}
+      </div>
+    );
   };
 
   if (!isOpen) return null;
@@ -516,7 +541,9 @@ export const ClassifyImageryDialog = ({
             <div className="naxatw-border-red-300 naxatw-bg-red-50 naxatw-text-red-700 naxatw-flex naxatw-flex-shrink-0 naxatw-items-center naxatw-gap-3 naxatw-rounded naxatw-border naxatw-p-4">
               <span className="material-icons">error</span>
               <div>
-                <p className="naxatw-font-semibold">{m.classify_imagery_failed_fetch_update()}</p>
+                <p className="naxatw-font-semibold">
+                  {m.classify_imagery_failed_fetch_update()}
+                </p>
                 <p className="naxatw-text-sm">
                   {errorStatus?.message || m.common_unknown_error_sentence()}
                 </p>
@@ -541,13 +568,15 @@ export const ClassifyImageryDialog = ({
                       startClassificationMutation.isPending ||
                       isLoadingStatus ||
                       isPolling ||
-                      (projectStatus?.staged ?? 0) + (projectStatus?.uploaded ?? 0) === 0
+                      (projectStatus?.staged ?? 0) +
+                        (projectStatus?.uploaded ?? 0) ===
+                        0
                     }
                     className="hover:naxatw-bg-red-600 naxatw-rounded naxatw-bg-red naxatw-px-8 naxatw-py-3 naxatw-text-lg naxatw-font-bold naxatw-text-white naxatw-shadow-md naxatw-transition-all active:naxatw-scale-95 disabled:naxatw-cursor-not-allowed disabled:naxatw-bg-gray-400"
                   >
                     {startClassificationMutation.isPending ? (
                       <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
-                        <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-white naxatw-border-t-transparent"></div>
+                        <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-white naxatw-border-t-transparent" />
                         <span>{m.common_starting()}</span>
                       </div>
                     ) : (
@@ -556,11 +585,13 @@ export const ClassifyImageryDialog = ({
                   </button>
                   {isLoadingStatus && (
                     <div className="naxatw-flex naxatw-items-center naxatw-gap-2 naxatw-text-sm naxatw-text-gray-500">
-                      <div className="naxatw-h-4 naxatw-w-4 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-red"></div>
+                      <div className="naxatw-h-4 naxatw-w-4 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-red" />
                       <span>{m.common_loading()}</span>
                     </div>
                   )}
-                  {(projectStatus?.staged ?? 0) + (projectStatus?.uploaded ?? 0) === 0 &&
+                  {(projectStatus?.staged ?? 0) +
+                    (projectStatus?.uploaded ?? 0) ===
+                    0 &&
                     !isLoadingStatus && (
                       <span className="naxatw-text-sm naxatw-text-gray-500">
                         {m.classify_imagery_no_pending()}
@@ -574,70 +605,105 @@ export const ClassifyImageryDialog = ({
           {/* Status Summary */}
           {computedStats && (
             <div className="naxatw-flex-shrink-0 naxatw-rounded naxatw-bg-gray-50 naxatw-p-4">
-              {isClassifying && projectStatus && (projectStatus.total ?? 0) > 0 && (
-                <div className="naxatw-mb-4">
-                  <div className="naxatw-mb-2 naxatw-flex naxatw-items-center naxatw-justify-between">
-                    <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
-                      <div className="naxatw-h-4 naxatw-w-4 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-600"></div>
-                      <span className="naxatw-text-sm naxatw-font-medium naxatw-text-blue-700">
-                        {m.classify_imagery_classifying()}
+              {isClassifying &&
+                projectStatus &&
+                (projectStatus.total ?? 0) > 0 && (
+                  <div className="naxatw-mb-4">
+                    <div className="naxatw-mb-2 naxatw-flex naxatw-items-center naxatw-justify-between">
+                      <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
+                        <div className="naxatw-h-4 naxatw-w-4 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-600" />
+                        <span className="naxatw-text-sm naxatw-font-medium naxatw-text-blue-700">
+                          {m.classify_imagery_classifying()}
+                        </span>
+                      </div>
+                      <span className="naxatw-text-sm naxatw-font-semibold naxatw-text-gray-700">
+                        {computedStats.totalClassified} /{' '}
+                        {projectStatus.total ?? 0}
                       </span>
                     </div>
-                    <span className="naxatw-text-sm naxatw-font-semibold naxatw-text-gray-700">
-                      {computedStats.totalClassified} / {projectStatus.total ?? 0}
-                    </span>
+                    <div className="naxatw-h-2.5 naxatw-w-full naxatw-overflow-hidden naxatw-rounded-full naxatw-bg-gray-200">
+                      <div
+                        className="naxatw-h-2.5 naxatw-rounded-full naxatw-bg-blue-600 naxatw-transition-all naxatw-duration-500"
+                        style={{
+                          width: `${Math.round((computedStats.totalClassified / (projectStatus.total ?? 1)) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="naxatw-mt-1 naxatw-flex naxatw-items-center naxatw-justify-between">
+                      <p className="naxatw-text-xs naxatw-text-gray-500">
+                        {computedStats.processing > 0 &&
+                          m.classify_imagery_currently_processing({
+                            count: computedStats.processing,
+                          })}
+                        {m.classify_imagery_updates_interval()}
+                      </p>
+                      <button
+                        onClick={() => resetStaleMutation.mutate({ projectId })}
+                        disabled={resetStaleMutation.isPending}
+                        className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-border naxatw-border-amber-300 naxatw-bg-amber-50 naxatw-px-2 naxatw-py-1 naxatw-text-xs naxatw-font-medium naxatw-text-amber-700 naxatw-transition-colors hover:naxatw-bg-amber-100 disabled:naxatw-cursor-not-allowed disabled:naxatw-opacity-50"
+                        title={m.classify_imagery_reset_stuck_title()}
+                      >
+                        <span className="material-icons naxatw-text-sm">
+                          refresh
+                        </span>
+                        {resetStaleMutation.isPending
+                          ? m.common_resetting()
+                          : m.classify_imagery_reset_stuck()}
+                      </button>
+                    </div>
                   </div>
-                  <div className="naxatw-h-2.5 naxatw-w-full naxatw-overflow-hidden naxatw-rounded-full naxatw-bg-gray-200">
-                    <div
-                      className="naxatw-h-2.5 naxatw-rounded-full naxatw-bg-blue-600 naxatw-transition-all naxatw-duration-500"
-                      style={{
-                        width: `${Math.round((computedStats.totalClassified / (projectStatus.total ?? 1)) * 100)}%`,
-                      }}
-                    ></div>
-                  </div>
-                  <div className="naxatw-mt-1 naxatw-flex naxatw-items-center naxatw-justify-between">
-                    <p className="naxatw-text-xs naxatw-text-gray-500">
-                      {computedStats.processing > 0 &&
-                        m.classify_imagery_currently_processing({
-                          count: computedStats.processing,
-                        })}
-                      {m.classify_imagery_updates_interval()}
-                    </p>
-                    <button
-                      onClick={() => resetStaleMutation.mutate({ projectId })}
-                      disabled={resetStaleMutation.isPending}
-                      className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-border naxatw-border-amber-300 naxatw-bg-amber-50 naxatw-px-2 naxatw-py-1 naxatw-text-xs naxatw-font-medium naxatw-text-amber-700 naxatw-transition-colors hover:naxatw-bg-amber-100 disabled:naxatw-cursor-not-allowed disabled:naxatw-opacity-50"
-                      title={m.classify_imagery_reset_stuck_title()}
-                    >
-                      <span className="material-icons naxatw-text-sm">refresh</span>
-                      {resetStaleMutation.isPending
-                        ? m.common_resetting()
-                        : m.classify_imagery_reset_stuck()}
-                    </button>
-                  </div>
-                </div>
-              )}
+                )}
 
               <div className="naxatw-grid naxatw-grid-cols-2 naxatw-gap-4 sm:naxatw-grid-cols-3 md:naxatw-grid-cols-5">
                 <div className="naxatw-text-center">
-                  {renderValue(computedStats.uploaded, isClassifying, "naxatw-text-gray-500")}
-                  <div className="naxatw-text-sm naxatw-text-gray-600">{m.common_pending()}</div>
+                  {renderValue(
+                    computedStats.uploaded,
+                    isClassifying,
+                    'naxatw-text-gray-500',
+                  )}
+                  <div className="naxatw-text-sm naxatw-text-gray-600">
+                    {m.common_pending()}
+                  </div>
                 </div>
                 <div className="naxatw-text-center">
-                  {renderValue(computedStats.processing, isClassifying, "naxatw-text-blue-600")}
-                  <div className="naxatw-text-sm naxatw-text-gray-600">{m.common_processing()}</div>
+                  {renderValue(
+                    computedStats.processing,
+                    isClassifying,
+                    'naxatw-text-blue-600',
+                  )}
+                  <div className="naxatw-text-sm naxatw-text-gray-600">
+                    {m.common_processing()}
+                  </div>
                 </div>
                 <div className="naxatw-text-center">
-                  {renderValue(computedStats.complete, isClassifying, "naxatw-text-green-600")}
-                  <div className="naxatw-text-sm naxatw-text-gray-600">{m.common_no_issues()}</div>
+                  {renderValue(
+                    computedStats.complete,
+                    isClassifying,
+                    'naxatw-text-green-600',
+                  )}
+                  <div className="naxatw-text-sm naxatw-text-gray-600">
+                    {m.common_no_issues()}
+                  </div>
                 </div>
                 <div className="naxatw-text-center">
-                  {renderValue(computedStats.issues, isClassifying, "naxatw-text-orange-600")}
-                  <div className="naxatw-text-sm naxatw-text-gray-600">{m.common_issues()}</div>
+                  {renderValue(
+                    computedStats.issues,
+                    isClassifying,
+                    'naxatw-text-orange-600',
+                  )}
+                  <div className="naxatw-text-sm naxatw-text-gray-600">
+                    {m.common_issues()}
+                  </div>
                 </div>
                 <div className="naxatw-text-center">
-                  {renderValue(computedStats.duplicates, isClassifying, "naxatw-text-gray-600")}
-                  <div className="naxatw-text-sm naxatw-text-gray-600">{m.common_duplicates()}</div>
+                  {renderValue(
+                    computedStats.duplicates,
+                    isClassifying,
+                    'naxatw-text-gray-600',
+                  )}
+                  <div className="naxatw-text-sm naxatw-text-gray-600">
+                    {m.common_duplicates()}
+                  </div>
                 </div>
               </div>
             </div>
@@ -646,7 +712,9 @@ export const ClassifyImageryDialog = ({
           {/* High issue rate warning */}
           {hasHighIssueRate && computedStats && (
             <div className="naxatw-flex naxatw-flex-shrink-0 naxatw-items-start naxatw-gap-3 naxatw-rounded naxatw-border naxatw-border-amber-300 naxatw-bg-amber-50 naxatw-p-4">
-              <span className="material-icons naxatw-text-amber-600">warning</span>
+              <span className="material-icons naxatw-text-amber-600">
+                warning
+              </span>
               <div>
                 <p className="naxatw-font-semibold naxatw-text-amber-800">
                   {m.classify_imagery_dataset_quality_warning()}
@@ -665,7 +733,9 @@ export const ClassifyImageryDialog = ({
           {/* Completion message */}
           {isComplete && (
             <div className="naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded naxatw-border naxatw-border-green-300 naxatw-bg-green-50 naxatw-p-4">
-              <span className="material-icons naxatw-text-green-600">check_circle</span>
+              <span className="material-icons naxatw-text-green-600">
+                check_circle
+              </span>
               <div>
                 <p className="naxatw-font-semibold naxatw-text-green-800">
                   {m.classify_imagery_complete_title()}
@@ -713,7 +783,11 @@ export const ClassifyImageryDialog = ({
             ) : (
               <span />
             )}
-            <Button variant="outline" className="naxatw-border-gray-300" onClick={handleClose}>
+            <Button
+              variant="outline"
+              className="naxatw-border-gray-300"
+              onClick={handleClose}
+            >
               {m.common_close()}
             </Button>
           </div>
@@ -733,12 +807,16 @@ interface IVerifyImageryDialogProps {
   projectId: string;
 }
 
-export const VerifyImageryDialog = ({ isOpen, onClose, projectId }: IVerifyImageryDialogProps) => {
+export const VerifyImageryDialog = ({
+  isOpen,
+  onClose,
+  projectId,
+}: IVerifyImageryDialogProps) => {
   const queryClient = useQueryClient();
 
   const handleClose = () => {
     queryClient.invalidateQueries({
-      queryKey: ["project-task-states", projectId],
+      queryKey: ['project-task-states', projectId],
     });
     onClose();
   };
@@ -759,7 +837,11 @@ export const VerifyImageryDialog = ({ isOpen, onClose, projectId }: IVerifyImage
         </div>
 
         <div className="naxatw-flex naxatw-w-full naxatw-flex-shrink-0 naxatw-justify-end naxatw-border-t naxatw-pt-4">
-          <Button variant="outline" className="naxatw-border-gray-300" onClick={handleClose}>
+          <Button
+            variant="outline"
+            className="naxatw-border-gray-300"
+            onClick={handleClose}
+          >
             {m.common_close()}
           </Button>
         </div>

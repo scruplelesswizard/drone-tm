@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@Components/RadixComponents/Button";
-import { m } from "@/paraglide/messages";
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@Components/RadixComponents/Button';
+import { m } from '@/paraglide/messages';
 
 // QField registers the `qfield://` URI scheme (BROWSABLE) in its Android
 // manifest, so both the custom scheme and an Android intent:// URL can launch
 // the app externally. See opengisch/QField AndroidManifest.xml.
-const QFIELD_ANDROID_PKG = "ch.opengis.qfield";
-const QFIELD_STORE_URL = "https://qfield.org/get/";
+const QFIELD_ANDROID_PKG = 'ch.opengis.qfield';
+const QFIELD_STORE_URL = 'https://qfield.org/get/';
 
-type MobileOS = "android" | "ios" | "other";
+type MobileOS = 'android' | 'ios' | 'other';
 
 /**
  * Read the presigned import URL from the URL fragment (e.g.
@@ -16,16 +16,16 @@ type MobileOS = "android" | "ios" | "other";
  * param keeps the download URL out of server access logs and Referer headers.
  */
 function readImportUrl(): string | null {
-  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  const url = params.get("import");
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const url = params.get('import');
   return url && /^https?:\/\//i.test(url) ? url : null;
 }
 
 function detectOS(): MobileOS {
-  const ua = navigator.userAgent || "";
-  if (/android/i.test(ua)) return "android";
-  if (/iphone|ipad|ipod/i.test(ua)) return "ios";
-  return "other";
+  const ua = navigator.userAgent || '';
+  if (/android/i.test(ua)) return 'android';
+  if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
+  return 'other';
 }
 
 function CenteredMessage({ children }: { children: React.ReactNode }) {
@@ -49,8 +49,8 @@ export default function QFieldOpen() {
   useEffect(() => {
     let cancelled = false;
     if (importUrl) {
-      fetch(importUrl, { method: "HEAD" })
-        .then((res) => {
+      fetch(importUrl, { method: 'HEAD' })
+        .then(res => {
           if (!cancelled && !res.ok) setProjectMissing(true);
         })
         .catch(() => {
@@ -71,7 +71,7 @@ export default function QFieldOpen() {
     // current unsigned public URL and future-proofs signed ones.
     const encodedImport = encodeURIComponent(importUrl);
 
-    if (os === "android") {
+    if (os === 'android') {
       // Native fallback: opens QField if installed, otherwise the browser
       // redirects to the store via S.browser_fallback_url.
       window.location.href =
@@ -100,7 +100,7 @@ export default function QFieldOpen() {
           {m.qfield_open_title()}
         </h1>
 
-        <p className="naxatw-rounded-lg naxatw-bg-red-50 naxatw-px-4 naxatw-py-3 naxatw-text-sm naxatw-text-[#D73F3F]">
+        <p className="naxatw-bg-red-50 naxatw-rounded-lg naxatw-px-4 naxatw-py-3 naxatw-text-sm naxatw-text-[#D73F3F]">
           {m.qfield_open_requirement()}
         </p>
 
@@ -119,7 +119,7 @@ export default function QFieldOpen() {
         </Button>
 
         <p className="naxatw-text-sm naxatw-text-gray-600">
-          {m.qfield_open_no_app()}{" "}
+          {m.qfield_open_no_app()}{' '}
           <a
             href={QFIELD_STORE_URL}
             target="_blank"
@@ -128,7 +128,7 @@ export default function QFieldOpen() {
           >
             {m.qfield_open_install_link()}
           </a>
-          {" - "}
+          {' - '}
           {m.qfield_open_rescan()}
         </p>
       </div>

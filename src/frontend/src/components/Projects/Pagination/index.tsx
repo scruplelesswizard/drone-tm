@@ -1,11 +1,11 @@
 /* eslint-disable no-nested-ternary */
-import { Button } from "@Components/RadixComponents/Button";
-import { FlexRow } from "@Components/common/Layouts";
-import { Input, Select } from "@Components/common/FormUI";
-import usePagination, { DOTS } from "@Hooks/usePagination";
-import { useMemo } from "react";
-import { rowsPerPageOptions } from "@Constants/index";
-import { m } from "@/paraglide/messages";
+import { Button } from '@Components/RadixComponents/Button';
+import { FlexRow } from '@Components/common/Layouts';
+import { Input, Select } from '@Components/common/FormUI';
+import usePagination, { DOTS } from '@Hooks/usePagination';
+import { useMemo } from 'react';
+import { rowsPerPageOptions } from '@Constants/index';
+import { m } from '@/paraglide/messages';
 
 interface IPaginationProps {
   totalCount: number;
@@ -42,10 +42,12 @@ export default function Pagination({
     <FlexRow className="naxatw-fixed naxatw-bottom-0 naxatw-left-0 naxatw-right-0 naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-between naxatw-gap-4 naxatw-bg-white naxatw-px-3 naxatw-py-2.5 md:naxatw-absolute md:naxatw-flex md:naxatw-flex-row md:naxatw-gap-0 lg:naxatw-px-16">
       <FlexRow className="naxatw-w-full naxatw-items-center naxatw-justify-between naxatw-gap-2 md:naxatw-w-[78%]">
         <FlexRow gap={4} className="naxatw-items-center">
-          <p className="naxatw-text-sm naxatw-font-bold">{m.projects_pagination_row_per_page()}</p>
+          <p className="naxatw-text-sm naxatw-font-bold">
+            {m.projects_pagination_row_per_page()}
+          </p>
           <Select
             options={rowsPerPageOptions}
-            onChange={(value) =>
+            onChange={value =>
               handlePaginationState({
                 selectedNumberOfRows: value,
                 activePage: 1,
@@ -61,14 +63,17 @@ export default function Pagination({
         </FlexRow>
         <FlexRow gap={2}>
           <FlexRow className="naxatw-items-center naxatw-gap-4">
-            <p className="naxatw-text-sm naxatw-font-bold">{m.projects_pagination_go_to_page()}</p>
+            <p className="naxatw-text-sm naxatw-font-bold">
+              {m.projects_pagination_go_to_page()}
+            </p>
             <Input
               type="number"
               defaultValue={currentPage}
               min={1}
-              onChange={(e) => {
+              onChange={e => {
                 const page = e.target.value ? Number(e.target.value) : 1;
-                const validPage = page >= lastPage ? lastPage : page <= 1 ? 1 : page;
+                const validPage =
+                  page >= lastPage ? lastPage : page <= 1 ? 1 : page;
                 handlePaginationState({ activePage: validPage });
               }}
               className="no-spinner naxatw-w-8 naxatw-border-b-2 naxatw-px-1 naxatw-py-0 naxatw-text-center"
@@ -86,7 +91,7 @@ export default function Pagination({
           disabled={currentPage <= 1}
         />
         <FlexRow className="naxatw-items-center naxatw-justify-center naxatw-gap-3">
-          {paginationRange.map((pageNumber) => {
+          {paginationRange.map(pageNumber => {
             if (pageNumber === DOTS) {
               return <span key={pageNumber}>&#8230;</span>;
             }
@@ -94,8 +99,10 @@ export default function Pagination({
               <Button
                 size="sm"
                 key={pageNumber}
-                className={`!naxatw-text-gray-500 naxatw-no-underline ${currentPage === pageNumber ? "naxatw-rounded-b-none naxatw-border-b-2 naxatw-border-gray-800 !naxatw-text-gray-800" : ""}`}
-                onClick={() => handlePaginationState({ activePage: pageNumber })}
+                className={`!naxatw-text-gray-500 naxatw-no-underline ${currentPage === pageNumber ? 'naxatw-rounded-b-none naxatw-border-b-2 naxatw-border-gray-800 !naxatw-text-gray-800' : ''}`}
+                onClick={() =>
+                  handlePaginationState({ activePage: pageNumber })
+                }
               >
                 {pageNumber}
               </Button>

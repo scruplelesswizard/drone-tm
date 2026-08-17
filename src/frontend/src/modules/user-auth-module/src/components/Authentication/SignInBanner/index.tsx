@@ -1,6 +1,6 @@
-import { Flex } from "@Components/common/Layouts";
-import BannerImage from "@Assets/images/login-banner.png";
-import { m } from "@/paraglide/messages";
+import { Flex } from '@Components/common/Layouts';
+import BannerImage from '@Assets/images/login-banner.png';
+import { m } from '@/paraglide/messages';
 
 export default function SignInBanner() {
   return (

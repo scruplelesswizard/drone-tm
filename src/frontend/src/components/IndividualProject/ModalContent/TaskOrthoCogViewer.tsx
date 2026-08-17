@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import Map from "ol/Map";
-import View from "ol/View";
-import TileLayer from "ol/layer/WebGLTile";
-import GeoTIFF from "ol/source/GeoTIFF";
-import Zoom from "ol/control/Zoom";
-import "ol/ol.css";
-import { m } from "@/paraglide/messages";
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import TileLayer from 'ol/layer/WebGLTile';
+import GeoTIFF from 'ol/source/GeoTIFF';
+import Zoom from 'ol/control/Zoom';
+import 'ol/ol.css';
+import { m } from '@/paraglide/messages';
 
 interface TaskOrthoCogViewerProps {
   signedUrl: string;
@@ -14,7 +14,11 @@ interface TaskOrthoCogViewerProps {
   onClose: () => void;
 }
 
-const TaskOrthoCogViewer = ({ signedUrl, title, onClose }: TaskOrthoCogViewerProps) => {
+const TaskOrthoCogViewer = ({
+  signedUrl,
+  title,
+  onClose,
+}: TaskOrthoCogViewerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -29,9 +33,9 @@ const TaskOrthoCogViewer = ({ signedUrl, title, onClose }: TaskOrthoCogViewerPro
     let raf = 0;
 
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    window.addEventListener("keydown", handleKey);
+    window.addEventListener('keydown', handleKey);
 
     (async () => {
       // ODM fast-ortho COGs are RGBA (3 colour bands + alpha). Letting OL
@@ -42,8 +46,8 @@ const TaskOrthoCogViewer = ({ signedUrl, title, onClose }: TaskOrthoCogViewerPro
         sources: [{ url: signedUrl, nodata: 0 }],
       });
 
-      source.on("error", (event: any) => {
-        const detail = event?.error?.message || "Failed to load orthophoto.";
+      source.on('error', (event: any) => {
+        const detail = event?.error?.message || 'Failed to load orthophoto.';
         if (!cancelled) setLoadError(detail);
       });
 
@@ -69,18 +73,22 @@ const TaskOrthoCogViewer = ({ signedUrl, title, onClose }: TaskOrthoCogViewerPro
       // explicit min/maxResolution bounds instead. The GeoTIFF source still
       // picks the right overview to fetch based on the view's resolution.
       const sourceResolutions: number[] | undefined = viewConfig.resolutions;
-      const smallestRes = sourceResolutions?.[sourceResolutions.length - 1] ?? 0.01;
+      const smallestRes =
+        sourceResolutions?.[sourceResolutions.length - 1] ?? 0.01;
       const largestRes = sourceResolutions?.[0] ?? 100;
 
       // Pick an initial resolution that fits the full extent into the
       // current modal viewport, with a bit of padding. Use window dims as
       // a stand-in for the not-yet-laid-out container - the post-mount
       // view.fit() call below refines this once map.getSize() is known.
-      const extent: [number, number, number, number] | undefined = viewConfig.extent;
+      const { extent } = viewConfig;
       const approxW = window.innerWidth * 0.8;
       const approxH = window.innerHeight * 0.85;
       const fitRes = extent
-        ? Math.max((extent[2] - extent[0]) / approxW, (extent[3] - extent[1]) / approxH) * 1.1
+        ? Math.max(
+            (extent[2] - extent[0]) / approxW,
+            (extent[3] - extent[1]) / approxH,
+          ) * 1.1
         : largestRes;
 
       const cfg: any = {
@@ -126,7 +134,7 @@ const TaskOrthoCogViewer = ({ signedUrl, title, onClose }: TaskOrthoCogViewerPro
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
-      window.removeEventListener("keydown", handleKey);
+      window.removeEventListener('keydown', handleKey);
       if (map) {
         map.setTarget(undefined);
       }
@@ -137,7 +145,7 @@ const TaskOrthoCogViewer = ({ signedUrl, title, onClose }: TaskOrthoCogViewerPro
   return createPortal(
     <div
       className="naxatw-fixed naxatw-inset-0 naxatw-z-[11113] naxatw-flex naxatw-items-center naxatw-justify-center naxatw-bg-black/60"
-      onClick={(e) => {
+      onClick={e => {
         // Click on the backdrop (not on the panel) dismisses.
         if (e.target === e.currentTarget) onClose();
       }}
@@ -161,7 +169,7 @@ const TaskOrthoCogViewer = ({ signedUrl, title, onClose }: TaskOrthoCogViewerPro
         </div>
         <div ref={containerRef} className="naxatw-min-h-0 naxatw-flex-1" />
         {loadError && (
-          <div className="naxatw-border-t naxatw-border-red-200 naxatw-bg-red-50 naxatw-px-4 naxatw-py-2 naxatw-text-xs naxatw-text-red-800">
+          <div className="naxatw-border-red-200 naxatw-bg-red-50 naxatw-text-red-800 naxatw-border-t naxatw-px-4 naxatw-py-2 naxatw-text-xs">
             {loadError}
           </div>
         )}

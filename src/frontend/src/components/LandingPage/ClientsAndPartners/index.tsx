@@ -1,10 +1,10 @@
-import Image from "@Components/RadixComponents/Image";
-import { motion } from "framer-motion";
-import worldBankLogo from "@Assets/images/LandingPage/WorldbankLogo.png";
-import { fadeUpVariant } from "@Constants/animations";
-import gfdrrLogo from "@Assets/images/GFDRR-logo.png";
-import { FlexRow } from "@Components/common/Layouts";
-import { m } from "@/paraglide/messages";
+import Image from '@Components/RadixComponents/Image';
+import { motion } from 'framer-motion';
+import worldBankLogo from '@Assets/images/LandingPage/WorldbankLogo.png';
+import { fadeUpVariant } from '@Constants/animations';
+import gfdrrLogo from '@Assets/images/GFDRR-logo.png';
+import { FlexRow } from '@Components/common/Layouts';
+import { m } from '@/paraglide/messages';
 
 export default function ClientAndPartners() {
   return (
@@ -28,9 +28,19 @@ export default function ClientAndPartners() {
             transition={{ duration: 0.7 }}
             viewport={{ once: true }}
           >
-            <FlexRow className="naxatw-flex naxatw-items-center naxatw-justify-center" gap={10}>
-              <Image src={worldBankLogo} alt={m.landing_world_bank_logo_alt()} />
-              <Image src={gfdrrLogo} alt={m.landing_gfdrr_logo_alt()} width={260} />
+            <FlexRow
+              className="naxatw-flex naxatw-items-center naxatw-justify-center"
+              gap={10}
+            >
+              <Image
+                src={worldBankLogo}
+                alt={m.landing_world_bank_logo_alt()}
+              />
+              <Image
+                src={gfdrrLogo}
+                alt={m.landing_gfdrr_logo_alt()}
+                width={260}
+              />
             </FlexRow>
           </motion.div>
         </div>

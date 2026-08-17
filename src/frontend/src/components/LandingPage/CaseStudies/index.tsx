@@ -1,7 +1,10 @@
-import { motion } from "framer-motion";
-import { containerAnimationVariant, fadeUpVariant } from "@Constants/animations";
-import { caseStudiesData } from "@Constants/landingPage";
-import { m } from "@/paraglide/messages";
+import { motion } from 'framer-motion';
+import {
+  containerAnimationVariant,
+  fadeUpVariant,
+} from '@Constants/animations';
+import { caseStudiesData } from '@Constants/landingPage';
+import { m } from '@/paraglide/messages';
 
 export default function CaseStudies() {
   return (
@@ -22,7 +25,7 @@ export default function CaseStudies() {
           viewport={{ once: true }}
           className="naxatw-mt-10 naxatw-grid naxatw-grid-cols-1 naxatw-gap-6 md:naxatw-grid-cols-3"
         >
-          {caseStudiesData().map((data) => (
+          {caseStudiesData().map(data => (
             <motion.div
               key={data.id}
               variants={fadeUpVariant}

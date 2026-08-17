@@ -1,56 +1,60 @@
-import ErrorMessage from "@Components/common/ErrorMessage";
-import { FormControl, Input } from "@Components/common/FormUI";
-import { FlexRow } from "@Components/common/Layouts";
-import { Button } from "@Components/RadixComponents/Button";
-import { uploadToOAM } from "@Services/project";
-import { toggleModal } from "@Store/actions/common";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getLocalStorageValue } from "@Utils/getLocalStorageValue";
-import { useState, KeyboardEvent } from "react";
-import { useDispatch } from "react-redux";
-import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
-import { m } from "@/paraglide/messages";
+import ErrorMessage from '@Components/common/ErrorMessage';
+import { FormControl, Input } from '@Components/common/FormUI';
+import { FlexRow } from '@Components/common/Layouts';
+import { Button } from '@Components/RadixComponents/Button';
+import { uploadToOAM } from '@Services/project';
+import { toggleModal } from '@Store/actions/common';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
+import { useState, KeyboardEvent } from 'react';
+import { useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { m } from '@/paraglide/messages';
 
 const UploadToOAM = () => {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
-  const pathname = window.location.pathname?.split("/");
+  const pathname = window.location.pathname?.split('/');
   const projectId = pathname?.[2];
-  const userProfile = getLocalStorageValue("userprofile");
-  const [inputTag, setInputTag] = useState("");
-  const [error, setError] = useState("");
-  const [tagList, setTagList] = useState<string[]>(["dronetm", "hotosm", "naxa"]);
+  const userProfile = getLocalStorageValue('userprofile');
+  const [inputTag, setInputTag] = useState('');
+  const [error, setError] = useState('');
+  const [tagList, setTagList] = useState<string[]>([
+    'dronetm',
+    'hotosm',
+    'naxa',
+  ]);
 
   const addInputTagOnList = () => {
     if (!inputTag) return setError(m.common_required());
-    if (tagList?.find((tag) => tag === inputTag))
+    if (tagList?.find(tag => tag === inputTag))
       return setError(m.individual_project_oam_tag_exists());
-    setInputTag("");
-    setTagList((prev) => [...prev, inputTag]);
+    setInputTag('');
+    setTagList(prev => [...prev, inputTag]);
     return () => {};
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       addInputTagOnList();
     }
     return () => {};
   };
 
   const handleDeleteTag = (tag: string) => {
-    setTagList((prev) => {
-      const newList = prev?.filter((prevTag) => prevTag !== tag);
+    setTagList(prev => {
+      const newList = prev?.filter(prevTag => prevTag !== tag);
       return newList;
     });
   };
 
   const { mutate } = useMutation({
     mutationFn: uploadToOAM,
-    onSuccess: (data) => {
+    onSuccess: data => {
       dispatch(toggleModal());
       queryClient.invalidateQueries({
-        queryKey: ["project-detail", projectId],
+        queryKey: ['project-detail', projectId],
       });
       if (data?.data?.detail) {
         toast.success(data?.data?.detail);
@@ -79,9 +83,9 @@ const UploadToOAM = () => {
       <FormControl className="naxatw-relative">
         <Input
           placeholder={m.individual_project_oam_tag_placeholder()}
-          onChange={(e) => {
+          onChange={e => {
             setInputTag(e.currentTarget.value?.trim());
-            setError("");
+            setError('');
           }}
           value={inputTag}
           onKeyDown={handleKeyDown}

@@ -1,22 +1,24 @@
-import area from "@Assets/images/area-icon.png";
-import lock from "@Assets/images/lock.png";
-import { FlexColumn } from "@Components/common/Layouts";
-import { useState } from "react";
-import { m } from "@/paraglide/messages";
+import area from '@Assets/images/area-icon.png';
+import lock from '@Assets/images/lock.png';
+import { FlexColumn } from '@Components/common/Layouts';
+import { useState } from 'react';
+import { m } from '@/paraglide/messages';
 
 const Legend = () => {
-  const [showLegendItems, setShowLegendItems] = useState<Boolean>(true);
+  const [showLegendItems, setShowLegendItems] = useState<boolean>(true);
   return (
     <div className="naxatw-absolute naxatw-bottom-2 naxatw-left-3 naxatw-z-50 naxatw-w-52 naxatw-rounded-sm naxatw-bg-white naxatw-p-3">
       <FlexColumn className="naxatw-gap-2">
         <div className="naxatw-flex naxatw-justify-between">
-          <div className="naxatw-text-base naxatw-font-semibold">{m.legend_title()}</div>
+          <div className="naxatw-text-base naxatw-font-semibold">
+            {m.legend_title()}
+          </div>
           <i
             className="material-icons naxatw-cursor-pointer naxatw-rounded-full hover:naxatw-bg-redlight"
             role="presentation"
             onClick={() => setShowLegendItems(!showLegendItems)}
           >
-            {showLegendItems ? "expand_more" : "expand_less"}
+            {showLegendItems ? 'expand_more' : 'expand_less'}
           </i>
         </div>
         {showLegendItems && (
@@ -47,7 +49,9 @@ const Legend = () => {
             {/* READY_FOR_PROCESSING */}
             <div className="naxatw-flex naxatw-gap-2">
               <div className="naxatw-h-5 naxatw-w-5 naxatw-bg-[#9ec7ff]" />
-              <p className="naxatw-text-sm">{m.legend_ready_for_processing()}</p>
+              <p className="naxatw-text-sm">
+                {m.legend_ready_for_processing()}
+              </p>
             </div>
             {/* IMAGE_PROCESSING_STARTED */}
             <div className="naxatw-flex naxatw-gap-2">

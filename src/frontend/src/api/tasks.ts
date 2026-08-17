@@ -1,12 +1,11 @@
-/* eslint-disable import/prefer-default-export */
 import {
   getAllTaskAssetsInfo,
   getIndividualTask,
   getTaskAssetsInfo,
   getTaskByProjectAndIndex,
   getTaskWaypoint,
-} from "@Services/tasks";
-import { useQuery, UseQueryOptions } from "@tanstack/react-query";
+} from '@Services/tasks';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 
 export const useGetTaskWaypointQuery = (
   projectId: string,
@@ -20,7 +19,7 @@ export const useGetTaskWaypointQuery = (
 ) => {
   return useQuery({
     queryKey: [
-      "task-waypoints",
+      'task-waypoints',
       projectId,
       taskId,
       mode,
@@ -50,7 +49,7 @@ export const useGetIndividualTaskQuery = (
   queryOptions?: Partial<UseQueryOptions>,
 ) => {
   return useQuery({
-    queryKey: ["task-description"],
+    queryKey: ['task-description'],
     enabled: !!taskId,
     queryFn: () => getIndividualTask(taskId),
     select: (res: any) => res.data,
@@ -64,7 +63,7 @@ export const useGetTaskByIndexQuery = (
   queryOptions?: Partial<UseQueryOptions>,
 ) => {
   return useQuery({
-    queryKey: ["task-by-index", projectId, taskIndex],
+    queryKey: ['task-by-index', projectId, taskIndex],
     enabled: !!(projectId && taskIndex),
     queryFn: () => getTaskByProjectAndIndex(projectId, taskIndex),
     select: (res: any) => res.data,
@@ -78,7 +77,7 @@ export const useGetTaskAssetsInfo = (
   queryOptions?: Partial<UseQueryOptions>,
 ) => {
   return useQuery({
-    queryKey: ["task-assets-info", projectId, taskId],
+    queryKey: ['task-assets-info', projectId, taskId],
     enabled: !!taskId,
     queryFn: () => getTaskAssetsInfo(projectId, taskId),
     select: (res: any) => res.data,
@@ -91,7 +90,7 @@ export const useGetAllTaskAssetsInfo = (
   queryOptions?: Partial<UseQueryOptions>,
 ) => {
   return useQuery({
-    queryKey: ["all-task-assets-info", projectId],
+    queryKey: ['all-task-assets-info', projectId],
     enabled: !!projectId,
     queryFn: () => getAllTaskAssetsInfo(projectId),
     select: (res: any) => res.data,

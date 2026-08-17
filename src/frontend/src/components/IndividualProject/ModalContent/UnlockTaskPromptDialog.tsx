@@ -1,5 +1,5 @@
-import { Button } from "@Components/RadixComponents/Button";
-import { m } from "@/paraglide/messages";
+import { Button } from '@Components/RadixComponents/Button';
+import { m } from '@/paraglide/messages';
 
 interface IUnlockTaskPromptDialogProps {
   handleUnlockTask: () => void;
@@ -20,7 +20,10 @@ const UnlockTaskPromptDialog = ({
           : m.individual_project_unlock_task_confirm()}
       </div>
       <div className="naxatw-flex naxatw-justify-end naxatw-gap-3 naxatw-py-3">
-        <Button className="!naxatw-text-red" onClick={() => setShowUnlockDialog(false)}>
+        <Button
+          className="!naxatw-text-red"
+          onClick={() => setShowUnlockDialog(false)}
+        >
           {m.common_cancel()}
         </Button>
         <Button
@@ -30,7 +33,9 @@ const UnlockTaskPromptDialog = ({
             setShowUnlockDialog(false);
           }}
         >
-          {isRevert ? m.individual_project_revert() : m.individual_project_unlock()}
+          {isRevert
+            ? m.individual_project_revert()
+            : m.individual_project_unlock()}
         </Button>
       </div>
     </div>

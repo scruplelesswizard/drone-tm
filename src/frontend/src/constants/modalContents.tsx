@@ -1,21 +1,21 @@
-import ExitCreateProjectModal from "@Components/CreateProject/ExitCreateProjectModal";
-import DocumentPreviewModal from "@Components/Dashboard/RequestLogs/ModalContent/DocumentPreviewModal";
-import ChooseTakeOffPointOptions from "@Components/DroneOperatorTask/ModalContent/ChooseTakeOffPointOptions";
-import ChooseProcessingParameter from "@Components/IndividualProject/ModalContent/ChooseProcessingParameter";
-import ProcessingStatusDialog from "@Components/IndividualProject/ModalContent/ProcessingStatusDialog";
-import UploadToOAM from "@Components/IndividualProject/ModalContent/UploadToOAM";
-import { ReactElement } from "react";
+import ExitCreateProjectModal from '@Components/CreateProject/ExitCreateProjectModal';
+import DocumentPreviewModal from '@Components/Dashboard/RequestLogs/ModalContent/DocumentPreviewModal';
+import ChooseTakeOffPointOptions from '@Components/DroneOperatorTask/ModalContent/ChooseTakeOffPointOptions';
+import ChooseProcessingParameter from '@Components/IndividualProject/ModalContent/ChooseProcessingParameter';
+import ProcessingStatusDialog from '@Components/IndividualProject/ModalContent/ProcessingStatusDialog';
+import UploadToOAM from '@Components/IndividualProject/ModalContent/UploadToOAM';
+import { ReactElement } from 'react';
 
 export type ModalContentsType =
-  | "sign-up-success"
-  | "quit-create-project"
-  | "update-flight-take-off-point"
-  | "document-preview"
-  | "choose-processing-parameter"
-  | "processing-status"
-  | "upload-to-oam"
+  | 'sign-up-success'
+  | 'quit-create-project'
+  | 'update-flight-take-off-point'
+  | 'document-preview'
+  | 'choose-processing-parameter'
+  | 'processing-status'
+  | 'upload-to-oam'
   | null;
-export type PromptDialogContentsType = "delete-layer" | null;
+export type PromptDialogContentsType = 'delete-layer' | null;
 
 type ModalReturnType = {
   title: string;
@@ -26,66 +26,68 @@ type ModalReturnType = {
 
 export function getModalContent(content: ModalContentsType): ModalReturnType {
   switch (content) {
-    case "sign-up-success":
+    case 'sign-up-success':
       return {
-        title: "",
+        title: '',
         content: <></>,
       };
-    case "quit-create-project":
+    case 'quit-create-project':
       return {
-        title: "Unsaved Changes!",
+        title: 'Unsaved Changes!',
         content: <ExitCreateProjectModal />,
       };
-    case "choose-processing-parameter":
+    case 'choose-processing-parameter':
       return {
-        className: "naxatw-w-[92vw] naxatw-max-w-[25rem]",
-        title: "Start Processing",
+        className: 'naxatw-w-[92vw] naxatw-max-w-[25rem]',
+        title: 'Start Processing',
         content: <ChooseProcessingParameter />,
       };
-    case "processing-status":
+    case 'processing-status':
       return {
-        className: "naxatw-w-[92vw] naxatw-max-w-[44rem]",
-        title: "Processing Status",
+        className: 'naxatw-w-[92vw] naxatw-max-w-[44rem]',
+        title: 'Processing Status',
         content: <ProcessingStatusDialog />,
       };
 
-    case "update-flight-take-off-point":
+    case 'update-flight-take-off-point':
       return {
-        className: "naxatw-w-[92vw] naxatw-max-w-[25rem]",
-        title: "Take-off Point",
+        className: 'naxatw-w-[92vw] naxatw-max-w-[25rem]',
+        title: 'Take-off Point',
         content: <ChooseTakeOffPointOptions />,
       };
-    case "document-preview":
+    case 'document-preview':
       return {
-        className: "!naxatw-w-[95vw] naxatw-h-[95vh] md:!naxatw-w-[60vw]",
-        title: "Document Preview",
+        className: '!naxatw-w-[95vw] naxatw-h-[95vh] md:!naxatw-w-[60vw]',
+        title: 'Document Preview',
         content: <DocumentPreviewModal />,
       };
-    case "upload-to-oam":
+    case 'upload-to-oam':
       return {
-        className: "naxatw-w-[92vw] naxatw-max-w-[34rem]",
-        title: "Upload To OAM (Open Aerial Map)",
+        className: 'naxatw-w-[92vw] naxatw-max-w-[34rem]',
+        title: 'Upload To OAM (Open Aerial Map)',
         content: <UploadToOAM />,
       };
 
     default:
       return {
-        title: "",
+        title: '',
         content: <></>,
       };
   }
 }
 
-export function getPromptDialogContent(content: PromptDialogContentsType): ModalReturnType {
+export function getPromptDialogContent(
+  content: PromptDialogContentsType,
+): ModalReturnType {
   switch (content) {
-    case "delete-layer":
+    case 'delete-layer':
       return {
-        title: "",
+        title: '',
         content: <></>,
       };
     default:
       return {
-        title: "",
+        title: '',
         content: <></>,
       };
   }

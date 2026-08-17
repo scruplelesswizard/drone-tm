@@ -1,12 +1,11 @@
-/* eslint-disable no-param-reassign */
-import { useEffect, useMemo, useRef } from "react";
-import { LngLatLike, MapMouseEvent } from "maplibre-gl";
-import bbox from "@turf/bbox";
-import { toast } from "react-toastify";
-import { Feature, FeatureCollection } from "geojson";
+import { useEffect, useMemo, useRef } from 'react';
+import { LngLatLike, MapMouseEvent } from 'maplibre-gl';
+import bbox from '@turf/bbox';
+import { toast } from 'react-toastify';
+import { Feature, FeatureCollection } from 'geojson';
 // import { v4 as uuidv4 } from 'uuid';
-import { useMap } from "../MapContext";
-import { IVectorLayer } from "../types";
+import { useMap } from '../MapContext';
+import { IVectorLayer } from '../types';
 
 export default function VectorLayer({
   id,
@@ -17,8 +16,8 @@ export default function VectorLayer({
   visibleOnMap = true,
   hasImage = false,
   image,
-  symbolPlacement = "point",
-  iconAnchor = "center",
+  symbolPlacement = 'point',
+  iconAnchor = 'center',
   imageLayerOptions,
   zoomToExtent = false,
   onDrag,
@@ -46,7 +45,7 @@ export default function VectorLayer({
 
     if (!map.getSource(sourceId)) {
       map.addSource(sourceId, {
-        type: "geojson",
+        type: 'geojson',
         data: geojson,
       });
     }
@@ -58,7 +57,7 @@ export default function VectorLayer({
       }
       map.addLayer({
         id: layerId,
-        type: "line",
+        type: 'line',
         source: sourceId,
         layout: {},
         ...layerOptions,
@@ -82,14 +81,14 @@ export default function VectorLayer({
         if (visibleOnMap && !map.getLayer(imageId) && map.getSource(sourceId)) {
           map.addLayer({
             id: imageId,
-            type: "symbol",
+            type: 'symbol',
             source: sourceId,
             layout: {
-              "symbol-placement": symbolPlacement,
-              "icon-image": imageId,
-              "icon-size": 0.8,
-              "icon-overlap": "always",
-              "icon-anchor": iconAnchor,
+              'symbol-placement': symbolPlacement,
+              'icon-image': imageId,
+              'icon-size': 0.8,
+              'icon-overlap': 'always',
+              'icon-anchor': iconAnchor,
               ...imageLayoutOptions,
             },
             ...imageLayerOptions,
@@ -136,18 +135,18 @@ export default function VectorLayer({
     if (!map) return () => {};
     function onMouseOver() {
       if (!map || !hasInteractions.current) return;
-      map.getCanvas().style.cursor = "pointer";
+      map.getCanvas().style.cursor = 'pointer';
     }
     function onMouseLeave() {
       if (!map || !hasInteractions.current) return;
-      map.getCanvas().style.cursor = "";
+      map.getCanvas().style.cursor = '';
     }
-    map.on("mouseover", sourceId, onMouseOver);
-    map.on("mouseleave", sourceId, onMouseLeave);
+    map.on('mouseover', sourceId, onMouseOver);
+    map.on('mouseleave', sourceId, onMouseLeave);
     // remove event handlers on unmount
     return () => {
-      map.off("mouseover", onMouseOver);
-      map.off("mouseleave", onMouseLeave);
+      map.off('mouseover', onMouseOver);
+      map.off('mouseleave', onMouseLeave);
     };
   }, [map, sourceId]);
 
@@ -161,11 +160,14 @@ export default function VectorLayer({
       let parsedGeojson: Feature | FeatureCollection;
 
       // Parse GeoJSON if it's a string
-      if (typeof geojson === "string") {
+      if (typeof geojson === 'string') {
         try {
           parsedGeojson = JSON.parse(geojson) as Feature | FeatureCollection;
         } catch (error) {
-          toast.error("Invalid GeoJSON string:", (error as Record<string, any>)?.message);
+          toast.error(
+            'Invalid GeoJSON string:',
+            (error as Record<string, any>)?.message,
+          );
           return;
         }
       } else {
@@ -185,23 +187,23 @@ export default function VectorLayer({
         // animate: false,
         duration: 300,
       });
-      map.off("idle", handleZoom);
+      map.off('idle', handleZoom);
     };
 
-    map.on("idle", handleZoom);
+    map.on('idle', handleZoom);
     // eslint-disable-next-line consistent-return
     return () => {
-      map.off("idle", handleZoom);
+      map.off('idle', handleZoom);
     };
   }, [map, geojson, zoomToExtent]);
 
   // add select interaction & return properties on feature select
   useEffect(() => {
-    if (!map || !interactions.includes("feature")) return () => {};
+    if (!map || !interactions.includes('feature')) return () => {};
 
     function handleSelectInteraction(event: MapMouseEvent) {
       if (!map) return;
-      map.getCanvas().style.cursor = "pointer";
+      map.getCanvas().style.cursor = 'pointer';
       // @ts-ignore
       const { features } = event;
       if (!features?.length) return;
@@ -210,14 +212,15 @@ export default function VectorLayer({
       onFeatureSelect?.({ ...properties, layer: layer?.id });
     }
 
-    map.on("click", `${sourceId}-layer`, handleSelectInteraction);
+    map.on('click', `${sourceId}-layer`, handleSelectInteraction);
     return () => {
-      map.off("click", `${sourceId}-layer`, handleSelectInteraction);
+      map.off('click', `${sourceId}-layer`, handleSelectInteraction);
     };
   }, [map, interactions, sourceId, onFeatureSelect]);
 
   useEffect(() => {
-    if (!map || !geojson || !onDrag || !onDragEnd || !needDragEvent) return () => {};
+    if (!map || !geojson || !onDrag || !onDragEnd || !needDragEvent)
+      return () => {};
 
     let isDragging = false;
     // let startCoordinates: [number, number] | null = null;
@@ -232,7 +235,7 @@ export default function VectorLayer({
 
       isDragging = true;
       // startCoordinates = [event.lngLat.lng, event.lngLat.lat];
-      map.getCanvas().style.cursor = "grab";
+      map.getCanvas().style.cursor = 'grab';
     };
 
     const onMouseMove = (event: MapMouseEvent) => {
@@ -245,19 +248,19 @@ export default function VectorLayer({
     const onMouseUp = () => {
       if (isDragging) {
         isDragging = false;
-        map.getCanvas().style.cursor = "";
+        map.getCanvas().style.cursor = '';
       }
       onDragEnd();
     };
 
-    map.on("mousedown", `${sourceId}-layer`, onMouseDown);
-    map.on("mousemove", onMouseMove);
-    map.on("mouseup", onMouseUp);
+    map.on('mousedown', `${sourceId}-layer`, onMouseDown);
+    map.on('mousemove', onMouseMove);
+    map.on('mouseup', onMouseUp);
 
     return () => {
-      map.off("mousedown", `${sourceId}-layer`, onMouseDown);
-      map.off("mousemove", onMouseMove);
-      map.off("mouseup", onMouseUp);
+      map.off('mousedown', `${sourceId}-layer`, onMouseDown);
+      map.off('mousemove', onMouseMove);
+      map.off('mouseup', onMouseUp);
     };
   }, [map, geojson, sourceId, onDrag, onDragEnd, needDragEvent]);
 
@@ -265,7 +268,8 @@ export default function VectorLayer({
     () => () => {
       if (map && isMapLoaded && map.getStyle() && map.getSource(sourceId)) {
         if (map.getLayer(imageId)) map.removeLayer(imageId);
-        if (map.getLayer(`${sourceId}-layer`)) map.removeLayer(`${sourceId}-layer`);
+        if (map.getLayer(`${sourceId}-layer`))
+          map.removeLayer(`${sourceId}-layer`);
         map.removeSource(sourceId);
       }
     },

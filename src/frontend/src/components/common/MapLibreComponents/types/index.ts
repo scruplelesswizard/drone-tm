@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
-import type { DrawMode } from "@mapbox/mapbox-gl-draw";
-import type { Feature, FeatureCollection, GeoJsonTypes } from "geojson";
-import type { Map, MapOptions } from "maplibre-gl";
-import type { ReactElement } from "react";
+import type { DrawMode } from '@mapbox/mapbox-gl-draw';
+import type { Feature, FeatureCollection, GeoJsonTypes } from 'geojson';
+import type { Map, MapOptions } from 'maplibre-gl';
+import type { ReactElement } from 'react';
 
 export type MapInstanceType = Map;
 
@@ -20,24 +20,24 @@ export interface IMapContainer {
   children?: ReactElement<any> | ReactElement<any>[] | any;
   containerId?: string;
   map: MapInstanceType | null;
-  isMapLoaded: Boolean;
-  style?: Object;
+  isMapLoaded: boolean;
+  style?: object;
 }
 
 export interface IBaseLayerSwitcher {
   map?: MapInstanceType | null;
   baseLayers?: object;
   activeLayer?: string;
-  isMapLoaded?: Boolean;
+  isMapLoaded?: boolean;
 }
 
 export interface ILayer {
   map?: MapInstanceType;
-  isMapLoaded?: Boolean;
-  id: Number | String;
-  style?: Object;
-  layerOptions?: Object;
-  visibleOnMap?: Boolean;
+  isMapLoaded?: boolean;
+  id: number | string;
+  style?: object;
+  layerOptions?: object;
+  visibleOnMap?: boolean;
 }
 
 export type GeojsonType = GeoJsonTypes | FeatureCollection | Feature;
@@ -48,26 +48,26 @@ export interface IVectorLayer extends ILayer {
   onFeatureSelect?: (properties: Record<string, any>) => void;
   hasImage?: boolean;
   image?: any;
-  symbolPlacement?: "point" | "line" | "line-center";
+  symbolPlacement?: 'point' | 'line' | 'line-center';
   iconAnchor?:
-    | "center"
-    | "left"
-    | "right"
-    | "top"
-    | "bottom"
-    | "top-left"
-    | "top-right"
-    | "bottom-left"
-    | "bottom-right";
-  imageLayerOptions?: Object;
+    | 'center'
+    | 'left'
+    | 'right'
+    | 'top'
+    | 'bottom'
+    | 'top-left'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-right';
+  imageLayerOptions?: object;
   zoomToExtent?: boolean;
   onDrag?: (e: any) => void;
   onDragEnd?: () => void;
   needDragEvent?: boolean;
-  imageLayoutOptions?: Object;
+  imageLayoutOptions?: object;
 }
 
-type InteractionsType = "hover" | "select";
+type InteractionsType = 'hover' | 'select';
 
 export interface IVectorTileLayer extends ILayer {
   url: string;
@@ -86,7 +86,7 @@ export interface IAsyncPopup {
   buttonText?: string;
   hideButton?: boolean;
   getCoordOnProperties?: boolean;
-  showPopup?: (clickedFeature: Record<string, any>) => Boolean;
+  showPopup?: (clickedFeature: Record<string, any>) => boolean;
   hasSecondaryButton?: boolean;
   secondaryButtonText?: string;
   handleSecondaryBtnClick?: (properties: Record<string, any>) => void;

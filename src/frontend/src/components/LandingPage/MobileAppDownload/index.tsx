@@ -1,8 +1,8 @@
-import mobileView from "@Assets/images/LandingPage/MobileView.webp";
-import Icon from "@Components/common/Icon";
-import Image from "@Components/RadixComponents/Image";
-import { Link } from "react-router-dom";
-import { m } from "@/paraglide/messages";
+import mobileView from '@Assets/images/LandingPage/MobileView.webp';
+import Icon from '@Components/common/Icon';
+import Image from '@Components/RadixComponents/Image';
+import { Link } from 'react-router-dom';
+import { m } from '@/paraglide/messages';
 
 const MobileAppDownload = () => {
   return (

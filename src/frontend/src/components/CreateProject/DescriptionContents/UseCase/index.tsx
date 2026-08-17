@@ -1,5 +1,5 @@
-import { FlexColumn } from "@Components/common/Layouts";
-import { m } from "@/paraglide/messages";
+import { FlexColumn } from '@Components/common/Layouts';
+import { m } from '@/paraglide/messages';
 
 export default function UseCase() {
   return (

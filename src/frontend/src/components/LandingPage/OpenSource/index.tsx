@@ -1,5 +1,5 @@
-import { FlexColumn } from "@Components/common/Layouts";
-import { m } from "@/paraglide/messages";
+import { FlexColumn } from '@Components/common/Layouts';
+import { m } from '@/paraglide/messages';
 // import Image from '@Components/RadixComponents/Image';
 // import { motion } from 'framer-motion';
 // import forestImage from '@Assets/images/LandingPage/ForestImage.png';

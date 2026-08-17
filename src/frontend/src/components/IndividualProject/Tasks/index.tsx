@@ -1,4 +1,4 @@
-import TableSection from "./TableSection";
+import TableSection from './TableSection';
 
 interface ITasksProps {
   isFetching: boolean;
@@ -6,11 +6,17 @@ interface ITasksProps {
   handleTableRowClick: (rowData: any) => {};
 }
 
-export default function Tasks({ isFetching, handleTableRowClick }: ITasksProps) {
+export default function Tasks({
+  isFetching,
+  handleTableRowClick,
+}: ITasksProps) {
   return (
     <section className="naxatw-py-5">
       <div className="naxatw-mt-2">
-        <TableSection isFetching={isFetching} handleTableRowClick={handleTableRowClick} />
+        <TableSection
+          isFetching={isFetching}
+          handleTableRowClick={handleTableRowClick}
+        />
       </div>
     </section>
   );

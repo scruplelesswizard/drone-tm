@@ -1,15 +1,23 @@
-/* eslint-disable import/prefer-default-export */
-import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from "@tanstack/react-query";
-import { getProjectsList, getProjectDetail, getProjectCentroid } from "@Services/createproject";
-import { getTaskStates } from "@Services/project";
-import { getUserProfileInfo, getUsers } from "@Services/common";
+import {
+  UseQueryOptions,
+  useQuery,
+  useMutation,
+  UseMutationOptions,
+} from '@tanstack/react-query';
+import {
+  getProjectsList,
+  getProjectDetail,
+  getProjectCentroid,
+} from '@Services/createproject';
+import { getTaskStates } from '@Services/project';
+import { getUserProfileInfo, getUsers } from '@Services/common';
 import {
   startProjectClassification,
   ingestExistingUploads,
   getProjectStatus,
   resetStaleClassification,
   BatchStatusSummary,
-} from "@Services/classification";
+} from '@Services/classification';
 
 export interface ProjectUser {
   id: number | string;
@@ -17,20 +25,28 @@ export interface ProjectUser {
   profile_img?: string | null;
 }
 
-export const useGetProjectsListQuery = (queryOptions?: Partial<UseQueryOptions>) => {
+export const useGetProjectsListQuery = (
+  queryOptions?: Partial<UseQueryOptions>,
+) => {
   return useQuery({
-    queryFn: () => getProjectsList(queryOptions?.queryKey ? { ...queryOptions.queryKey } : {}),
+    queryFn: () =>
+      getProjectsList(
+        queryOptions?.queryKey ? { ...queryOptions.queryKey } : {},
+      ),
     select: (res: any) => res.data,
     ...queryOptions,
     queryKey: queryOptions?.queryKey
-      ? ["projects-list", ...Object.values(queryOptions?.queryKey || {})]
-      : ["projects-list"],
+      ? ['projects-list', ...Object.values(queryOptions?.queryKey || {})]
+      : ['projects-list'],
   });
 };
 
-export const useGetProjectsDetailQuery = (id: string, queryOptions?: Partial<UseQueryOptions>) => {
+export const useGetProjectsDetailQuery = (
+  id: string,
+  queryOptions?: Partial<UseQueryOptions>,
+) => {
   return useQuery({
-    queryKey: ["project-detail", id],
+    queryKey: ['project-detail', id],
     queryFn: () => getProjectDetail(id),
     select: (res: any) => res.data,
     enabled: !!id,
@@ -43,7 +59,7 @@ export const useGetTaskStatesQuery = (
   queryOptions?: Partial<UseQueryOptions>,
 ) => {
   return useQuery({
-    queryKey: ["project-task-states", projectId],
+    queryKey: ['project-task-states', projectId],
     queryFn: () => getTaskStates(projectId),
     select: (res: any) => res.data,
     enabled: !!projectId,
@@ -51,23 +67,27 @@ export const useGetTaskStatesQuery = (
   });
 };
 
-export const useGetUserDetailsQuery = (queryOptions?: Partial<UseQueryOptions>) => {
+export const useGetUserDetailsQuery = (
+  queryOptions?: Partial<UseQueryOptions>,
+) => {
   return useQuery({
-    queryKey: ["user-profile"],
+    queryKey: ['user-profile'],
     queryFn: getUserProfileInfo,
     select: (res: any) => {
       const userDetails = res.data;
       const userDetailsString = JSON.stringify(userDetails);
-      localStorage.setItem("userprofile", userDetailsString as string);
+      localStorage.setItem('userprofile', userDetailsString as string);
       return userDetails;
     },
     ...queryOptions,
   });
 };
 
-export const useGetUsersQuery = (queryOptions?: Partial<UseQueryOptions<ProjectUser[]>>) => {
+export const useGetUsersQuery = (
+  queryOptions?: Partial<UseQueryOptions<ProjectUser[]>>,
+) => {
   return useQuery<ProjectUser[]>({
-    queryKey: ["users-list"],
+    queryKey: ['users-list'],
     queryFn: async () => {
       const res = await getUsers();
       // Backend now returns { results, pagination } instead of a bare list.
@@ -77,21 +97,34 @@ export const useGetUsersQuery = (queryOptions?: Partial<UseQueryOptions<ProjectU
   });
 };
 
-export const useGetProjectCentroidQuery = (queryOptions?: Partial<UseQueryOptions>) => {
+export const useGetProjectCentroidQuery = (
+  queryOptions?: Partial<UseQueryOptions>,
+) => {
   return useQuery({
-    queryFn: () => getProjectCentroid(queryOptions?.queryKey ? { ...queryOptions.queryKey } : {}),
+    queryFn: () =>
+      getProjectCentroid(
+        queryOptions?.queryKey ? { ...queryOptions.queryKey } : {},
+      ),
     select: (data: any) => data.data,
     ...queryOptions,
     queryKey: queryOptions?.queryKey
-      ? ["all-projects-centroid", ...Object.values(queryOptions?.queryKey || {})]
-      : ["all-projects-centroid"],
+      ? [
+          'all-projects-centroid',
+          ...Object.values(queryOptions?.queryKey || {}),
+        ]
+      : ['all-projects-centroid'],
   });
 };
 
 // Project-scoped classification hooks
 export const useStartProjectClassificationMutation = (
   mutationOptions?: UseMutationOptions<
-    { job_id: string; message: string; project_id: string; image_count: number },
+    {
+      job_id: string;
+      message: string;
+      project_id: string;
+      image_count: number;
+    },
     Error,
     { projectId: string; disableFlightTailDetection?: boolean }
   >,
@@ -121,7 +154,7 @@ export const useGetProjectStatusQuery = (
   queryOptions?: Partial<UseQueryOptions<BatchStatusSummary>>,
 ) => {
   return useQuery<BatchStatusSummary>({
-    queryKey: ["project-imagery-status", projectId],
+    queryKey: ['project-imagery-status', projectId],
     queryFn: async () => getProjectStatus(projectId),
     enabled: !!projectId,
     ...queryOptions,

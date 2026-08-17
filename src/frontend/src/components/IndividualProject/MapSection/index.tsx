@@ -1,36 +1,36 @@
 /* eslint-disable no-nested-ternary */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { LngLatBoundsLike, Map } from "maplibre-gl";
-import { FeatureCollection } from "geojson";
-import { toast } from "react-toastify";
-import { useGetTaskStatesQuery, useGetUserDetailsQuery } from "@Api/projects";
-import lock from "@Assets/images/lock.png";
-import areaIcon from "@Assets/images/area-icon.png";
-import BaseLayerSwitcherUI from "@Components/common/BaseLayerSwitcher";
-import { useMapLibreGLMap } from "@Components/common/MapLibreComponents";
-import AsyncPopup from "@Components/common/MapLibreComponents/AsyncPopup";
-import VectorLayer from "@Components/common/MapLibreComponents/Layers/VectorLayer";
-import LocateUser from "@Components/common/MapLibreComponents/LocateUser";
-import MapContainer from "@Components/common/MapLibreComponents/MapContainer";
-import { GeojsonType } from "@Components/common/MapLibreComponents/types";
-import { postTaskStatus } from "@Services/project";
-import { setProjectState } from "@Store/actions/project";
-import { useTypedDispatch, useTypedSelector } from "@Store/hooks";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import getBbox from "@turf/bbox";
-import hasErrorBoundary from "@Utils/hasErrorBoundary";
-import { commentMentionsUserId, renderCommentMentions } from "@Utils/mentions";
-import COGOrthophotoViewer from "@Components/common/MapLibreComponents/COGOrthophotoViewer";
-import { getLayerOptionsByStatus } from "@Constants/projectDescription";
-import { Button } from "@Components/RadixComponents/Button";
-import ToolTip from "@Components/RadixComponents/ToolTip";
-import Legend from "./Legend";
-import ProjectPromptDialog from "../ModalContent";
-import UnlockTaskPromptDialog from "../ModalContent/UnlockTaskPromptDialog";
-import LockTaskDialog from "../ModalContent/LockTaskDialog";
-import Icon from "@Components/common/Icon";
-import { m } from "@/paraglide/messages";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { LngLatBoundsLike, Map } from 'maplibre-gl';
+import { FeatureCollection } from 'geojson';
+import { toast } from 'react-toastify';
+import { useGetTaskStatesQuery, useGetUserDetailsQuery } from '@Api/projects';
+import lock from '@Assets/images/lock.png';
+import areaIcon from '@Assets/images/area-icon.png';
+import BaseLayerSwitcherUI from '@Components/common/BaseLayerSwitcher';
+import { useMapLibreGLMap } from '@Components/common/MapLibreComponents';
+import AsyncPopup from '@Components/common/MapLibreComponents/AsyncPopup';
+import VectorLayer from '@Components/common/MapLibreComponents/Layers/VectorLayer';
+import LocateUser from '@Components/common/MapLibreComponents/LocateUser';
+import MapContainer from '@Components/common/MapLibreComponents/MapContainer';
+import { GeojsonType } from '@Components/common/MapLibreComponents/types';
+import { postTaskStatus } from '@Services/project';
+import { setProjectState } from '@Store/actions/project';
+import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import getBbox from '@turf/bbox';
+import hasErrorBoundary from '@Utils/hasErrorBoundary';
+import { commentMentionsUserId, renderCommentMentions } from '@Utils/mentions';
+import COGOrthophotoViewer from '@Components/common/MapLibreComponents/COGOrthophotoViewer';
+import { getLayerOptionsByStatus } from '@Constants/projectDescription';
+import { Button } from '@Components/RadixComponents/Button';
+import ToolTip from '@Components/RadixComponents/ToolTip';
+import Icon from '@Components/common/Icon';
+import Legend from './Legend';
+import ProjectPromptDialog from '../ModalContent';
+import UnlockTaskPromptDialog from '../ModalContent/UnlockTaskPromptDialog';
+import LockTaskDialog from '../ModalContent/LockTaskDialog';
+import { m } from '@/paraglide/messages';
 
 const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   const { id: urlId } = useParams();
@@ -39,13 +39,20 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   const queryClient = useQueryClient();
   // Use UUID from project data for API calls, URL param (slug) for navigation
   const projectUuid = projectData?.id || urlId;
-  const [taskStatusObj, setTaskStatusObj] = useState<Record<string, any> | null>(null);
-  const [lockedUser, setLockedUser] = useState<Record<string, any> | null>(null);
+  const [taskStatusObj, setTaskStatusObj] = useState<Record<
+    string,
+    any
+  > | null>(null);
+  const [lockedUser, setLockedUser] = useState<Record<string, any> | null>(
+    null,
+  );
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
   const [showLockDialog, setShowLockDialog] = useState(false);
-  const pendingLockCommentRef = useRef<string>("");
+  const pendingLockCommentRef = useRef<string>('');
   const [showTaskArea, setShowTaskArea] = useState(true);
-  const [selectedTaskIndex, setSelectedTaskIndex] = useState<number | null>(null);
+  const [selectedTaskIndex, setSelectedTaskIndex] = useState<number | null>(
+    null,
+  );
 
   const { data: userDetails }: Record<string, any> = useGetUserDetailsQuery();
 
@@ -58,16 +65,22 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
     disableRotation: true,
   });
 
-  const selectedTaskId = useTypedSelector((state) => state.project.selectedTaskId);
-  const tasksData = useTypedSelector((state) => state.project.tasksData);
-  const projectArea = useTypedSelector((state) => state.project.projectArea);
-  const taskClickedOnTable = useTypedSelector((state) => state.project.taskClickedOnTable);
-  const visibleTaskOrthophoto = useTypedSelector((state) => state.project.visibleOrthophotoList);
+  const selectedTaskId = useTypedSelector(
+    state => state.project.selectedTaskId,
+  );
+  const tasksData = useTypedSelector(state => state.project.tasksData);
+  const projectArea = useTypedSelector(state => state.project.projectArea);
+  const taskClickedOnTable = useTypedSelector(
+    state => state.project.taskClickedOnTable,
+  );
+  const visibleTaskOrthophoto = useTypedSelector(
+    state => state.project.visibleOrthophotoList,
+  );
 
   const { data: taskStates } = useGetTaskStatesQuery(projectUuid as string, {
     enabled: !!tasksData && !!projectUuid,
   });
-  const signedInAs = localStorage.getItem("signedInAs");
+  const signedInAs = localStorage.getItem('signedInAs');
 
   const { mutate: lockTask } = useMutation<any, any, any, unknown>({
     mutationFn: postTaskStatus,
@@ -76,8 +89,8 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
       const newState =
         projectData?.requires_approval_from_manager_for_locking &&
         userDetails?.id !== projectData?.author_id
-          ? "AWAITING_APPROVAL"
-          : "LOCKED";
+          ? 'AWAITING_APPROVAL'
+          : 'LOCKED';
       setTaskStatusObj({
         ...taskStatusObj,
         [taskId]: newState,
@@ -109,10 +122,10 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
           }),
         );
       }
-      pendingLockCommentRef.current = "";
+      pendingLockCommentRef.current = '';
       // Close the popup so it reopens with fresh data on next click
-      document.getElementById("close-popup")?.click();
-      if (newState === "AWAITING_APPROVAL") {
+      document.getElementById('close-popup')?.click();
+      if (newState === 'AWAITING_APPROVAL') {
         toast.success(m.map_lock_approval_requested());
       } else {
         toast.success(m.map_task_locked_for_flight());
@@ -120,7 +133,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
       }
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.detail || err?.message || "");
+      toast.error(err?.response?.data?.detail || err?.message || '');
     },
   });
 
@@ -132,16 +145,22 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
       // admin revert (which preserves the original pilot as locker). We
       // can't compute the prior pilot client-side, so refetch instead of
       // patching state inline.
-      const newState = res.data.state || "UNLOCKED";
-      queryClient.invalidateQueries({ queryKey: ["project-task-states", projectUuid] });
-      queryClient.invalidateQueries({ queryKey: ["project-detail", projectUuid] });
-      document.getElementById("close-popup")?.click();
+      const newState = res.data.state || 'UNLOCKED';
+      queryClient.invalidateQueries({
+        queryKey: ['project-task-states', projectUuid],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['project-detail', projectUuid],
+      });
+      document.getElementById('close-popup')?.click();
       toast.success(
-        newState === "UNLOCKED" ? m.map_task_unlocked_success() : m.map_task_reverted_success(),
+        newState === 'UNLOCKED'
+          ? m.map_task_unlocked_success()
+          : m.map_task_reverted_success(),
       );
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.detail || err?.message || "");
+      toast.error(err?.response?.data?.detail || err?.message || '');
     },
   });
 
@@ -164,7 +183,8 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
     return new Set(
       tasksData
         .filter((task: Record<string, any>) => {
-          const comment = task?.comment || task?.outline?.properties?.lock_comment;
+          const comment =
+            task?.comment || task?.outline?.properties?.lock_comment;
           return commentMentionsUserId(comment, userDetails.id);
         })
         .map((task: Record<string, any>) => task.id),
@@ -176,7 +196,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
     if (tasksData && tasksData.length > 0) {
       const tasksCollectiveGeojson = tasksData.reduce(
         (acc, curr) => ({ ...acc, features: [...acc.features, curr.outline] }),
-        { type: "FeatureCollection", features: [] },
+        { type: 'FeatureCollection', features: [] },
       );
       return getBbox(tasksCollectiveGeojson as FeatureCollection);
     }
@@ -195,13 +215,19 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
       setSelectedTaskIndex(null);
       return;
     }
-    const task = tasksData.find((t: Record<string, any>) => t.id === selectedTaskId);
+    const task = tasksData.find(
+      (t: Record<string, any>) => t.id === selectedTaskId,
+    );
     setSelectedTaskIndex(task?.project_task_index || null);
   }, [selectedTaskId, tasksData]);
 
   const selectedTask = useMemo(() => {
     if (!selectedTaskId || !tasksData) return null;
-    return tasksData.find((task: Record<string, any>) => task.id === selectedTaskId) || null;
+    return (
+      tasksData.find(
+        (task: Record<string, any>) => task.id === selectedTaskId,
+      ) || null
+    );
   }, [selectedTaskId, tasksData]);
 
   const selectedTaskStatus = taskStatusObj?.[selectedTaskId];
@@ -210,12 +236,15 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   // later state the admin is stepping the task back one event in history,
   // which is a "revert" semantically.
   const isRevertAction =
-    !!selectedTaskStatus && selectedTaskStatus !== "UNLOCKED" && selectedTaskStatus !== "LOCKED";
+    !!selectedTaskStatus &&
+    selectedTaskStatus !== 'UNLOCKED' &&
+    selectedTaskStatus !== 'LOCKED';
   const canUnlockSelectedTask =
     !!selectedTaskStatus &&
-    selectedTaskStatus !== "UNLOCKED" &&
+    selectedTaskStatus !== 'UNLOCKED' &&
     (projectData?.author_id === userDetails?.id ||
-      (selectedTaskStatus === "LOCKED" && selectedTaskLatestUserId === userDetails?.id));
+      (selectedTaskStatus === 'LOCKED' &&
+        selectedTaskLatestUserId === userDetails?.id));
 
   // end zoom to layer
 
@@ -228,30 +257,30 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
           : properties?.locked_user_name;
       const byLocker = properties.locked_user_name
         ? ` ${m.map_popup_by_locker({ locker: lockerName })}`
-        : "";
+        : '';
       const lockComment = properties?.lock_comment;
 
       const statusLabel = (taskStatus: string) => {
         switch (taskStatus) {
-          case "UNLOCKED":
+          case 'UNLOCKED':
             return m.legend_available();
-          case "AWAITING_APPROVAL":
+          case 'AWAITING_APPROVAL':
             return m.legend_awaiting_approval();
-          case "LOCKED":
+          case 'LOCKED':
             return m.legend_in_progress();
-          case "FULLY_FLOWN":
+          case 'FULLY_FLOWN':
             return m.legend_fully_flown();
-          case "HAS_IMAGERY":
+          case 'HAS_IMAGERY':
             return m.legend_in_progress();
-          case "HAS_ISSUES":
+          case 'HAS_ISSUES':
             return m.legend_has_issues();
-          case "READY_FOR_PROCESSING":
+          case 'READY_FOR_PROCESSING':
             return m.legend_ready_for_processing();
-          case "IMAGE_PROCESSING_STARTED":
+          case 'IMAGE_PROCESSING_STARTED':
             return m.legend_processing();
-          case "IMAGE_PROCESSING_FINISHED":
+          case 'IMAGE_PROCESSING_FINISHED':
             return m.legend_completed();
-          case "IMAGE_PROCESSING_FAILED":
+          case 'IMAGE_PROCESSING_FAILED':
             return m.legend_has_issues();
           default:
             return m.map_popup_status_unknown();
@@ -260,65 +289,65 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
 
       const statusColor = (taskStatus: string) => {
         switch (taskStatus) {
-          case "UNLOCKED":
-            return { bg: "#f0f0f0", text: "#484848" };
-          case "AWAITING_APPROVAL":
-            return { bg: "#F3C5C5", text: "#7a2020" };
-          case "LOCKED":
-            return { bg: "#98BBC8", text: "#1a3a4a" };
-          case "FULLY_FLOWN":
-            return { bg: "#ACD2C4", text: "#1a3a2a" };
-          case "HAS_IMAGERY":
-            return { bg: "#98BBC8", text: "#1a3a4a" };
-          case "HAS_ISSUES":
-            return { bg: "#D73F3F", text: "#ffffff" };
-          case "READY_FOR_PROCESSING":
-            return { bg: "#9ec7ff", text: "#1a3a6a" };
-          case "IMAGE_PROCESSING_STARTED":
-            return { bg: "#9C77B2", text: "#ffffff" };
-          case "IMAGE_PROCESSING_FINISHED":
-            return { bg: "#176149", text: "#ffffff" };
-          case "IMAGE_PROCESSING_FAILED":
-            return { bg: "#D73F3F", text: "#ffffff" };
+          case 'UNLOCKED':
+            return { bg: '#f0f0f0', text: '#484848' };
+          case 'AWAITING_APPROVAL':
+            return { bg: '#F3C5C5', text: '#7a2020' };
+          case 'LOCKED':
+            return { bg: '#98BBC8', text: '#1a3a4a' };
+          case 'FULLY_FLOWN':
+            return { bg: '#ACD2C4', text: '#1a3a2a' };
+          case 'HAS_IMAGERY':
+            return { bg: '#98BBC8', text: '#1a3a4a' };
+          case 'HAS_ISSUES':
+            return { bg: '#D73F3F', text: '#ffffff' };
+          case 'READY_FOR_PROCESSING':
+            return { bg: '#9ec7ff', text: '#1a3a6a' };
+          case 'IMAGE_PROCESSING_STARTED':
+            return { bg: '#9C77B2', text: '#ffffff' };
+          case 'IMAGE_PROCESSING_FINISHED':
+            return { bg: '#176149', text: '#ffffff' };
+          case 'IMAGE_PROCESSING_FAILED':
+            return { bg: '#D73F3F', text: '#ffffff' };
           default:
-            return { bg: "#e0e0e0", text: "#484848" };
+            return { bg: '#e0e0e0', text: '#484848' };
         }
       };
 
       const popupDescription = (taskStatus: string) => {
-        if (projectData?.regulator_approval_status === "PENDING")
+        if (projectData?.regulator_approval_status === 'PENDING')
           return m.map_popup_regulator_pending();
-        if (projectData?.regulator_approval_status === "REJECTED")
+        if (projectData?.regulator_approval_status === 'REJECTED')
           return m.map_popup_regulator_rejected();
         switch (taskStatus) {
-          case "UNLOCKED":
+          case 'UNLOCKED':
             return m.map_popup_desc_unlocked();
-          case "AWAITING_APPROVAL":
+          case 'AWAITING_APPROVAL':
             return m.map_popup_desc_awaiting_approval({ byLocker });
-          case "LOCKED":
+          case 'LOCKED':
             return m.map_popup_desc_locked({ byLocker });
-          case "FULLY_FLOWN":
+          case 'FULLY_FLOWN':
             return m.map_popup_desc_fully_flown({ byLocker });
-          case "HAS_IMAGERY":
+          case 'HAS_IMAGERY':
             return m.map_popup_desc_has_imagery({ byLocker });
-          case "HAS_ISSUES":
+          case 'HAS_ISSUES':
             return m.map_popup_desc_has_issues();
-          case "READY_FOR_PROCESSING":
+          case 'READY_FOR_PROCESSING':
             return m.map_popup_desc_ready_for_processing({ byLocker });
-          case "IMAGE_PROCESSING_STARTED":
+          case 'IMAGE_PROCESSING_STARTED':
             return m.map_popup_desc_image_processing_started({ byLocker });
-          case "IMAGE_PROCESSING_FINISHED":
+          case 'IMAGE_PROCESSING_FINISHED':
             return m.map_popup_desc_image_processing_finished({ byLocker });
-          case "IMAGE_PROCESSING_FAILED":
+          case 'IMAGE_PROCESSING_FAILED':
             return m.map_popup_desc_image_processing_failed({ byLocker });
           default:
-            return "";
+            return '';
         }
       };
 
       const colors = statusColor(status);
       const description = popupDescription(status);
-      const showComment = lockComment && status !== "UNLOCKED";
+      const showComment = lockComment && status !== 'UNLOCKED';
       const renderedComment = renderCommentMentions(lockComment);
 
       return (
@@ -329,9 +358,13 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
           >
             {statusLabel(status)}
           </span>
-          {description && <p className="naxatw-text-xs naxatw-text-grey-800">{description}</p>}
+          {description && (
+            <p className="naxatw-text-xs naxatw-text-grey-800">{description}</p>
+          )}
           {showComment && (
-            <p className="naxatw-text-xs naxatw-italic naxatw-text-grey-600">{renderedComment}</p>
+            <p className="naxatw-text-xs naxatw-italic naxatw-text-grey-600">
+              {renderedComment}
+            </p>
           )}
         </div>
       );
@@ -340,11 +373,11 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   );
 
   const handleTaskLockClick = () => {
-    pendingLockCommentRef.current = "";
+    pendingLockCommentRef.current = '';
     lockTask({
       projectId: projectUuid,
       taskId: selectedTaskId,
-      data: { event: "request", updated_at: new Date().toISOString() },
+      data: { event: 'request', updated_at: new Date().toISOString() },
     });
   };
 
@@ -358,7 +391,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
       projectId: projectUuid,
       taskId: selectedTaskId,
       data: {
-        event: "request",
+        event: 'request',
         comment: comment || undefined,
         updated_at: new Date().toISOString(),
       },
@@ -369,7 +402,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
     unLockTask({
       projectId: projectUuid,
       taskId: selectedTaskId,
-      data: { event: "unlock", updated_at: new Date().toISOString() },
+      data: { event: 'unlock', updated_at: new Date().toISOString() },
     });
   };
 
@@ -381,12 +414,16 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   const handleToggleTaskArea = () => {
     const taskLayerIds = map
       ?.getStyle()
-      .layers?.filter((layer) => layer.id.includes("tasks-layer"));
+      .layers?.filter(layer => layer.id.includes('tasks-layer'));
 
-    taskLayerIds?.forEach((layerId) => {
-      map?.setLayoutProperty(`${layerId.id}`, "visibility", showTaskArea ? "none" : "visible");
+    taskLayerIds?.forEach(layerId => {
+      map?.setLayoutProperty(
+        `${layerId.id}`,
+        'visibility',
+        showTaskArea ? 'none' : 'visible',
+      );
     });
-    setShowTaskArea((prev) => !prev);
+    setShowTaskArea(prev => !prev);
   };
 
   return (
@@ -395,8 +432,8 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
         map={map}
         isMapLoaded={isMapLoaded}
         style={{
-          width: "100%",
-          height: "100%",
+          width: '100%',
+          height: '100%',
         }}
       >
         <BaseLayerSwitcherUI />
@@ -408,15 +445,15 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
             visibleOnMap
             geojson={
               {
-                type: "FeatureCollection",
+                type: 'FeatureCollection',
                 features: [projectArea],
               } as GeojsonType
             }
             layerOptions={{
-              type: "line",
+              type: 'line',
               paint: {
-                "line-color": "#D73F3F",
-                "line-width": 2,
+                'line-color': '#D73F3F',
+                'line-width': 2,
               },
             }}
           />
@@ -428,16 +465,16 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
             visibleOnMap
             geojson={
               {
-                type: "FeatureCollection",
+                type: 'FeatureCollection',
                 features: [projectData?.no_fly_zones_geojson],
               } as GeojsonType
             }
             layerOptions={{
-              type: "fill",
+              type: 'fill',
               paint: {
-                "fill-color": "#9EA5AD",
-                "fill-outline-color": "#484848",
-                "fill-opacity": 0.8,
+                'fill-color': '#9EA5AD',
+                'fill-outline-color': '#484848',
+                'fill-opacity': 0.8,
               },
             }}
           />
@@ -458,11 +495,13 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
                     project_task_index: task?.project_task_index,
                   },
                 }}
-                interactions={["feature"]}
-                layerOptions={getLayerOptionsByStatus(taskStatusObj?.[`${task?.id}`])}
+                interactions={['feature']}
+                layerOptions={getLayerOptionsByStatus(
+                  taskStatusObj?.[`${task?.id}`],
+                )}
                 hasImage={
-                  taskStatusObj?.[`${task?.id}`] === "LOCKED" ||
-                  taskStatusObj?.[`${task?.id}`] === "HAS_IMAGERY" ||
+                  taskStatusObj?.[`${task?.id}`] === 'LOCKED' ||
+                  taskStatusObj?.[`${task?.id}`] === 'HAS_IMAGERY' ||
                   false
                 }
                 image={lock}
@@ -473,7 +512,9 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
         {taskStatusObj &&
           tasksData &&
           tasksData
-            ?.filter((task: Record<string, any>) => mentionedTaskIds.has(task?.id))
+            ?.filter((task: Record<string, any>) =>
+              mentionedTaskIds.has(task?.id),
+            )
             .map((task: Record<string, any>) => (
               <VectorLayer
                 key={`mention-${task?.id}`}
@@ -488,17 +529,17 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
                   },
                 }}
                 layerOptions={{
-                  type: "line",
+                  type: 'line',
                   paint: {
-                    "line-color": "#FFD700",
-                    "line-width": 3,
-                    "line-dasharray": [3, 2],
+                    'line-color': '#FFD700',
+                    'line-width': 3,
+                    'line-dasharray': [3, 2],
                   },
                 }}
               />
             ))}
         {/* visualize tasks orthophoto */}
-        {visibleTaskOrthophoto?.map((orthophotoDetails) => (
+        {visibleTaskOrthophoto?.map(orthophotoDetails => (
           <COGOrthophotoViewer
             key={orthophotoDetails.taskId}
             id={orthophotoDetails.taskId}
@@ -513,7 +554,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
           <div className="naxatw-flex naxatw-flex-col naxatw-gap-3">
             <Button
               variant="ghost"
-              className={`naxatw-flex naxatw-h-[1.85rem] naxatw-w-[] naxatw-items-center naxatw-justify-center naxatw-border !naxatw-p-[0.315rem] ${showTaskArea ? "naxatw-border-red naxatw-bg-[#ffe0e0]" : "naxatw-border-gray-400 naxatw-bg-[#F5F5F5]"}`}
+              className={`naxatw-flex naxatw-h-[1.85rem] naxatw-w-[] naxatw-items-center naxatw-justify-center naxatw-border !naxatw-p-[0.315rem] ${showTaskArea ? 'naxatw-border-red naxatw-bg-[#ffe0e0]' : 'naxatw-border-gray-400 naxatw-bg-[#F5F5F5]'}`}
               onClick={() => handleToggleTaskArea()}
               title={m.map_button_task_area()}
             >
@@ -521,7 +562,10 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
                 <img src={areaIcon} alt="area-icon" />
               </div>
             </Button>
-            <ToolTip message={m.map_button_zoom_to_project_area()} className="naxatw-mt-[-4px]">
+            <ToolTip
+              message={m.map_button_zoom_to_project_area()}
+              className="naxatw-mt-[-4px]"
+            >
               <button
                 className="naxatw-grid naxatw-h-[1.85rem] naxatw-place-items-center naxatw-border naxatw-border-gray-400 naxatw-bg-[#F5F5F5] !naxatw-p-[0.315rem]"
                 onClick={() => handleZoomToExtent()}
@@ -548,11 +592,12 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
             if (!userDetails) return false;
 
             return (
-              feature?.source?.includes("tasks-layer") &&
+              feature?.source?.includes('tasks-layer') &&
               !(
                 (
-                  (userDetails?.role?.length === 1 && userDetails?.role?.includes("REGULATOR")) ||
-                  signedInAs === "REGULATOR"
+                  (userDetails?.role?.length === 1 &&
+                    userDetails?.role?.includes('REGULATOR')) ||
+                  signedInAs === 'REGULATOR'
                 ) // Don't show popup if user role is regulator any and no other roles
               )
             );
@@ -566,42 +611,46 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
             dispatch(setProjectState({ selectedTaskId: properties.id }));
             setSelectedTaskIndex(properties?.project_task_index || null);
             setLockedUser({
-              id: properties?.locked_user_id || "",
-              name: properties?.locked_user_name || "",
+              id: properties?.locked_user_id || '',
+              name: properties?.locked_user_name || '',
             });
           }}
           hideButton={
-            projectData?.regulator_approval_status === "REJECTED" || // Don't task lock button if regulator rejected the approval
-            projectData?.regulator_approval_status === "PENDING"
+            projectData?.regulator_approval_status === 'REJECTED' || // Don't task lock button if regulator rejected the approval
+            projectData?.regulator_approval_status === 'PENDING'
           }
           buttonText={
-            selectedTaskStatus === "UNLOCKED" || !selectedTaskStatus
+            selectedTaskStatus === 'UNLOCKED' || !selectedTaskStatus
               ? m.individual_project_lock_task()
               : m.map_popup_go_to_task()
           }
           handleBtnClick={() =>
-            selectedTaskStatus === "UNLOCKED" || !selectedTaskStatus
+            selectedTaskStatus === 'UNLOCKED' || !selectedTaskStatus
               ? handleTaskLockClick()
-              : navigate(`/projects/${projectData?.slug || urlId}/tasks/${selectedTaskIndex}`)
+              : navigate(
+                  `/projects/${projectData?.slug || urlId}/tasks/${selectedTaskIndex}`,
+                )
           }
           hasSecondaryButton={
-            selectedTaskStatus === "UNLOCKED" || !selectedTaskStatus || canUnlockSelectedTask
+            selectedTaskStatus === 'UNLOCKED' ||
+            !selectedTaskStatus ||
+            canUnlockSelectedTask
           }
           secondaryButtonText={
-            selectedTaskStatus === "UNLOCKED" || !selectedTaskStatus
+            selectedTaskStatus === 'UNLOCKED' || !selectedTaskStatus
               ? m.map_popup_lock_with_comment()
               : isRevertAction
                 ? m.map_popup_revert_task()
                 : m.map_popup_unlock_task()
           }
           handleSecondaryBtnClick={() =>
-            selectedTaskStatus === "UNLOCKED" || !selectedTaskStatus
+            selectedTaskStatus === 'UNLOCKED' || !selectedTaskStatus
               ? handleTaskLockWithCommentClick()
               : setShowUnlockDialog(true)
           }
           // trigger from popup outside
           openPopupFor={
-            projectData?.regulator_approval_status === "REJECTED" // ignore click if the regulator rejected the approval
+            projectData?.regulator_approval_status === 'REJECTED' // ignore click if the regulator rejected the approval
               ? null
               : taskClickedOnTable
           }
@@ -629,7 +678,11 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
       </ProjectPromptDialog>
 
       <ProjectPromptDialog
-        title={isRevertAction ? m.map_dialog_task_revert_title() : m.map_dialog_task_unlock_title()}
+        title={
+          isRevertAction
+            ? m.map_dialog_task_revert_title()
+            : m.map_dialog_task_unlock_title()
+        }
         show={showUnlockDialog}
         onClose={() => setShowUnlockDialog(false)}
       >

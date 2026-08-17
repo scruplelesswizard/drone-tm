@@ -1,16 +1,15 @@
-/* eslint-disable no-console */
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Button } from "@Components/RadixComponents/Button";
-import { setSecondPage } from "@Store/actions/droneOperatorTask";
-import { useTypedDispatch } from "@Store/hooks";
-import { postUnflyableComment } from "@Services/droneOperator";
-import { toast } from "react-toastify";
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import useTaskParams from "@Hooks/useTaskParams";
-import RadioButton from "@Components/common/RadioButton";
-import { m } from "@/paraglide/messages";
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '@Components/RadixComponents/Button';
+import { setSecondPage } from '@Store/actions/droneOperatorTask';
+import { useTypedDispatch } from '@Store/hooks';
+import { postUnflyableComment } from '@Services/droneOperator';
+import { toast } from 'react-toastify';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import useTaskParams from '@Hooks/useTaskParams';
+import RadioButton from '@Components/common/RadioButton';
+import { m } from '@/paraglide/messages';
 // import UploadsBox from '../UploadsBox'; // Disabled - use Drone Upload Workflow instead
 
 interface IQuestionBoxProps {
@@ -19,22 +18,27 @@ interface IQuestionBoxProps {
   haveNoImages: boolean;
 }
 
-const QuestionBox = ({ flyable, setFlyable, haveNoImages }: IQuestionBoxProps) => {
+const QuestionBox = ({
+  flyable,
+  setFlyable,
+  haveNoImages,
+}: IQuestionBoxProps) => {
   const { projectId, taskId, projectSlug } = useTaskParams();
   const navigate = useNavigate();
 
   const dispatch = useTypedDispatch();
-  const [comment, setComment] = useState("");
+  const [comment, setComment] = useState('');
   const variants = {
     open: { opacity: 1, y: 0 },
-    closed: { opacity: 0, y: "-100%" },
+    closed: { opacity: 0, y: '-100%' },
   };
   function handleFlyableChange(value: string) {
     setFlyable(value);
   }
 
   const { mutate: mutateComment, isPending: commentIsUpdating } = useMutation({
-    mutationFn: (data: any) => postUnflyableComment({ projectId, taskId, data }),
+    mutationFn: (data: any) =>
+      postUnflyableComment({ projectId, taskId, data }),
     onSuccess: () => {
       // Optionally, refetch queries or show a success message
       toast.success(m.drone_task_comment_added_success());
@@ -46,9 +50,9 @@ const QuestionBox = ({ flyable, setFlyable, haveNoImages }: IQuestionBoxProps) =
     },
   });
   function handleSubmit() {
-    if (flyable === "no") {
+    if (flyable === 'no') {
       const data = {
-        event: "comment",
+        event: 'comment',
         comment,
       };
       mutateComment(data);
@@ -66,8 +70,8 @@ const QuestionBox = ({ flyable, setFlyable, haveNoImages }: IQuestionBoxProps) =
           </p>
           <RadioButton
             options={[
-              { name: "flyable", value: "yes", label: m.common_yes() },
-              { name: "flyable", value: "no", label: m.common_no() },
+              { name: 'flyable', value: 'yes', label: m.common_yes() },
+              { name: 'flyable', value: 'no', label: m.common_no() },
             ]}
             direction="column"
             onChangeData={handleFlyableChange}
@@ -77,9 +81,9 @@ const QuestionBox = ({ flyable, setFlyable, haveNoImages }: IQuestionBoxProps) =
           />
         </div>
         <motion.div
-          animate={flyable === "yes" ? "closed" : "open"}
+          animate={flyable === 'yes' ? 'closed' : 'open'}
           variants={variants}
-          className={` ${flyable === "yes" ? "naxatw-hidden" : "naxatw-block"} naxatw-flex naxatw-flex-col naxatw-items-start naxatw-gap-1 naxatw-self-stretch`}
+          className={` ${flyable === 'yes' ? 'naxatw-hidden' : 'naxatw-block'} naxatw-flex naxatw-flex-col naxatw-items-start naxatw-gap-1 naxatw-self-stretch`}
         >
           <p className="naxatw-text-[0.875rem] naxatw-font-semibold naxatw-text-[#484848]">
             {m.drone_task_comment_label()}
@@ -88,7 +92,7 @@ const QuestionBox = ({ flyable, setFlyable, haveNoImages }: IQuestionBoxProps) =
             className="naxatw-w-full naxatw-resize-none naxatw-rounded-[0.25rem] naxatw-border naxatw-border-[#555] naxatw-p-2"
             placeholder={m.drone_task_comment_label()}
             value={comment}
-            onChange={(e) => setComment(e.target.value)}
+            onChange={e => setComment(e.target.value)}
           />
 
           <div className="naxatw-my-4 naxatw-flex naxatw-w-full naxatw-justify-center">
@@ -96,7 +100,7 @@ const QuestionBox = ({ flyable, setFlyable, haveNoImages }: IQuestionBoxProps) =
               variant="ghost"
               className="naxatw-w-fit naxatw-bg-[#D73F3F] naxatw-text-[#FFFFFF]"
               onClick={() => handleSubmit()}
-              disabled={flyable === "yes"}
+              disabled={flyable === 'yes'}
               isLoading={commentIsUpdating}
             >
               {m.common_save()}
