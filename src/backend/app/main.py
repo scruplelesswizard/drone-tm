@@ -3,6 +3,7 @@ import logging
 import os
 import signal
 import sys
+import uuid
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -40,6 +41,7 @@ from hotosm_auth_fastapi import (
 from loguru import logger as log
 from psycopg import Connection
 from psycopg_pool import AsyncConnectionPool
+from starlette.middleware.base import BaseHTTPMiddleware
 
 root = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.abspath(os.path.join(root, "..", "frontend_html"))
@@ -91,10 +93,28 @@ def healthcheck_log_filter(record):
 
 _LOG_FORMAT = (
     "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} "
-    "| {name}:{function}:{line} | {message}"
+    "| {name}:{function}:{line} | req={extra[request_id]} | {message}"
 )
 _sink_id: int | None = None
 _current_level: str = settings.LOG_LEVEL
+
+log.configure(extra={"request_id": "-"})
+
+
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    """Assign (or propagate) a request ID, bound to log context and echoed back.
+
+    Lets a failed request be traced through backend logs by X-Request-ID.
+    Doesn't yet propagate into arq jobs enqueued from the request - see
+    todo.md.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        with log.contextualize(request_id=request_id):
+            response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
 
 
 def _install_sink(level: str) -> None:
@@ -198,6 +218,7 @@ def get_application() -> FastAPI:
     # Set custom logger
     _app.logger = get_logger()
 
+    _app.add_middleware(RequestIDMiddleware)
     _app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.EXTRA_CORS_ORIGINS,
