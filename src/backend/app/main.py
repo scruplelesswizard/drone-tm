@@ -202,8 +202,8 @@ def get_application() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.EXTRA_CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Access-Token", "Content-Type", "Accept"],
         expose_headers=["Content-Disposition"],
     )
     # All API routes live under the configured prefix (default `/api`).
