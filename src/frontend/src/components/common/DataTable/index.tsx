@@ -1,6 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable no-nested-ternary */
-/* eslint-disable no-unused-vars */
+
 import React, { useState, useMemo, useEffect, CSSProperties } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {

@@ -502,7 +502,6 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
 
   const {
     data: reviewData,
-    isLoading: isReviewLoading,
     error: reviewError,
     isError: isReviewError,
   } = useQuery<ProjectReviewData>({

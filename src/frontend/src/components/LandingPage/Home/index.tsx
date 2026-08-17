@@ -4,7 +4,6 @@ import Image from '@Components/RadixComponents/Image';
 import { Button } from '@Components/RadixComponents/Button';
 import { motion } from 'framer-motion';
 import droneTaskingManagerLogo from '@Assets/images/DTM-logo-white.svg';
-import arrowSouth from '@Assets/images/LandingPage/arrow_south.svg';
 import { setCommonState } from '@Store/actions/common';
 import useAuth from '@Hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -19,22 +18,6 @@ export default function Home() {
   const navigate = useNavigate();
   // const userProfile = getLocalStorageValue('userprofile');
   const role = localStorage.getItem('signedInAs');
-
-  const bounceTransition: {
-    y: {
-      repeat: number;
-      repeatType: 'reverse' | 'loop' | 'mirror';
-      duration: number;
-      ease: string;
-    };
-  } = {
-    y: {
-      repeat: Infinity,
-      repeatType: 'mirror',
-      duration: 0.8,
-      ease: 'easeOut',
-    },
-  };
 
   const container = {
     visible: {

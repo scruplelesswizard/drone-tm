@@ -42,8 +42,7 @@ export default function Login() {
   const dispatch = useTypedDispatch();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [onSignUpBtnClick, setOnSignUpBtnClick] = useState<boolean>(false);
-  // eslint-disable-next-line no-unused-vars
-  const [showErrorToggle, setShowErrorToggle] = useState<boolean>(false);
+
   const handleShow = () => {
     return setShowPassword(prev => !prev);
   };

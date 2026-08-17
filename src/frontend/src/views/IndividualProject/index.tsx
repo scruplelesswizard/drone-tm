@@ -50,7 +50,7 @@ const getActiveTabContent = (
   activeTab: string,
   data: Record<string, any>,
   isProjectDataLoading: boolean,
-  // eslint-disable-next-line no-unused-vars
+
   handleTableRowClick: (rowData: any) => {},
 
   onOpenUpload?: () => void,

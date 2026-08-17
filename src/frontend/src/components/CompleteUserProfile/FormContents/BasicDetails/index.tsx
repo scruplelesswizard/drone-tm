@@ -11,7 +11,6 @@ export default function BasicDetails({ formProps }: { formProps: any }) {
 
   const userProfile = getLocalStorageValue('userprofile');
 
-  // eslint-disable-next-line no-unused-vars
   const countryList = Object.entries(countries).map(([_, value]) => ({
     name: value?.name,
     phone: value?.phone?.[0],

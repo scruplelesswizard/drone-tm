@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Flex } from '@Components/common/Layouts';
@@ -12,8 +11,10 @@ const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
 function GoogleAuth() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isReadyToRedirect, setIsReadyToRedirect] = useState(false);
-  const [userProfileDetails, setUserProfileDetails] =
+  // Values are write-only here (used to trigger re-render/redirect effects
+  // below); setters are read, values aren't.
+  const [_isReadyToRedirect, setIsReadyToRedirect] = useState(false);
+  const [_userProfileDetails, setUserProfileDetails] =
     useState<UserProfileDetailsType>();
   const signedInAs = localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
 

@@ -6,7 +6,9 @@ export default function Flex({
   children,
   gap,
   md,
-  row,
+  // row is part of the public prop contract but not yet wired to actual
+  // layout direction - see todo.md.
+  row: _row,
   ...rest
 }: IFlexContainerProps) {
   let newClassNames = '';

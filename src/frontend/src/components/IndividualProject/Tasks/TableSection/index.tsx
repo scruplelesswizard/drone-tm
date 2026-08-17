@@ -24,7 +24,7 @@ const tasksDataColumns = [
 
 interface ITableSectionProps {
   isFetching: boolean;
-  // eslint-disable-next-line no-unused-vars
+
   handleTableRowClick: (rowData: any) => {};
 }
 

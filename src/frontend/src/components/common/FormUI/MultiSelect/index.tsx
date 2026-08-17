@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable no-unused-vars */
+
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import { useEffect, useRef, useState } from 'react';
 import Icon from '@Components/common/Icon';
@@ -107,7 +107,7 @@ export default function MultiSelect({
           selected.length ? 'placeholder:naxatw-text-grey-800' : ''
         } focus:placeholder:naxatw-text-grey-400`}
         value={searchText}
-        onClick={e => {
+        onClick={() => {
           setIsOpen(true);
         }}
         onChange={e => {

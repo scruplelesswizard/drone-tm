@@ -2,7 +2,7 @@ import TableSection from './TableSection';
 
 interface IContributionsProps {
   isFetching: boolean;
-  // eslint-disable-next-line no-unused-vars
+
   handleTableRowClick: (rowData: any) => {};
 }
 

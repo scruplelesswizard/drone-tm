@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/interactive-supports-focus */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/display-name */
-/* eslint-disable no-unused-vars */
+
 /* eslint-disable react/no-danger */
 import type { LngLatLike, MapMouseEvent } from 'maplibre-gl';
 import { Popup } from 'maplibre-gl';
@@ -95,7 +95,7 @@ const AsyncPopup = forwardRef<HTMLDivElement, IAsyncPopup>(
       popupCoordinate,
       closePopupOnButtonClick,
     }: IAsyncPopup,
-    ref,
+    _ref,
   ) => {
     const { map } = useMap();
     const [properties, setProperties] = useState<Record<string, any> | null>(

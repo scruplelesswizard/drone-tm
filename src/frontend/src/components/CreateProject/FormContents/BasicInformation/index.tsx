@@ -70,7 +70,7 @@ export default function BasicInformation({
         <Controller
           control={control}
           name="description"
-          render={({ field: { onChange, onBlur, value, ref, ...others } }) => (
+          render={({ field: { onChange, value, ...others } }) => (
             <textarea
               className="naxatw-flex naxatw-h-[100px] naxatw-rounded-[4px] naxatw-border naxatw-border-[#555555] naxatw-bg-transparent naxatw-p-2 naxatw-text-body-md file:naxatw-font-medium hover:naxatw-border-red focus:naxatw-border-red focus:naxatw-bg-transparent focus:naxatw-outline-none disabled:naxatw-cursor-not-allowed"
               placeholder={m.create_basic_description_placeholder()}

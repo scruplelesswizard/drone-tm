@@ -31,9 +31,8 @@ interface IFileUploadProps extends UseFormPropsType {
   placeholder?: string;
   disabled?: boolean;
   onChange?: any;
-  isValid?: // eslint-disable-next-line no-unused-vars
+  isValid?:
     | ((value: any) => boolean | undefined)
-    // eslint-disable-next-line no-unused-vars
     | ((value: any) => Promise<boolean | undefined>);
 }
 
