@@ -12,13 +12,19 @@ from app.db.database import get_db
 from app.drones import drone_routes
 from app.gcp import gcp_routes
 from app.models.enums import HTTPStatus
+from app.problem_details import (
+    handle_http_exception,
+    handle_unexpected_error,
+    handle_validation_error,
+)
 from app.projects import classification_routes, project_routes
 from app.public_routes import router as public_router
 from app.tasks import task_routes
 from app.users import user_routes
 from app.utils import sanitize_sensitive_text
 from app.waypoints import waypoint_routes
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -236,6 +242,19 @@ def get_application() -> FastAPI:
         # OSM OAuth router for account linking
         _app.include_router(osm_router, prefix="/api")
 
+    # RFC 7807 (application/problem+json) handlers. Registered here (not at
+    # module scope on the `api` singleton below) so every app instance this
+    # factory produces gets them - including the fresh one the `app` test
+    # fixture builds by calling get_application() again, which otherwise
+    # silently got FastAPI's default (non-problem+json) handlers instead.
+    _app.add_exception_handler(HTTPException, handle_http_exception)
+    _app.add_exception_handler(RequestValidationError, handle_validation_error)
+    if not settings.DEBUG:
+        # In DEBUG mode, leave unhandled exceptions to Starlette's
+        # interactive traceback page (FastAPI(debug=...)) instead of
+        # swallowing them here.
+        _app.add_exception_handler(Exception, handle_unexpected_error)
+
     return _app
 
 
@@ -368,3 +387,8 @@ async def custom_404_handler(request: Request, _):
     except Exception:
         """Fall back if tempalate missing. Redirect home to docs."""
         return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+
+# custom_404_handler above is registered by status code, which Starlette
+# dispatches ahead of the class-based RFC 7807 handlers registered inside
+# get_application(), so SPA-fallback behaviour for 404s is unaffected.

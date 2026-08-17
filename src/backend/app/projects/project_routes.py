@@ -732,10 +732,11 @@ async def regulator_approval(
             )
 
         return {"message": "Comment Added successfully !!!"}
-    except Exception as e:
+    except Exception:
+        log.exception(f"Failed to record regulator comment for project {project_id}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"An error occurred: {e!s}",
+            detail="Failed to record regulator comment",
         )
 
 

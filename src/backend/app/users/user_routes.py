@@ -297,10 +297,11 @@ async def reset_password(
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Token expired")
     except jwt.JWTError:
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid token")
-    except Exception as e:
+    except Exception:
+        log.exception("Failed to reset password")
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred: {e!s}",
+            detail="Failed to reset password",
         )
 
     return JSONResponse(
@@ -389,8 +390,9 @@ async def regulator_create(
             refresh_token=refresh_token,
             role="REGULATOR",
         )
-    except Exception as e:
+    except Exception:
+        log.exception("Failed to log in regulator")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"An error occurred: {e!s}",
+            detail="Failed to log in regulator",
         )
