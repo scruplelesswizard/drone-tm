@@ -61,8 +61,13 @@ inline on the original item.
 - [x] Add a frontend test workflow (`frontend-test.yml`, runs `pnpm test` /
       Vitest on PRs touching `src/frontend`) — narrower than the item below:
       covers test execution only, not lint/typecheck/build.
-- [ ] Add lint + typecheck + build gate for the frontend on PRs (today only
-      exercised inside the release Docker build)
+- [x] Add lint + typecheck + build gate for the frontend on PRs — `build`
+      job (`tsc && vite build`, builds the `gcp-editor` sibling package
+      first) is a hard gate; `lint` is non-blocking
+      (`continue-on-error` on the eslint step, not the job, so it stays
+      non-blocking even once branch protection requires the check) since
+      the ~6600 pre-existing violations below aren't this PR's to fix.
+      Flip `lint` to blocking once that backlog clears.
 - [ ] Turn on dependency vulnerability scanning (no Renovate/Dependabot,
       no CodeQL, on either the Python or JS dependency graph)
 - [ ] Turn on container image scanning (`tag_build.yml:19` explicitly sets
