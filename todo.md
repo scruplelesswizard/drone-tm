@@ -354,12 +354,22 @@ than as inline notes on the item that found them:
       mechanical rules — see the PR for the full list). Verified `pnpm
       run build` clean and the Vitest suite unchanged (5/5) before
       committing, fixer output only, no manual edits.
-- [ ] Triage the remaining 698 errors + 21 warnings `eslint .` still
-      reports (mostly `@typescript-eslint/no-explicit-any`, plus a few
-      `@ts-ignore`/`no-shadow`/`consistent-return` sites) — not auto-
-      fixable, needs individual review. Do this in reviewable batches as
-      separate PRs (per the original caution above, which still applies
-      to the non-auto-fixable remainder).
+- [ ] Triage the remaining ~687 errors + 21 warnings `eslint .` still
+      reports (mostly `@typescript-eslint/no-explicit-any` at 448 sites,
+      `@typescript-eslint/ban-ts-comment` at 78, `no-unused-vars` at 46,
+      plus a long tail — `no-nested-ternary`, `consistent-return`,
+      `no-shadow`, `jsx-a11y/*`, etc.) — not auto-fixable, needs
+      individual review. Doing this in reviewable batches as separate
+      PRs, mechanical/low-risk rules first:
+      - [x] `no-console` (12 sites) — allow `warn`/`error` in config (all
+            existing sites were legitimate diagnostics, not debug
+            leftovers); kept 4 genuine `console.log` breadcrumbs in
+            `utils/adb.ts` (flaky hardware transfer) behind scoped
+            `eslint-disable` comments.
+      - [x] `react/button-has-type` (20 sites) — added explicit
+            `type="button"`; verified no affected file contains a
+            `<form>`, so none needed `type="submit"` instead.
+      - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
       HTTP request that triggered it. Needs touching every enqueue call
