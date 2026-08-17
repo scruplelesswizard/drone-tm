@@ -88,6 +88,7 @@ src/backend/frontend_html
 !**/package.json
 !**/tsconfig.json
 !src/frontend/messages/**.json
+!chart/values.schema.json
 
 # LLM tools
 .claude
