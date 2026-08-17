@@ -3,7 +3,8 @@
 Source: engineering audit, 2026-08-15 (full backlog published as an artifact —
 ask for the link if needed). Originally scoped to Backend/Frontend P0/P1 only;
 expanded 2026-08-16 to track every item from the audit, across all six
-domains and all priority tiers.
+domains and all priority tiers, plus a seventh domain (Accessibility &
+Design System) added the same day from a separate standards audit request.
 
 Each item gets its own commit (and, on the `scruplelesswizard/drone-tm` fork,
 its own stacked PR, except where noted). Checked = committed. Follow-ups
@@ -41,9 +42,12 @@ inline on the original item.
 
 - [ ] Set `response_model` + `summary` consistently across routes (only ~3 of
       35 routes in `project_routes.py` set `response_model`; no route
-      anywhere sets `summary`)
-- [ ] Introduce `/api/v1` path versioning ahead of the next breaking change —
-      no versioning mechanism exists at all today
+      anywhere sets `summary`). Large mechanical sweep (~32 routes), not
+      attempted this pass - safe to pick up in reviewable batches.
+- [ ] **Needs interaction:** introduce `/api/v1` path versioning. This is a
+      breaking-change-shaped decision (URL structure, client migration,
+      whether unversioned `/api` keeps working during a transition) that
+      needs a rollout plan, not a drive-by route mount.
 
 ## CI/CD & Delivery — P0
 
@@ -54,8 +58,11 @@ inline on the original item.
       ever. Dropped the branch filter (path filters still apply). Landed
       directly on `dev` (PR #18), not part of the stack, then restacked every
       open `todo/*` branch on top so existing PRs pick it up too.
-- [ ] Add a frontend CI job (lint + typecheck + build gate on PRs — today
-      only exercised inside the release Docker build)
+- [x] Add a frontend test workflow (`frontend-test.yml`, runs `pnpm test` /
+      Vitest on PRs touching `src/frontend`) — narrower than the item below:
+      covers test execution only, not lint/typecheck/build.
+- [ ] Add lint + typecheck + build gate for the frontend on PRs (today only
+      exercised inside the release Docker build)
 - [ ] Turn on dependency vulnerability scanning (no Renovate/Dependabot,
       no CodeQL, on either the Python or JS dependency graph)
 - [ ] Turn on container image scanning (`tag_build.yml:19` explicitly sets
@@ -83,48 +90,88 @@ inline on the original item.
 
 ## Kubernetes & Infra — P0
 
-- [ ] Set default resource requests/limits (`chart/values.yaml` ships
-      `backend.resources: {}`, `worker.resources: {}`, `qgis.resources: {}`)
-- [ ] Harden container `securityContext` — add `readOnlyRootFilesystem`,
-      `capabilities.drop:[ALL]`, `allowPrivilegeEscalation:false` (only
-      `runAsNonRoot`/`runAsUser` are set today)
+- [ ] **Needs interaction:** set default resource requests/limits
+      (`chart/values.yaml` ships `backend.resources: {}`,
+      `worker.resources: {}`, `qgis.resources: {}`). Real numbers need actual
+      usage data (or at least a target cluster's node sizing) - guessed
+      requests/limits are worse than none if they're wrong in either
+      direction (throttling vs. no protection).
+- [ ] **Needs interaction:** harden container `securityContext` —
+      `readOnlyRootFilesystem`, `capabilities.drop:[ALL]`,
+      `allowPrivilegeEscalation:false`. `readOnlyRootFilesystem` in
+      particular risks breaking any container that writes to its own
+      filesystem at runtime (temp files, caches) - needs a real deploy to
+      verify before defaulting it on, not a chart-only change.
 
 ## Kubernetes & Infra — P1
 
-- [ ] Default HPA and PDB to enabled (`autoscaling.enabled` and
-      `podDisruptionBudget.*.enabled` default to `false`)
-- [ ] Add default-deny `NetworkPolicy` (none exists despite Postgres,
-      Dragonfly, RustFS all running in-cluster)
-- [ ] Add `startupProbe` to backend/worker (liveness/readiness are solid but
-      nothing covers slow startup — migrations, DB pool warm-up)
+- [ ] **Needs interaction:** default HPA and PDB to enabled
+      (`autoscaling.enabled`/`podDisruptionBudget.*.enabled` default
+      `false`). Enabling by default changes behavior for every existing
+      install of the chart, not just new ones - a deploy-owner call.
+- [ ] **Needs interaction:** add default-deny `NetworkPolicy`. Wrong from a
+      sandbox with no real cluster to validate against - a too-strict policy
+      silently breaks Postgres/Dragonfly/RustFS connectivity in a way only
+      visible at runtime.
+- [x] Add `startupProbe` to backend/worker — purely additive (new probe,
+      existing liveness/readiness untouched); verified with `helm lint` +
+      `helm template`.
 
 ## Kubernetes & Infra — P2
 
-- [ ] Pin images by digest, not mutable tag
-- [ ] Add `values.schema.json` to validate `helm install`/`template` inputs
+- [ ] **Needs interaction:** pin images by digest, not mutable tag. Needs a
+      decision on the digest-refresh workflow (Renovate digest-pinning mode,
+      or manual) - not just a values.yaml edit.
+- [x] Add `values.schema.json` to validate `helm install`/`template` inputs
+      — deliberately permissive (`additionalProperties: true` throughout,
+      subchart values left untyped) so it only constrains what this chart's
+      own templates consume. Verified: default `values.yaml` still renders
+      unchanged, and a deliberately-wrong values file is rejected with a
+      clear per-field error. Needed a `.gitignore` exception - a blanket
+      `*.json` rule was silently excluding it.
 
 ## Kubernetes & Infra — P3
 
-- [ ] SBOM generation + image signing (`cosign`/`syft`/`trivy`)
+- [ ] **Needs interaction:** SBOM generation + image signing
+      (`cosign`/`syft`/`trivy`). Needs key management / OIDC signing
+      infrastructure decisions, not just a workflow step.
 
 ## Security — P1
 
-- [ ] Add rate limiting (no `slowapi`, middleware, or ingress-level
-      throttling on login, the presigned-URL endpoint, or the ScaleODM
-      webhook)
+- [ ] **Needs interaction:** add rate limiting (no `slowapi`, middleware, or
+      ingress-level throttling on login, the presigned-URL endpoint, or the
+      ScaleODM webhook). Needs a decision on actual thresholds per endpoint
+      and whether it's enforced app-side (`slowapi`) or at the ingress —
+      picking numbers without input is a guess, not a fix.
 
 ## Security — P2
 
-- [ ] Scope CORS methods/headers (`main.py:195-202` pairs
-      `allow_methods=["*"]`/`allow_headers=["*"]` with
-      `allow_credentials=True`)
-- [ ] Codify the column-name f-string SQL pattern as a lint rule (currently
-      safe via an `assert column in ALLOWLIST`, but relies on discipline)
+- [x] Scope CORS methods/headers (`main.py`'s `allow_methods=["*"]`/
+      `allow_headers=["*"]` paired with `allow_credentials=True`) — scoped
+      to `GET/POST/PATCH/DELETE/OPTIONS` (no PUT route exists anywhere) and
+      `Authorization`/`Access-Token`/`Content-Type`/`Accept`.
+- [x] Codify the column-name/fixed-fragment SQL pattern via ruff — auditing
+      actually found 10 files carrying the blanket `S608` ignore, not the
+      assumed 3. Reviewed each: all but one were either a hardcoded-allowlist
+      column name, a Pydantic model's own field names (no model here allows
+      extra fields), or a two-way choice between fixed SQL fragments with
+      values always parameterized. The one real value-interpolation site
+      (`image_logic.py`'s `ST_MakePoint` call — safe today only because
+      every caller happens to pass EXIF-derived floats through an untyped
+      `Any` field) is fixed to use params instead of ignored. Replaced the
+      blanket ignore with per-file scoping so `S608` stays live elsewhere.
 
 ## Observability — P1
 
-- [ ] Request/correlation-ID propagation (no request-ID middleware anywhere)
-- [ ] Expose a Prometheus `/metrics` endpoint
+- [x] Request/correlation-ID propagation — `RequestIDMiddleware` in
+      `main.py`: reads/generates `X-Request-ID`, binds it to the loguru
+      context (now in every log line via `req={extra[request_id]}`), and
+      echoes it back on the response. Does **not** yet propagate into arq
+      jobs enqueued from a request — see follow-ups.
+- [ ] **Needs interaction:** expose a Prometheus `/metrics` endpoint. Needs
+      a dependency choice (`prometheus-fastapi-instrumentator` vs
+      `prometheus_client` vs `starlette-exporter`) — CLAUDE.md requires
+      asking before adding a new dependency.
 
 ## Observability — P2
 
@@ -153,17 +200,115 @@ inline on the original item.
 - [ ] Break up the four largest components: `ImageReview.tsx` (2334 lines),
       `ProcessingStatusDialog.tsx` (1153), `MapSection.tsx` (1072),
       `TaskVerificationModal.tsx` (832) — opportunistically, alongside
-      feature work that already touches them
+      feature work that already touches them. Not attempted this pass: a
+      blind split risks behavior changes in components this size without
+      the usual manual browser check this repo's guidelines call for.
 - [ ] Reduce `any` usage starting at the API layer (193 occurrences across
-      86 files despite `strict: true`; every response handler in
-      `api/tasks.ts`/`api/dashboard.ts` types the axios response as `any`)
+      86 files despite `strict: true`) — large mechanical sweep, not
+      attempted this pass.
 - [ ] Finish i18n coverage (`LandingPage`/`Footer` and several cross-cutting
-      `toast.error()` calls are hardcoded English)
+      `toast.error()` calls are hardcoded English) — not attempted this
+      pass; translating user-facing strings is a copy/product call as much
+      as a code one.
 
 ## Frontend — P3
 
-- [ ] Investigate dropping one of two map libraries (MapLibre GL vs
-      OpenLayers) — spike first to confirm neither is load-bearing
+- [ ] **Needs interaction:** investigate dropping one of two map libraries
+      (MapLibre GL vs OpenLayers). Explicitly named as a spike in the
+      original audit, not a direct change - needs the spike's findings
+      before any removal.
+
+## Accessibility & Design System (WCAG 2.2 AA)
+
+New backlog domain, added 2026-08-16 from a standards audit (WHATWG HTML,
+WCAG 2.2 AA, ARIA APG, ISO 9241-110/210, OWASP ASVS, Core Web Vitals,
+i18n) requested against `src/frontend`. Findings below are from a fast
+targeted scan, not the full multi-day audit the standards list implies -
+each is a real, file-specific issue, but this is a punch list to start
+from, not exhaustive coverage of every category (performance and OWASP
+ASVS in particular haven't been scanned yet).
+
+### Critical
+
+- [ ] Base `Modal` component has no dialog semantics, no Escape handler, no
+      focus trap (`components/common/Modal/index.tsx`, used by 7+ callers
+      incl. `DeleteProjectConfirmation`, `UnlockTaskPromptDialog`,
+      `ChooseProcessingParameter`, `UploadToOAM`). Has `tabIndex={-1}` but
+      no `role="dialog"`/`aria-modal`/`aria-labelledby`; Tab can leave the
+      dialog into background content. WCAG 2.4.3, 4.1.2; ARIA APG Dialog
+      pattern.
+- [ ] `Icon` component's keyboard handler is a no-op
+      (`components/common/Icon/index.tsx:17-26`): `role="button"
+      tabIndex={0} onKeyUp={() => {}}` — looks accessible but Enter/Space
+      does nothing. Every icon-only control built on it (57 usages: close,
+      delete, sync, download, zoom, etc.) is keyboard-unusable, and none
+      pass `aria-label` (accessible name falls back to the icon ligature
+      text, e.g. "close", fragile if the icon font fails to load). WCAG
+      2.1.1, 4.1.2.
+
+### High
+
+- [ ] `Breadcrumb` keyboard handler is also a no-op
+      (`components/common/Breadcrumb/index.tsx:20-23`) - real navigation
+      only happens in `onClick`. WCAG 2.1.1.
+- [ ] `ProjectCard`'s clickable div uses `role="presentation"` (removes it
+      from the accessibility tree) and has no `tabIndex`/`onKeyDown`
+      (`components/Projects/ProjectCard/index.tsx:33-37`) - the main
+      navigation target for every project in the grid is unreachable by
+      keyboard/screen reader. WCAG 2.1.1, 4.1.2.
+
+### Medium
+
+- [ ] Heading hierarchy: three `<h1>`s in one section
+      (`components/IndividualProject/ExportSection/index.tsx:16,48,55`).
+      Should be one `h1` + `h2`/`h3` for subsections. WCAG 1.3.1, 2.4.6.
+- [ ] `SearchInput`/`Select` rely on `placeholder` only, no
+      `<label>`/`aria-label` (`components/common/FormUI/SearchInput/index.tsx:27-34`,
+      `components/common/FormUI/Input/index.tsx`,
+      `components/common/FormUI/Select/index.tsx:113-117`). Placeholder
+      text isn't a reliable accessible name (it disappears on input). WCAG
+      1.3.1, 4.1.2.
+- [ ] `Drawer` has `role="dialog"`/`aria-modal`/Escape handling (good) but
+      no focus trap or initial focus on open
+      (`components/common/Drawer/index.tsx`) - Tab can still leave the
+      panel. WCAG 2.4.3.
+- [ ] Fixed-width label containers risk text clipping on longer-language
+      translations:
+      `components/RegulatorsApprovalPage/Description/DescriptionSection.tsx:156,168,183`
+      (`w-[146px]`) and
+      `components/IndividualProject/ExportSection/index.tsx:22,25,30,33,38,41`
+      (`w-28`) on translated field labels - should be `min-w` not fixed
+      `w-`. i18n text-expansion guidance.
+- [ ] No `prefers-reduced-motion` or `prefers-color-scheme` support
+      anywhere (confirmed via repo-wide grep - zero matches).
+      `tailwind.config.js` defines several transform/scale/opacity
+      animations with no reduced-motion variant.  `darkMode: "class"` is
+      configured but no toggle mechanism was found using it. WCAG 2.3.3.
+
+### Low
+
+- [ ] Verify `dangerouslySetInnerHTML` usages are sanitized, not raw
+      API/user data: `components/IndividualProject/QFieldExport/index.tsx`,
+      `components/common/MapLibreComponents/{AsyncPopup,NewAsyncPopup}/index.tsx`
+      (MapLibre popups render feature-derived content),
+      `components/Dashboard/RequestLogs/index.tsx`. OWASP ASVS (XSS).
+- [ ] `alt=""` on a meaningful profile image in the task-lock user list
+      (`components/IndividualProject/ModalContent/LockTaskDialog.tsx:209-213`)
+      - other avatars in the codebase use descriptive alt text; this one
+      conveys user identity but is marked decorative.
+
+### Checked and clean (no action needed)
+
+No `<img>` missing `alt` outright (some empty/decorative by design).
+`StatusChip` pairs color with visible text, not color-only. `TaskOrthoCogViewer`
+correctly implements `role="dialog"`/`aria-modal`.
+
+### Not yet scanned
+
+Performance (Core Web Vitals), OWASP ASVS beyond the XSS check above,
+full keyboard-navigation/focus-order pass across all views, contrast
+audit, and the CSS/design-token consolidation pass - out of scope for
+this fast scan, needed before calling this domain complete.
 
 ## Follow-ups discovered while executing the above
 
@@ -175,10 +320,12 @@ than as inline notes on the item that found them:
       text into the client-facing response (all already `log.error(...)` the
       real error first, so not urgent — found while adding the RFC 7807
       handlers, which only fixed the 3 sites the original audit named).
-- [ ] Regenerate `uv.lock` (run `uv lock` from `src/backend` in a real dev
-      environment or container — this sandbox lacks `libpq-dev`/GDAL headers
-      needed to resolve `psycopg[c]`) now that mypy was added as a dev
-      dependency; the `uv-lock` pre-commit hook will fail until then.
+- [x] Regenerate `uv.lock` for the mypy dev dependency — ran `uv lock` inside
+      a throwaway container built from the backend Dockerfile's build stage
+      (has the `libpq-dev`/GDAL headers this sandbox itself lacks). Landed
+      on `todo/08-mypy-baseline` (PR #23) and cascaded through every branch
+      after it, since it was failing CI on `mypy-baseline` and every PR
+      built on top of it.
 - [ ] Incrementally clear the debt the restored ruff config now tracks in
       documented `ignore` entries: `B904` (51 sites, exception chaining),
       `N805`/`N806` (43 sites, naming), `ASYNC240` (11 sites, blocking calls
@@ -196,3 +343,35 @@ than as inline notes on the item that found them:
       deliberate, reviewed pass (almost 6000 are auto-fixable, but running
       `--fix` across the whole tree in one shot is exactly what went wrong
       mid-session here — do it in reviewable batches, not one commit).
+- [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
+      arq jobs enqueued from a request, so a job can be traced back to the
+      HTTP request that triggered it. Needs touching every enqueue call
+      site to pass the ID through job kwargs/context - not attempted as
+      part of adding the middleware itself.
+- [ ] Regenerate `uv.lock` again once `prometheus_client` (or whichever
+      package gets picked, see the `/metrics` item above) is added as a
+      dependency - same container-based process used for the mypy lockfile
+      fix.
+- [x] Fixed two real bugs the RFC 7807 PR's own tests caught: (1) the
+      exception handlers were only registered on the module-level `api`
+      singleton, not inside `get_application()` itself, so any other
+      caller of the factory (including every test) silently got FastAPI's
+      default handlers instead - moved registration inside the factory;
+      (2) `handle_http_exception` was unconditionally `str()`-ing non-string
+      `detail`, breaking routes (e.g. waypoint's `MISSING_TERRAIN_DEM`
+      check) that deliberately raise a structured dict detail for the
+      frontend to branch on - now passed through as-is. Confirmed via a
+      real `just test backend`-equivalent run (this sandbox got Docker
+      BuildKit working via a user-level `docker-buildx` CLI plugin install,
+      no root needed) - full suite green, 257/257.
+- [ ] **Needs interaction:** every PR that triggers a test workflow should
+      have tests exercising both expected and failure conditions - done
+      for the backend PR stack (#2-#33) this pass; frontend PRs beyond the
+      ErrorBoundary/AppErrorFallback test are still light (ESLint-v9 and
+      redux-saga-deletion PRs are config/deletion-only, no new tests
+      needed, but ProjectCard/Modal/Breadcrumb keyboard-accessibility gaps
+      below have no regression tests either once fixed). "Add additional
+      linting for FE and BE code" also requested - no specific new rules
+      picked yet; needs a decision on what beyond the existing ruff/ESLint
+      configs is wanted (stricter mypy, more ESLint plugins, etc.) before
+      it's actionable.
