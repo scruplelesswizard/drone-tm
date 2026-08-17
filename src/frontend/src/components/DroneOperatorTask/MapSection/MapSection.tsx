@@ -10,11 +10,7 @@ import getBbox from '@turf/bbox';
 import { point } from '@turf/helpers';
 import { coordAll } from '@turf/meta';
 import { useTypedSelector } from '@Store/hooks';
-import {
-  useGetTaskByIndexQuery,
-  useGetTaskAssetsInfo,
-  useGetTaskWaypointQuery,
-} from '@Api/tasks';
+import { useGetTaskAssetsInfo, useGetTaskWaypointQuery } from '@Api/tasks';
 import { postTaskWaypoint } from '@Services/tasks';
 import { useMapLibreGLMap } from '@Components/common/MapLibreComponents';
 import { GeojsonType } from '@Components/common/MapLibreComponents/types';
@@ -62,7 +58,7 @@ import { m } from '@/paraglide/messages';
 const MapSection = ({ className }: { className?: string }) => {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
-  const { projectId, taskId, taskData, taskIndex } = useTaskParams();
+  const { projectId, taskId, taskData } = useTaskParams();
   const [popupData, setPopupData] = useState<Record<string, any>>({});
   const [showFlightPlan, setShowFlightPlan] = useState(true);
   const [showTaskArea, setShowTaskArea] = useState(true);
@@ -115,7 +111,9 @@ const MapSection = ({ className }: { className?: string }) => {
   });
 
   const {
-    data: taskAssetsInformation,
+    // Query is still called for its cache-population side effect even
+    // though the returned data isn't read directly in this component.
+    data: _taskAssetsInformation,
     // isFetching: taskAssetsInfoLoading,
   }: Record<string, any> = useGetTaskAssetsInfo(
     projectId as string,

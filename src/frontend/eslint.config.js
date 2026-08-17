@@ -30,7 +30,9 @@ const legacyConfig = compat.extends(
 // fixing the (large, pre-existing) violation count this now surfaces.
 const legacyRuleOverrides = {
   'prettier/prettier': 'error',
-  'no-console': 'error',
+  // warn/error are legitimate runtime diagnostics; only bare console.log
+  // (debug leftovers) is disallowed.
+  'no-console': ['error', { allow: ['warn', 'error'] }],
   'react/react-in-jsx-scope': 0,
   'react/jsx-props-no-spreading': 'off',
   'react/forbid-prop-types': 'off',
@@ -48,8 +50,18 @@ const legacyRuleOverrides = {
   'react/jsx-no-useless-fragment': 0,
   'import/extensions': 0,
   'no-plusplus': 0,
-  'no-unused-vars': 'error',
-  '@typescript-eslint/no-unused-vars': 'off',
+  // The base rule isn't TypeScript-aware: it flags parameter names in
+  // interface/type function signatures (e.g. `onClick: (event: Foo) =>
+  // void` inside a props interface) as unused, since it can't tell a
+  // type-only signature from a real binding. The typescript-eslint
+  // version understands the difference, and also respects the
+  // leading-underscore "intentionally unused" convention already used
+  // throughout this codebase (e.g. `_properties`, `_imageUrls`).
+  'no-unused-vars': 'off',
+  '@typescript-eslint/no-unused-vars': [
+    'error',
+    { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+  ],
   'class-methods-use-this': 'warn',
   'react/state-in-constructor': 0,
   'react/destructuring-assignment': 0,
@@ -104,6 +116,17 @@ export default [
     },
   },
   {
+    // Ambient declaration files: `declare namespace JSX { interface
+    // IntrinsicElements ... }` is TypeScript declaration merging, not a
+    // normal local binding - the base (non-type-aware) no-unused-vars
+    // rule can't tell the two apart and flags every merged
+    // namespace/interface name as dead code.
+    files: ['src/**/*.d.ts'],
+    rules: {
+      'no-unused-vars': 'off',
+    },
+  },
+  {
     // Root-level tooling config files: not part of the app's own tsconfig
     // (so no type-aware `project`), and legitimately import devDependencies.
     files: ['*.config.{js,ts,cjs,mjs}'],
@@ -112,6 +135,9 @@ export default [
       sourceType: 'module',
       globals: { ...globals.node },
       parser: tsParser,
+    },
+    plugins: {
+      '@typescript-eslint': tsPlugin,
     },
     rules: {
       ...legacyRuleOverrides,

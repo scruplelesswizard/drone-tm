@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable no-unused-vars */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import { useEffect, useRef, useState } from 'react';
 import Icon from '@Components/common/Icon';
@@ -46,7 +45,7 @@ export default function Select({
   const resolvedPlaceholder = placeholder ?? m.common_select();
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(selectedOption);
-  const [position, setPosition] = useState(direction);
+  const [position] = useState(direction);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [searchText, setSearchText] = useState('');
 
@@ -122,7 +121,7 @@ export default function Select({
               selected ? 'placeholder:naxatw-text-grey-800' : ''
             } focus:placeholder:naxatw-text-grey-400`}
             value={searchText}
-            onClick={e => {
+            onClick={() => {
               setIsOpen(true);
             }}
             onChange={e => {

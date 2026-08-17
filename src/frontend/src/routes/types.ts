@@ -2,7 +2,6 @@ import React, { LazyExoticComponent, ReactNode } from 'react';
 
 type ComponentType =
   | (() => React.JSX.Element)
-  // eslint-disable-next-line no-unused-vars
   | ((props: { children?: ReactNode }) => React.JSX.Element);
 
 export interface IRoute {

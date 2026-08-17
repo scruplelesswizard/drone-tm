@@ -21,7 +21,7 @@ interface IQuestionBoxProps {
 const QuestionBox = ({
   flyable,
   setFlyable,
-  haveNoImages,
+  haveNoImages: _haveNoImages,
 }: IQuestionBoxProps) => {
   const { projectId, taskId, projectSlug } = useTaskParams();
   const navigate = useNavigate();

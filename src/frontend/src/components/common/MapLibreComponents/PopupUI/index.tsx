@@ -1,7 +1,4 @@
-/* eslint-disable no-unused-vars */
-
 import React from 'react';
-import { format } from 'date-fns';
 import capitalizeFirstLetter from '@Utils/capitalizeFirstLetter';
 // import { popupExceptionKeys } from '@src/constants/map';
 
@@ -19,10 +16,9 @@ export default function PopupUI({ data = {} }: IPopupUIProps) {
       const value = data?.[key];
 
       if (key === 'submitted_date') {
-        const date = new Date(value);
         return {
           ...obj,
-          // [name]: format(date, ['MMM do yyyy, h:mm a'])
+          // [name]: format(new Date(value), ['MMM do yyyy, h:mm a'])
         };
       }
       if (exceptionKeys.includes(key)) {

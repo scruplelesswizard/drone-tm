@@ -5,7 +5,6 @@ import { useTypedSelector } from '@Store/hooks';
 import { formatString, buildDownloadUrl } from '@Utils/index';
 import { useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { m } from '@/paraglide/messages';
 
@@ -30,7 +29,6 @@ const contributionsDataColumns = [
     cell: function CellComponent({ row }: any) {
       const { original: rowData } = row;
       const dispatch = useDispatch();
-      const { id } = useParams();
       const visibleOrthophotoList = useTypedSelector(
         state => state.project.visibleOrthophotoList,
       );
@@ -150,7 +148,7 @@ const contributionsDataColumns = [
 
 interface ITableSectionProps {
   isFetching: boolean;
-  // eslint-disable-next-line no-unused-vars
+
   handleTableRowClick: (rowData: any) => {};
 }
 

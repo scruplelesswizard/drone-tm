@@ -66,7 +66,7 @@ api.interceptors.response.use(
           localStorage.setItem('token', newAccessToken); // set new access token
           originalRequest.headers['Access-Token'] = `${newAccessToken}`;
           return axios(originalRequest); // recall Api with new token1
-        } catch (error: any) {
+        } catch {
           toast.error('Session Expired. Please Re-login.');
           localStorage.removeItem('token');
           localStorage.removeItem('refresh');

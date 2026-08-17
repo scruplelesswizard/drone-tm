@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable no-param-reassign */
 import { useEffect, useMemo, useRef } from 'react';
 import { DrawMode, Map, Popup } from 'maplibre-gl';

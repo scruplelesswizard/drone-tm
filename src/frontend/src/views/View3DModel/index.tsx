@@ -459,7 +459,6 @@ const View3DModel = () => {
         const failedUrl: string | undefined = event?.url;
         const isTileset = !!failedUrl && failedUrl.endsWith('tileset.json');
         if (isTileset) {
-          // eslint-disable-next-line no-console
           console.error('Failed to load 3D tileset', event?.error);
           if (!cancelled) setModelState('error');
           return;
@@ -470,7 +469,6 @@ const View3DModel = () => {
           !firstModelLoaded &&
           !cancelled
         ) {
-          // eslint-disable-next-line no-console
           console.error(`Aborting after ${tileErrorCount} tile load errors`);
           setModelState('error');
         }

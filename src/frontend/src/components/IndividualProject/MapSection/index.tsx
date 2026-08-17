@@ -567,6 +567,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
               className="naxatw-mt-[-4px]"
             >
               <button
+                type="button"
                 className="naxatw-grid naxatw-h-[1.85rem] naxatw-place-items-center naxatw-border naxatw-border-gray-400 naxatw-bg-[#F5F5F5] !naxatw-p-[0.315rem]"
                 onClick={() => handleZoomToExtent()}
               >

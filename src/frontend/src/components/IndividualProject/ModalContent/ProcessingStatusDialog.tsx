@@ -120,15 +120,12 @@ const ProcessingStatusDialog = () => {
   });
 
   // Spatial coverage: actual PostGIS-computed percentage of project area covered
-  const {
-    data: projectCoverage,
-    refetch: refetchCoverage,
-    isFetching: isCoverageFetching,
-  } = useQuery<ProjectCoverage>({
-    queryKey: ['projectCoverage', projectId],
-    queryFn: () => getProjectCoverage(projectId),
-    enabled: !!projectId,
-  });
+  const { data: projectCoverage, isFetching: isCoverageFetching } =
+    useQuery<ProjectCoverage>({
+      queryKey: ['projectCoverage', projectId],
+      queryFn: () => getProjectCoverage(projectId),
+      enabled: !!projectId,
+    });
 
   // Build a lookup from task_id → has_ready_imagery so the backend is the
   // single source of truth for readiness decisions.

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import type { DrawMode } from '@mapbox/mapbox-gl-draw';
 import type { Feature, FeatureCollection, GeoJsonTypes } from 'geojson';
 import type { Map, MapOptions } from 'maplibre-gl';

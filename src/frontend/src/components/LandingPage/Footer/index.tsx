@@ -1,11 +1,9 @@
-/* eslint-disable no-unused-vars */
 import { FlexRow } from '@Components/common/Layouts';
 // import Icon from '@Components/common/Icon';
 import Image from '@Components/RadixComponents/Image';
 import JamaicaFlyingLabsLogo from '@Assets/images/LandingPage/JamaicaFlyingLabs_Logo.png';
 import naxaLogo from '@Assets/images/LandingPage/Naxa-logo.png';
 import hotLogo from '@Assets/images/LandingPage/HOT-logo.png';
-import { Button } from '@Components/RadixComponents/Button';
 import { motion } from 'framer-motion';
 import { fadeUpVariant } from '@Constants/animations';
 import { m } from '@/paraglide/messages';

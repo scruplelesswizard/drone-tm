@@ -291,6 +291,7 @@ const FlightGapDetectionModal = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="naxatw-rounded-full naxatw-p-2 naxatw-text-gray-500 hover:naxatw-bg-gray-100"
           >

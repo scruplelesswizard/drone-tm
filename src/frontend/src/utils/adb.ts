@@ -30,6 +30,9 @@ async function sendDjiGoFileViaAdb(data: Blob) {
   }
   const uuid = dirs[0];
   const targetFile = `${waypointBase}/${uuid}/${uuid}.kmz`;
+  // Diagnostic breadcrumbs for a notoriously flaky hardware transfer -
+  // useful when troubleshooting a failed/partial ADB copy in the field.
+  // eslint-disable-next-line no-console
   console.log(`Replacing: ${targetFile}`);
 
   // Send file to phone via ADB STDIN
@@ -38,6 +41,7 @@ async function sendDjiGoFileViaAdb(data: Blob) {
   );
   const writer = process.stdin.getWriter();
   await writer.write(encodeUtf8(base64String));
+  // eslint-disable-next-line no-console -- see above
   console.log(`Copied flightplan to ${targetFile}`);
 }
 
@@ -51,6 +55,7 @@ async function sendPotensicProFileViaAdb(data: Blob) {
   await adb.subprocess.shellProtocol!.spawn(
     'run-as com.ipotensic.potensicpro rm -f databases/map.db-journal',
   );
+  // eslint-disable-next-line no-console -- see sendDjiGoFileViaAdb above
   console.log('Deleted db journal');
 
   // Send file to phone via ADB STDIN
@@ -60,6 +65,7 @@ async function sendPotensicProFileViaAdb(data: Blob) {
   const writer = process.stdin.getWriter();
   // Send as UTF-8 encoded data
   await writer.write(encodeUtf8(base64String));
+  // eslint-disable-next-line no-console -- see sendDjiGoFileViaAdb above
   console.log('Copied flightplan to databases/map.db');
 }
 

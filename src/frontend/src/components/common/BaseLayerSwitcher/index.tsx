@@ -20,7 +20,7 @@ const getBaseLayerLabel = (key: string) => {
 const BaseLayerSwitcherUI = () => {
   const { map, isMapLoaded } = useMap();
   const [selectedBaseLayer, setSelectedBaseLayer] = useState('osm');
-  // eslint-disable-next-line no-unused-vars
+
   const [_, toggle, handleToggle]: any = useOutsideClick('single');
   const baseLayerList = baseLayersData;
 

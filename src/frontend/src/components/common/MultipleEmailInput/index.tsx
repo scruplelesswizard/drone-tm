@@ -6,7 +6,7 @@ import { FlexRow } from '../Layouts';
 
 interface IMultipleEmailInput {
   emails: string[] | [];
-  // eslint-disable-next-line no-unused-vars
+
   onEmailAdd: (emails: string[]) => void;
 }
 
