@@ -1,0 +1,69 @@
+version: 2
+
+updates:
+  # Backend Python deps (uv workspace: src/backend + the drone-flightplan
+  # member package share one lockfile at the workspace root).
+  - package-ecosystem: "uv"
+    directory: "/src/backend"
+    schedule:
+      interval: "weekly"
+    groups:
+      backend-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # Frontend JS deps (pnpm workspace: src/frontend + src/gcp-editor share
+  # one lockfile at src/pnpm-lock.yaml).
+  - package-ecosystem: "npm"
+    directory: "/src"
+    schedule:
+      interval: "weekly"
+    groups:
+      frontend-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  # GitHub Actions workflow action versions.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "devops"
+
+  # Backend release image base.
+  - package-ecosystem: "docker"
+    directory: "/src/backend"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # Frontend release image base.
+  - package-ecosystem: "docker"
+    directory: "/src/frontend"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  # contrib/pg-upgrade/Dockerfile is deliberately excluded: it pins
+  # specific PostGIS major versions (14/15/16) as upgrade path steps, not
+  # a "latest wins" deployed image - Dependabot bumping those would break
+  # its purpose.
