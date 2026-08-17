@@ -1748,6 +1748,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
           {/* Map toolbar */}
           <div className="naxatw-flex naxatw-shrink-0 naxatw-items-center naxatw-gap-3 naxatw-border-b naxatw-border-gray-200 naxatw-bg-white naxatw-px-3 naxatw-py-1.5">
             <button
+              type="button"
               onClick={() => {
                 if (boxSelectMode) setBoxSelectedImages([]);
                 const next = !boxSelectMode;
@@ -1774,6 +1775,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
               {m.image_review_select_multiple()}
             </button>
             <button
+              type="button"
               onClick={() => {
                 const next = !sequenceSelectMode;
                 setSequenceSelectMode(next);
@@ -1970,6 +1972,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
                       })}
                     </span>
                     <button
+                      type="button"
                       onClick={() => {
                         setBoxSelectedImages([]);
                         setSequenceAnchor(null);
@@ -1994,6 +1997,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
                         <>
                           {overridable.length > 0 && (
                             <button
+                              type="button"
                               onClick={handleBulkOverrideRejection}
                               disabled={isBulkProcessing}
                               className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-green-600 naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-green-700 disabled:naxatw-opacity-50"
@@ -2011,6 +2015,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
                           )}
                           {rejectable.length > 0 && (
                             <button
+                              type="button"
                               onClick={handleBulkRejectImages}
                               disabled={isBulkProcessing}
                               className="hover:naxatw-bg-red-600 naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-red naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white disabled:naxatw-opacity-50"
@@ -2028,6 +2033,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
                           )}
                           {matchable.length > 0 && (
                             <button
+                              type="button"
                               onClick={() => {
                                 setBoxSelectMode(false);
                                 setBulkTaskMatchingImages(matchable);
@@ -2066,6 +2072,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setBulkTaskMatchingImages(null)}
                   className="naxatw-rounded naxatw-bg-white naxatw-bg-opacity-20 naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-opacity-30"
                 >
@@ -2087,6 +2094,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setTaskMatchingImage(null)}
                   className="naxatw-rounded naxatw-bg-white naxatw-bg-opacity-20 naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-opacity-30"
                 >
@@ -2255,6 +2263,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
             onClick={e => e.stopPropagation()}
           >
             <button
+              type="button"
               className="naxatw-absolute naxatw-right-4 naxatw-top-4 naxatw-rounded-full naxatw-bg-white naxatw-p-2 naxatw-text-gray-800 naxatw-shadow-lg hover:naxatw-bg-gray-100"
               onClick={closeModal}
             >

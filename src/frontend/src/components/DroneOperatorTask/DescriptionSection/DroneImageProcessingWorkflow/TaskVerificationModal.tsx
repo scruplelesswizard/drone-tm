@@ -544,6 +544,7 @@ const TaskVerificationModal = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="naxatw-rounded-full naxatw-p-2 naxatw-text-gray-500 hover:naxatw-bg-gray-100"
           >
@@ -784,6 +785,7 @@ const TaskVerificationModal = ({
                                   </div>
                                 )}
                                 <button
+                                  type="button"
                                   className="naxatw-bg-red-500 hover:naxatw-bg-red-600 naxatw-absolute naxatw-right-1 naxatw-top-1 naxatw-rounded-full naxatw-p-1 naxatw-text-white naxatw-opacity-0 naxatw-transition-opacity group-hover:naxatw-opacity-100"
                                   onClick={e => {
                                     e.stopPropagation();

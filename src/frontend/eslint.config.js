@@ -30,7 +30,9 @@ const legacyConfig = compat.extends(
 // fixing the (large, pre-existing) violation count this now surfaces.
 const legacyRuleOverrides = {
   'prettier/prettier': 'error',
-  'no-console': 'error',
+  // warn/error are legitimate runtime diagnostics; only bare console.log
+  // (debug leftovers) is disallowed.
+  'no-console': ['error', { allow: ['warn', 'error'] }],
   'react/react-in-jsx-scope': 0,
   'react/jsx-props-no-spreading': 'off',
   'react/forbid-prop-types': 'off',

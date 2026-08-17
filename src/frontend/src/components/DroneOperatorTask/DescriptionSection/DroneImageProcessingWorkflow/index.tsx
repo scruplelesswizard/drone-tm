@@ -563,6 +563,7 @@ export const ClassifyImageryDialog = ({
                 </div>
                 <div className="naxatw-flex naxatw-items-center naxatw-gap-3">
                   <button
+                    type="button"
                     onClick={handleStartClassification}
                     disabled={
                       startClassificationMutation.isPending ||
@@ -638,6 +639,7 @@ export const ClassifyImageryDialog = ({
                         {m.classify_imagery_updates_interval()}
                       </p>
                       <button
+                        type="button"
                         onClick={() => resetStaleMutation.mutate({ projectId })}
                         disabled={resetStaleMutation.isPending}
                         className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-border naxatw-border-amber-300 naxatw-bg-amber-50 naxatw-px-2 naxatw-py-1 naxatw-text-xs naxatw-font-medium naxatw-text-amber-700 naxatw-transition-colors hover:naxatw-bg-amber-100 disabled:naxatw-cursor-not-allowed disabled:naxatw-opacity-50"

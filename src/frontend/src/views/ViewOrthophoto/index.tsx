@@ -131,7 +131,7 @@ const ViewOrthophoto = () => {
         setViewState('loaded');
       } catch (err) {
         if (cancelled) return;
-        // eslint-disable-next-line no-console
+
         console.error('Failed to load orthophoto COG', err);
         setViewState('error');
       }
@@ -149,7 +149,6 @@ const ViewOrthophoto = () => {
           );
         })
         .catch(err => {
-          // eslint-disable-next-line no-console
           console.warn(
             'Failed to read COG metadata; zoom-to-extent will use project outline',
             err,
