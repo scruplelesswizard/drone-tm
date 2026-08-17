@@ -292,11 +292,14 @@ async def create_project_image(
     """
     # Convert location dict to PostGIS point if provided
     location_sql = "NULL"
+    lat = lon = None
     if image_data.location:
         lat = image_data.location.get("lat")
         lon = image_data.location.get("lon")
         if lat is not None and lon is not None:
-            location_sql = f"ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)"
+            location_sql = "ST_SetSRID(ST_MakePoint(%(lon)s, %(lat)s), 4326)"
+        else:
+            lat = lon = None
 
     sql = f"""
         INSERT INTO project_images (
@@ -326,6 +329,8 @@ async def create_project_image(
                 "batch_id": str(image_data.batch_id) if image_data.batch_id else None,
                 "thumbnail_url": image_data.thumbnail_url,
                 "rejection_reason": image_data.rejection_reason,
+                "lat": lat,
+                "lon": lon,
             },
         )
         result = await cur.fetchone()

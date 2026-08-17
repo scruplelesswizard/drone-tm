@@ -152,10 +152,6 @@ ignore = [
   "N806",  # non-lowercase-variable-in-function (22 sites): mix of real
   # violations and Pydantic/SQLAlchemy conventions that look like violations;
   # needs per-site review, not a blind rename.
-  "S608",  # hardcoded-sql-expression (17 sites): all are the same
-  # allowlist-guarded dynamic column name pattern (see project_routes.py's
-  # _GENERATING_COLUMNS) - safe as implemented, but relies on the allowlist
-  # guard staying in place rather than a structural guarantee.
   "ASYNC240",  # blocking-path-method-in-async-function (11 sites): needs
   # per-site review of actual hot-path impact before wrapping in
   # asyncio.to_thread.
@@ -195,6 +191,28 @@ extend-immutable-calls = [
 # These are retained compatibility modules; renaming them would break imports.
 "**/flightPlanWaypointGenerator.py" = ["N999"]
 "**/sampleRasterAtPoints.py" = ["N999"]
+# S608 (hardcoded-sql-expression): reviewed site-by-site instead of a blanket
+# repo-wide ignore, so S608 stays live everywhere else and a new f-string-
+# built query elsewhere still gets caught. Each file below only ever
+# f-string-interpolates one of: (a) a column name checked against a
+# hardcoded allowlist first, (b) a Pydantic model's own field names via
+# model_dump().keys() (none of these models allow extra fields, so the key
+# set is fixed by the schema, not attacker input), or (c) a choice between
+# two fixed SQL-fragment literals, with any actual values always passed as
+# %(...)s params. One real value-interpolation site (image_logic.py's
+# ST_MakePoint call) was found and fixed to use params instead, rather than
+# ignored.
+"app/projects/project_routes.py" = ["S608"]
+"app/projects/project_logic.py" = ["S608"]
+"app/projects/project_schemas.py" = ["S608"]
+"app/arq/cloudnative.py" = ["S608"]
+"app/arq/tasks.py" = ["S608"]
+"app/drones/drone_schemas.py" = ["S608"]
+"app/images/image_logic.py" = ["S608"]
+"app/images/flight_stationary_removal.py" = ["S608"]
+"app/images/flight_tail_removal.py" = ["S608"]
+"app/users/user_schemas.py" = ["S608"]
+"tests/test_classification_routes.py" = ["S608"]
 # These fixtures model naive PostgreSQL timestamp values returned by psycopg.
 "tests/test_project_processing.py" = ["DTZ001"]
 # This test deliberately passes a naive datetime to exercise input validation.
