@@ -243,7 +243,30 @@ class UserTasksOut(BaseModel):
     @staticmethod
     async def get_tasks_by_user(
         db: Connection, user_id: str, skip: int = 0, limit: int = 50
-    ):
+    ) -> tuple[list["UserTasksOut"], int]:
+        async with db.cursor(row_factory=dict_row) as cur:
+            await cur.execute(
+                """
+                SELECT COUNT(DISTINCT tasks.id) AS total
+                FROM task_events
+                LEFT JOIN tasks ON task_events.task_id = tasks.id
+                WHERE
+                    (
+                        task_events.user_id = %(user_id)s
+                        AND task_events.state::text NOT IN ('UNLOCKED')
+                    )
+                    OR
+                    task_events.project_id IN (
+                        SELECT p.id
+                        FROM projects p
+                        WHERE p.author_id = %(user_id)s
+                    );
+                """,
+                {"user_id": user_id},
+            )
+            total_row = await cur.fetchone()
+            total = total_row["total"] if total_row else 0
+
         async with db.cursor(row_factory=class_row(UserTasksOut)) as cur:
             await cur.execute(
                 """
@@ -288,7 +311,8 @@ class UserTasksOut(BaseModel):
                 {"user_id": user_id, "skip": skip, "limit": limit},
             )
             try:
-                return await cur.fetchall()
+                results = await cur.fetchall()
+                return results, total
 
             except Exception as e:
                 log.exception(e)

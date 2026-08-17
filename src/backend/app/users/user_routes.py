@@ -7,6 +7,7 @@ import jwt
 from app.config import get_password_hash, settings, verify_password
 from app.db import database
 from app.models.enums import HTTPStatus
+from app.pagination import PaginationParams, paginate
 from app.users import user_deps, user_logic, user_schemas
 from app.users.permissions import IsSelf, check_permissions
 from app.users.user_deps import (
@@ -78,17 +79,21 @@ async def login_access_token(
     return Token(access_token=access_token, refresh_token=refresh_token, role=role)
 
 
-@router.get("", tags=["users"], response_model=list[user_schemas.DbUser])
+@router.get("", tags=["users"])
 async def get_user(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
-    skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(gt=0, le=500)] = 200,
+    # Bounds/default deliberately differ from the shared pagination_params()
+    # dependency: existing callers (e.g. the user-mention picker) expect
+    # "all users" back in one page. Revisit once a dedicated paged UI lands.
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(gt=0, le=500)] = 200,
 ):
-    # NOTE limit default/max chosen to avoid changing behaviour for existing
-    # callers (e.g. user-mention pickers) that today expect "all users" back.
-    # Revisit once real pagination lands here (see todo.md).
-    return await user_schemas.DbUser.all(db, skip, limit)
+    pagination = PaginationParams(page=page, per_page=per_page)
+    results, total = await user_schemas.DbUser.all(
+        db, pagination.skip, pagination.per_page
+    )
+    return {"results": results, "pagination": paginate(pagination, total)}
 
 
 @router.post("/{user_id}/profile")
