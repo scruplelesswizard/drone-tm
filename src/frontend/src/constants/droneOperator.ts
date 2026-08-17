@@ -1,4 +1,4 @@
-import { m } from "@/paraglide/messages";
+import { m } from '@/paraglide/messages';
 
 export const getDescriptionData = () => [
   [
@@ -37,9 +37,9 @@ export const getDescriptionTitle = () => [
 ];
 
 export const mapLayerIDs = [
-  "waypoint-points-layer",
-  "waypoint-points-image-layer",
-  "waypoint-line-layer",
-  "waypoint-points-image-image/logo",
-  "waypoint-line-image/logo",
+  'waypoint-points-layer',
+  'waypoint-points-image-layer',
+  'waypoint-line-layer',
+  'waypoint-points-image-image/logo',
+  'waypoint-line-image/logo',
 ];

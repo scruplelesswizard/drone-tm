@@ -1,9 +1,9 @@
-import { ReactElement, useEffect, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { getRuntimeConfig } from "@/runtimeConfig";
+import { ReactElement, useEffect, useState } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { getRuntimeConfig } from '@/runtimeConfig';
 
-const API_URL = getRuntimeConfig("VITE_API_URL", "/api");
-const AUTH_PROVIDER = getRuntimeConfig("VITE_AUTH_PROVIDER", "legacy");
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const AUTH_PROVIDER = getRuntimeConfig('VITE_AUTH_PROVIDER', 'legacy');
 
 interface IProtectedRoute {
   isAuthenticated: boolean;
@@ -17,33 +17,33 @@ interface IProtectedRoute {
  * the session is still valid.  If not, we clear stale state and redirect.
  */
 function useValidateSession(isAuthenticated: boolean) {
-  const [status, setStatus] = useState<"checking" | "valid" | "invalid">(
-    isAuthenticated && AUTH_PROVIDER === "hanko"
-      ? "checking"
+  const [status, setStatus] = useState<'checking' | 'valid' | 'invalid'>(
+    isAuthenticated && AUTH_PROVIDER === 'hanko'
+      ? 'checking'
       : isAuthenticated
-        ? "valid"
-        : "invalid",
+        ? 'valid'
+        : 'invalid',
   );
 
   useEffect(() => {
-    if (!isAuthenticated || AUTH_PROVIDER !== "hanko") return;
+    if (!isAuthenticated || AUTH_PROVIDER !== 'hanko') return;
 
     let cancelled = false;
 
-    fetch(`${API_URL}/users/my-info`, { credentials: "include" })
-      .then((res) => {
+    fetch(`${API_URL}/users/my-info`, { credentials: 'include' })
+      .then(res => {
         if (cancelled) return;
         if (res.ok) {
-          setStatus("valid");
+          setStatus('valid');
         } else {
           // Session expired - clean up stale localStorage
-          localStorage.removeItem("userprofile");
-          localStorage.removeItem("signedInAs");
-          setStatus("invalid");
+          localStorage.removeItem('userprofile');
+          localStorage.removeItem('signedInAs');
+          setStatus('invalid');
         }
       })
       .catch(() => {
-        if (!cancelled) setStatus("invalid");
+        if (!cancelled) setStatus('invalid');
       });
 
     return () => {
@@ -56,18 +56,18 @@ function useValidateSession(isAuthenticated: boolean) {
 
 export default function ProtectedRoute({
   isAuthenticated,
-  redirectPath = "/",
+  redirectPath = '/',
   children,
 }: IProtectedRoute): ReactElement {
   const location = useLocation();
   const sessionStatus = useValidateSession(isAuthenticated);
 
-  if (sessionStatus === "checking") {
+  if (sessionStatus === 'checking') {
     // Show nothing while validating - avoids the empty-page flash
     return <></>;
   }
 
-  if (sessionStatus === "invalid") {
+  if (sessionStatus === 'invalid') {
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 

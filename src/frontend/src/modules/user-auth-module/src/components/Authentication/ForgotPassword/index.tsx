@@ -1,18 +1,18 @@
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 
-import { Input, Label, FormControl } from "@Components/common/FormUI";
-import { Button } from "@Components/RadixComponents/Button";
-import Icon from "@Components/common/Icon";
-import { Flex, FlexRow } from "@Components/common/Layouts";
-import ErrorMessage from "@Components/common/ErrorMessage";
-import { forgotPassword } from "@Services/common";
-import { toast } from "react-toastify";
-import { m } from "@/paraglide/messages";
+import { Input, Label, FormControl } from '@Components/common/FormUI';
+import { Button } from '@Components/RadixComponents/Button';
+import Icon from '@Components/common/Icon';
+import { Flex, FlexRow } from '@Components/common/Layouts';
+import ErrorMessage from '@Components/common/ErrorMessage';
+import { forgotPassword } from '@Services/common';
+import { toast } from 'react-toastify';
+import { m } from '@/paraglide/messages';
 
 const initialState = {
-  email: "",
+  email: '',
 };
 
 export default function ForgotPassword() {
@@ -23,7 +23,7 @@ export default function ForgotPassword() {
     onSuccess: () => {
       toast.success(m.auth_forgot_password_email_sent());
 
-      navigate("/login");
+      navigate('/login');
     },
   });
 
@@ -62,10 +62,13 @@ export default function ForgotPassword() {
             id="email"
             type="email"
             placeholder={m.auth_email_placeholder()}
-            {...register("email", { required: true })}
+            {...register('email', { required: true })}
           />
           <ErrorMessage
-            message={error?.response?.data?.detail?.[0]?.msg || m.auth_reset_password_error()}
+            message={
+              error?.response?.data?.detail?.[0]?.msg ||
+              m.auth_reset_password_error()
+            }
           />
         </FormControl>
 
@@ -79,7 +82,7 @@ export default function ForgotPassword() {
             leftIcon="west"
             className="naxatw-text-red"
             onClick={() => {
-              navigate("/login");
+              navigate('/login');
             }}
             type="button"
           >

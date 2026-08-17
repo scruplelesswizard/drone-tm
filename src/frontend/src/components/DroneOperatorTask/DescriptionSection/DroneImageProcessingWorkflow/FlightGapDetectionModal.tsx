@@ -1,28 +1,28 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import {
   Map as MapLibreMap,
   NavigationControl,
   AttributionControl,
   LngLatBoundsLike,
-} from "maplibre-gl";
-import bbox from "@turf/bbox";
-import { toast } from "react-toastify";
+} from 'maplibre-gl';
+import bbox from '@turf/bbox';
+import { toast } from 'react-toastify';
 import {
   FlightGapDetectionData,
   getFlightGapDetectionData,
   downloadFlightGapGenerationPlan,
-} from "@Services/classification";
-import { FlexRow } from "@Components/common/Layouts";
-import { Button } from "@Components/RadixComponents/Button";
-import Select from "@Components/common/FormUI/Select";
-import MapContainer from "@Components/common/MapLibreComponents/MapContainer";
-import VectorLayer from "@Components/common/MapLibreComponents/Layers/VectorLayer";
-import BaseLayerSwitcherUI from "@Components/common/BaseLayerSwitcher";
-import { GeojsonType } from "@Components/common/MapLibreComponents/types";
-import AsyncPopup from "@Components/common/MapLibreComponents/NewAsyncPopup";
-import { droneModelOptions } from "@Constants/taskDescription";
-import { m } from "@/paraglide/messages";
+} from '@Services/classification';
+import { FlexRow } from '@Components/common/Layouts';
+import { Button } from '@Components/RadixComponents/Button';
+import Select from '@Components/common/FormUI/Select';
+import MapContainer from '@Components/common/MapLibreComponents/MapContainer';
+import VectorLayer from '@Components/common/MapLibreComponents/Layers/VectorLayer';
+import BaseLayerSwitcherUI from '@Components/common/BaseLayerSwitcher';
+import { GeojsonType } from '@Components/common/MapLibreComponents/types';
+import AsyncPopup from '@Components/common/MapLibreComponents/NewAsyncPopup';
+import { droneModelOptions } from '@Constants/taskDescription';
+import { m } from '@/paraglide/messages';
 
 interface FlightGapDetectionModalProps {
   isOpen: boolean;
@@ -46,10 +46,10 @@ const FlightGapDetectionModal = ({
   const [isStyleReady, setIsStyleReady] = useState(false);
   const [popupData, setPopupData] = useState<Record<string, any>>();
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const [manualGapData, setManualGapData] = useState<GeoJSON.FeatureCollection | null>(null);
-  const [currentGapData, setCurrentGapData] = useState<FlightGapDetectionData | null>(
-    gapAnalysisData,
-  );
+  const [manualGapData, setManualGapData] =
+    useState<GeoJSON.FeatureCollection | null>(null);
+  const [currentGapData, setCurrentGapData] =
+    useState<FlightGapDetectionData | null>(gapAnalysisData);
   const [selectedDroneType, setSelectedDroneType] = useState<string | null>(
     gapAnalysisData?.drone_type ?? null,
   );
@@ -79,14 +79,14 @@ const FlightGapDetectionModal = ({
 
     // Use a small delay to ensure DOM is rendered after loading state changes
     const timer = setTimeout(() => {
-      const container = document.getElementById("flight-gap-analysis-map");
+      const container = document.getElementById('flight-gap-analysis-map');
       if (!container) {
-        console.error("Map container not found");
+        console.error('Map container not found');
         return;
       }
 
       const mapInstance = new MapLibreMap({
-        container: container,
+        container,
         style: { version: 8, sources: {}, layers: [] },
         center: [0, 0],
         zoom: 2,
@@ -95,7 +95,7 @@ const FlightGapDetectionModal = ({
         renderWorldCopies: false,
       });
 
-      mapInstance.on("load", () => {
+      mapInstance.on('load', () => {
         setIsMapLoaded(true);
         // Additional delay to ensure style is fully ready
         setTimeout(() => {
@@ -117,8 +117,8 @@ const FlightGapDetectionModal = ({
   // Add map controls
   useEffect(() => {
     if (isMapLoaded && map) {
-      map.addControl(new NavigationControl(), "top-right");
-      map.addControl(new AttributionControl({ compact: true }), "bottom-right");
+      map.addControl(new NavigationControl(), 'top-right');
+      map.addControl(new AttributionControl({ compact: true }), 'bottom-right');
     }
   }, [isMapLoaded, map]);
 
@@ -136,7 +136,7 @@ const FlightGapDetectionModal = ({
 
     try {
       const geojson = {
-        type: "FeatureCollection" as const,
+        type: 'FeatureCollection' as const,
         features: [currentGapData.task_geometry],
       };
       const [minLng, minLat, maxLng, maxLat] = bbox(geojson);
@@ -160,15 +160,15 @@ const FlightGapDetectionModal = ({
   const imagesGeoJson = useCallback(() => {
     if (!currentGapData?.images) return null;
 
-    const features = currentGapData.images.features.flatMap((img) => {
-      const properties = img.properties;
-      if (!properties || !img.geometry || img.geometry.type !== "Point") {
+    const features = currentGapData.images.features.flatMap(img => {
+      const { properties } = img;
+      if (!properties || !img.geometry || img.geometry.type !== 'Point') {
         return [];
       }
 
       return [
         {
-          type: "Feature" as const,
+          type: 'Feature' as const,
           properties: {
             id: properties.id,
             filename: properties.filename,
@@ -182,13 +182,12 @@ const FlightGapDetectionModal = ({
     });
 
     return {
-      type: "FeatureCollection" as const,
+      type: 'FeatureCollection' as const,
       features,
     };
   }, [currentGapData]);
 
   const getPopupUI = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (_properties: Record<string, any>) => {
       if (!popupData) {
         return <div>{m.common_loading()}</div>;
@@ -196,7 +195,9 @@ const FlightGapDetectionModal = ({
 
       return (
         <div className="naxatw-flex naxatw-max-w-[300px] naxatw-flex-col naxatw-gap-2">
-          <p className="naxatw-truncate naxatw-text-sm naxatw-font-medium">{popupData.filename}</p>
+          <p className="naxatw-truncate naxatw-text-sm naxatw-font-medium">
+            {popupData.filename}
+          </p>
           {(popupData.thumbnail_url || popupData.url) && (
             <img
               src={popupData.thumbnail_url || popupData.url}
@@ -205,7 +206,7 @@ const FlightGapDetectionModal = ({
             />
           )}
           <p className="naxatw-text-xs naxatw-capitalize">
-            {m.common_status_label()} {popupData.status?.replace("_", " ")}
+            {m.common_status_label()} {popupData.status?.replace('_', ' ')}
           </p>
         </div>
       );
@@ -220,7 +221,7 @@ const FlightGapDetectionModal = ({
         manualGapPolygons: gapPolygons,
         droneType: selectedDroneType,
       }),
-    onSuccess: (data) => {
+    onSuccess: data => {
       setCurrentGapData(data);
       setManualGapData(data.gap_polygons);
       setSelectedDroneType(data.drone_type ?? selectedDroneType);
@@ -229,7 +230,9 @@ const FlightGapDetectionModal = ({
     },
     onError: (error: any) => {
       const message =
-        error?.response?.data?.detail || error.message || m.flight_gap_finalize_failed();
+        error?.response?.data?.detail ||
+        error.message ||
+        m.flight_gap_finalize_failed();
       toast.error(message);
     },
   });
@@ -251,7 +254,7 @@ const FlightGapDetectionModal = ({
       });
 
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `reflight_task_${taskIndex}.kmz`;
       document.body.appendChild(link);
@@ -270,7 +273,7 @@ const FlightGapDetectionModal = ({
 
   const imageGeoJsonData = imagesGeoJson();
   const taskGeometryGeoJson = {
-    type: "FeatureCollection" as const,
+    type: 'FeatureCollection' as const,
     features: [currentGapData.task_geometry],
   } as unknown as GeojsonType;
 
@@ -303,65 +306,74 @@ const FlightGapDetectionModal = ({
               isMapLoaded={isMapLoaded}
               containerId="flight-gap-analysis-map"
               style={{
-                width: "100%",
-                height: "100%",
+                width: '100%',
+                height: '100%',
               }}
             >
               <BaseLayerSwitcherUI />
               {/* Task polygon */}
-              {map && isMapLoaded && isStyleReady && currentGapData?.task_geometry && (
-                <VectorLayer
-                  map={map}
-                  isMapLoaded={isMapLoaded}
-                  id="task-polygon"
-                  geojson={taskGeometryGeoJson}
-                  visibleOnMap={true}
-                  layerOptions={{
-                    type: "fill",
-                    paint: {
-                      "fill-color": "#98BBC8",
-                      "fill-outline-color": "#484848",
-                      "fill-opacity": 0.4,
-                    },
-                  }}
-                />
-              )}
+              {map &&
+                isMapLoaded &&
+                isStyleReady &&
+                currentGapData?.task_geometry && (
+                  <VectorLayer
+                    map={map}
+                    isMapLoaded={isMapLoaded}
+                    id="task-polygon"
+                    geojson={taskGeometryGeoJson}
+                    visibleOnMap
+                    layerOptions={{
+                      type: 'fill',
+                      paint: {
+                        'fill-color': '#98BBC8',
+                        'fill-outline-color': '#484848',
+                        'fill-opacity': 0.4,
+                      },
+                    }}
+                  />
+                )}
 
               {/* Task polygon outline */}
-              {map && isMapLoaded && isStyleReady && currentGapData?.task_geometry && (
-                <VectorLayer
-                  map={map}
-                  isMapLoaded={isMapLoaded}
-                  id="task-polygon-outline"
-                  geojson={taskGeometryGeoJson}
-                  visibleOnMap={true}
-                  layerOptions={{
-                    type: "line",
-                    paint: {
-                      "line-color": "#484848",
-                      "line-width": 2,
-                    },
-                  }}
-                />
-              )}
+              {map &&
+                isMapLoaded &&
+                isStyleReady &&
+                currentGapData?.task_geometry && (
+                  <VectorLayer
+                    map={map}
+                    isMapLoaded={isMapLoaded}
+                    id="task-polygon-outline"
+                    geojson={taskGeometryGeoJson}
+                    visibleOnMap
+                    layerOptions={{
+                      type: 'line',
+                      paint: {
+                        'line-color': '#484848',
+                        'line-width': 2,
+                      },
+                    }}
+                  />
+                )}
 
               {/* Gap Polygons */}
-              {map && isMapLoaded && isStyleReady && currentGapData?.gap_polygons && (
-                <VectorLayer
-                  map={map}
-                  isMapLoaded={isMapLoaded}
-                  id="task-gap-polygons"
-                  geojson={currentGapData.gap_polygons as GeojsonType}
-                  visibleOnMap={true}
-                  layerOptions={{
-                    type: "fill",
-                    paint: {
-                      "fill-color": "#f32424",
-                      "fill-opacity": 0.4,
-                    },
-                  }}
-                />
-              )}
+              {map &&
+                isMapLoaded &&
+                isStyleReady &&
+                currentGapData?.gap_polygons && (
+                  <VectorLayer
+                    map={map}
+                    isMapLoaded={isMapLoaded}
+                    id="task-gap-polygons"
+                    geojson={currentGapData.gap_polygons as GeojsonType}
+                    visibleOnMap
+                    layerOptions={{
+                      type: 'fill',
+                      paint: {
+                        'fill-color': '#f32424',
+                        'fill-opacity': 0.4,
+                      },
+                    }}
+                  />
+                )}
 
               {/* Image points */}
               {map &&
@@ -374,15 +386,15 @@ const FlightGapDetectionModal = ({
                     isMapLoaded={isMapLoaded}
                     id="task-image-points"
                     geojson={imageGeoJsonData as GeojsonType}
-                    visibleOnMap={true}
+                    visibleOnMap
                     layerOptions={{
-                      type: "circle",
+                      type: 'circle',
                       paint: {
-                        "circle-color": "#22c55e",
-                        "circle-radius": 6,
-                        "circle-stroke-width": 2,
-                        "circle-stroke-color": "#ffffff",
-                        "circle-stroke-opacity": 0.8,
+                        'circle-color': '#22c55e',
+                        'circle-radius': 6,
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#ffffff',
+                        'circle-stroke-opacity': 0.8,
                       },
                     }}
                   />
@@ -391,7 +403,7 @@ const FlightGapDetectionModal = ({
               {/* Popup for image preview */}
               <AsyncPopup
                 showPopup={(feature: Record<string, any>) =>
-                  feature?.source === "task-image-points"
+                  feature?.source === 'task-image-points'
                 }
                 popupUI={getPopupUI}
                 fetchPopupData={(properties: Record<string, any>) => {
@@ -422,12 +434,15 @@ const FlightGapDetectionModal = ({
                   selectedOption={selectedDroneType}
                   onChange={(value: string | number) => {
                     setSelectedDroneType(String(value));
-                    if (manualGapData) finalizeGapMutation.mutate(manualGapData);
+                    if (manualGapData)
+                      finalizeGapMutation.mutate(manualGapData);
                   }}
                   className="naxatw-w-full naxatw-bg-[#F4F7FE]"
                   placeholder={m.flight_gap_select_model_placeholder()}
                 />
-                <p className="naxatw-text-xs naxatw-text-gray-500">{currentGapData.message}</p>
+                <p className="naxatw-text-xs naxatw-text-gray-500">
+                  {currentGapData.message}
+                </p>
               </div>
               <h4 className="naxatw-mb-3 naxatw-text-sm naxatw-font-semibold naxatw-text-gray-700">
                 {m.common_images_count({
@@ -444,14 +459,16 @@ const FlightGapDetectionModal = ({
                       key={imageId}
                       className={`naxatw-relative naxatw-aspect-square naxatw-cursor-pointer naxatw-overflow-hidden naxatw-rounded naxatw-border naxatw-transition-all hover:naxatw-shadow-md ${
                         selectedImageId === imageId
-                          ? "naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-200"
-                          : "naxatw-border-gray-200"
+                          ? 'naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-200'
+                          : 'naxatw-border-gray-200'
                       }`}
                       onClick={() => setSelectedImageId(imageId)}
                     >
                       <img
-                        src={String(properties.thumbnail_url || properties.url || "")}
-                        alt={String(properties.filename || "Task image")}
+                        src={String(
+                          properties.thumbnail_url || properties.url || '',
+                        )}
+                        alt={String(properties.filename || 'Task image')}
                         className="naxatw-h-full naxatw-w-full naxatw-object-cover"
                         loading="lazy"
                       />

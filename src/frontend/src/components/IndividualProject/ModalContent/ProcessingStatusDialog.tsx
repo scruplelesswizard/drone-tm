@@ -1,37 +1,49 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
-import { matchPath, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { toast } from "react-toastify";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useGetProjectsDetailQuery } from "@Api/projects";
-import { useGetAllTaskAssetsInfo } from "@Api/tasks";
-import { postProcessImagery, postReconcileProcessing, postRetryTransfer } from "@Services/tasks";
-import { processAllImagery, saveGcpFile } from "@Services/project";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import axios from 'axios';
+import { matchPath, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { toast } from 'react-toastify';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useGetProjectsDetailQuery } from '@Api/projects';
+import { useGetAllTaskAssetsInfo } from '@Api/tasks';
+import {
+  postProcessImagery,
+  postReconcileProcessing,
+  postRetryTransfer,
+} from '@Services/tasks';
+import { processAllImagery, saveGcpFile } from '@Services/project';
 import {
   getProjectTaskImagerySummary,
   getProjectCoverage,
   TaskImagerySummary,
   ProjectCoverage,
-} from "@Services/classification";
-import { formatString, buildDownloadUrl } from "@Utils/index";
-import { Button } from "@Components/RadixComponents/Button";
-import Icon from "@Components/common/Icon";
-import { toggleModal } from "@Store/actions/common";
-import { setProjectState } from "@Store/actions/project";
-import { m } from "@/paraglide/messages";
+} from '@Services/classification';
+import { formatString, buildDownloadUrl } from '@Utils/index';
+import { Button } from '@Components/RadixComponents/Button';
+import Icon from '@Components/common/Icon';
+import { toggleModal } from '@Store/actions/common';
+import { setProjectState } from '@Store/actions/project';
+import { m } from '@/paraglide/messages';
 
 // Lazy-loaded so the ~150KB OpenLayers chunk only ships when a user
 // actually clicks View on a finished task.
-const TaskOrthoCogViewer = lazy(() => import("./TaskOrthoCogViewer"));
+const TaskOrthoCogViewer = lazy(() => import('./TaskOrthoCogViewer'));
 
 const stateColors: Record<string, string> = {
-  READY_FOR_PROCESSING: "#9ec7ff",
-  IMAGE_PROCESSING_STARTED: "#9C77B2",
-  IMAGE_PROCESSING_FINISHED: "#176149",
-  IMAGE_PROCESSING_FAILED: "#D73F3F",
-  LOCKED: "#98BBC8",
-  HAS_ISSUES: "#D73F3F",
+  READY_FOR_PROCESSING: '#9ec7ff',
+  IMAGE_PROCESSING_STARTED: '#9C77B2',
+  IMAGE_PROCESSING_FINISHED: '#176149',
+  IMAGE_PROCESSING_FAILED: '#D73F3F',
+  LOCKED: '#98BBC8',
+  HAS_ISSUES: '#D73F3F',
 };
 
 type ProcessingDialogTask = {
@@ -59,17 +71,21 @@ type ProcessingDialogProjectDetail = {
 const ProcessingStatusDialog = () => {
   const { pathname } = useLocation();
   const projectRouteId = useMemo(() => {
-    const projectMatch = matchPath("/projects/:id", pathname);
-    const approvalMatch = matchPath("/projects/:id/approval", pathname);
-    return projectMatch?.params.id || approvalMatch?.params.id || "";
+    const projectMatch = matchPath('/projects/:id', pathname);
+    const approvalMatch = matchPath('/projects/:id/approval', pathname);
+    return projectMatch?.params.id || approvalMatch?.params.id || '';
   }, [pathname]);
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
 
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
-  const [processingTasks, setProcessingTasks] = useState<Set<string>>(new Set());
+  const [processingTasks, setProcessingTasks] = useState<Set<string>>(
+    new Set(),
+  );
   // Tasks whose transfer-resume request is in flight; drives a brief spinner.
-  const [transferringTasks, setTransferringTasks] = useState<Set<string>>(new Set());
+  const [transferringTasks, setTransferringTasks] = useState<Set<string>>(
+    new Set(),
+  );
   // When non-null, render the OL COG viewer overlay for this task's
   // signed orthophoto URL. Cleared by clicking the close button, the
   // backdrop, or pressing Escape (handled inside the viewer).
@@ -83,7 +99,8 @@ const ProcessingStatusDialog = () => {
     data?: ProcessingDialogProjectDetail;
   };
   const projectId = (projectDetail as any)?.id || projectRouteId;
-  const isProjectProcessing = projectDetail?.image_processing_status === "PROCESSING";
+  const isProjectProcessing =
+    projectDetail?.image_processing_status === 'PROCESSING';
   const {
     data: allTaskAssets,
     refetch: refetchAllTaskAssets,
@@ -96,7 +113,7 @@ const ProcessingStatusDialog = () => {
     refetch: refetchTaskSummary,
     isFetching: isTaskSummaryFetching,
   } = useQuery<TaskImagerySummary[]>({
-    queryKey: ["projectTaskImagerySummary", projectId],
+    queryKey: ['projectTaskImagerySummary', projectId],
     queryFn: () => getProjectTaskImagerySummary(projectId),
     enabled: !!projectId,
     // No polling (ADR 0006): status refreshes on open and via the Refresh button.
@@ -108,7 +125,7 @@ const ProcessingStatusDialog = () => {
     refetch: refetchCoverage,
     isFetching: isCoverageFetching,
   } = useQuery<ProjectCoverage>({
-    queryKey: ["projectCoverage", projectId],
+    queryKey: ['projectCoverage', projectId],
     queryFn: () => getProjectCoverage(projectId),
     enabled: !!projectId,
   });
@@ -144,31 +161,32 @@ const ProcessingStatusDialog = () => {
       postProcessImagery(projectId, taskId, odmUrl),
   });
 
-  const { mutate: startAllImageProcessing, isPending: isProcessingAll } = useMutation({
-    mutationFn: processAllImagery,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
-      queryClient.invalidateQueries({
-        queryKey: ["all-task-assets-info", projectId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["projectTaskImagerySummary", projectId],
-      });
-      toast.success(m.processing_dialog_final_started_success());
-    },
-    onError: (error) => {
-      const detail =
-        axios.isAxiosError(error) &&
-        typeof error.response?.data?.detail === "string" &&
-        error.response.data.detail
-          ? error.response.data.detail
-          : m.processing_dialog_final_start_failed();
-      toast.error(detail);
-    },
-  });
+  const { mutate: startAllImageProcessing, isPending: isProcessingAll } =
+    useMutation({
+      mutationFn: processAllImagery,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+        queryClient.invalidateQueries({
+          queryKey: ['all-task-assets-info', projectId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['projectTaskImagerySummary', projectId],
+        });
+        toast.success(m.processing_dialog_final_started_success());
+      },
+      onError: error => {
+        const detail =
+          axios.isAxiosError(error) &&
+          typeof error.response?.data?.detail === 'string' &&
+          error.response.data.detail
+            ? error.response.data.detail
+            : m.processing_dialog_final_start_failed();
+        toast.error(detail);
+      },
+    });
 
   const toggleTaskSelection = useCallback((taskId: string) => {
-    setSelectedTasks((prev) => {
+    setSelectedTasks(prev => {
       const next = new Set(prev);
       if (next.has(taskId)) {
         next.delete(taskId);
@@ -183,56 +201,62 @@ const ProcessingStatusDialog = () => {
     const taskIds = Array.from(selectedTasks);
     setSelectedTasks(new Set());
     setProcessingTasks(new Set(taskIds));
-    const results = await Promise.allSettled(taskIds.map((taskId) => processTask({ taskId })));
+    const results = await Promise.allSettled(
+      taskIds.map(taskId => processTask({ taskId })),
+    );
     let successCount = 0;
     let failCount = 0;
-    results.forEach((result) => {
-      if (result.status === "fulfilled") successCount++;
+    results.forEach(result => {
+      if (result.status === 'fulfilled') successCount++;
       else failCount++;
     });
     if (successCount > 0) {
-      toast.success(m.processing_dialog_started_count_success({ count: successCount }));
+      toast.success(
+        m.processing_dialog_started_count_success({ count: successCount }),
+      );
     }
     if (failCount > 0) {
       toast.error(m.processing_dialog_start_failed_count({ count: failCount }));
     }
-    const failedTaskIds = taskIds.filter((_taskId, index) => results[index].status === "rejected");
+    const failedTaskIds = taskIds.filter(
+      (_taskId, index) => results[index].status === 'rejected',
+    );
     if (failedTaskIds.length > 0) {
-      setProcessingTasks((prev) => {
+      setProcessingTasks(prev => {
         const next = new Set(prev);
-        failedTaskIds.forEach((taskId) => next.delete(taskId));
+        failedTaskIds.forEach(taskId => next.delete(taskId));
         return next;
       });
     }
     queryClient.invalidateQueries({
-      queryKey: ["all-task-assets-info", projectId],
+      queryKey: ['all-task-assets-info', projectId],
     });
     queryClient.invalidateQueries({
-      queryKey: ["projectTaskImagerySummary", projectId],
+      queryKey: ['projectTaskImagerySummary', projectId],
     });
   }, [selectedTasks, processTask, queryClient, projectId]);
 
   const handleProcessSingle = useCallback(
     async (taskId: string, odmUrl?: string) => {
-      setProcessingTasks((prev) => new Set(prev).add(taskId));
+      setProcessingTasks(prev => new Set(prev).add(taskId));
       try {
         await processTask({ taskId, odmUrl });
         toast.success(m.processing_dialog_task_processing_started());
         queryClient.invalidateQueries({
-          queryKey: ["all-task-assets-info", projectId],
+          queryKey: ['all-task-assets-info', projectId],
         });
         queryClient.invalidateQueries({
-          queryKey: ["projectTaskImagerySummary", projectId],
+          queryKey: ['projectTaskImagerySummary', projectId],
         });
       } catch (error) {
         const detail =
           axios.isAxiosError(error) &&
-          typeof error.response?.data?.detail === "string" &&
+          typeof error.response?.data?.detail === 'string' &&
           error.response.data.detail
             ? error.response.data.detail
             : m.processing_dialog_processing_start_failed();
         toast.error(detail);
-        setProcessingTasks((prev) => {
+        setProcessingTasks(prev => {
           const next = new Set(prev);
           next.delete(taskId);
           return next;
@@ -251,20 +275,20 @@ const ProcessingStatusDialog = () => {
     // background. The spinner covers only this request - we don't poll (ADR
     // 0006), so the user hits Refresh to see progress and then Process.
     async (taskId: string) => {
-      setTransferringTasks((prev) => new Set(prev).add(taskId));
+      setTransferringTasks(prev => new Set(prev).add(taskId));
       try {
         const { data } = await retryTransfer(taskId);
         toast.success(data?.message || m.processing_dialog_transfer_resumed());
       } catch (error) {
         const detail =
           axios.isAxiosError(error) &&
-          typeof error.response?.data?.detail === "string" &&
+          typeof error.response?.data?.detail === 'string' &&
           error.response.data.detail
             ? error.response.data.detail
             : m.processing_dialog_transfer_resume_failed();
         toast.error(detail);
       } finally {
-        setTransferringTasks((prev) => {
+        setTransferringTasks(prev => {
           const next = new Set(prev);
           next.delete(taskId);
           return next;
@@ -281,49 +305,58 @@ const ProcessingStatusDialog = () => {
 
   const handleDownloadAssets = useCallback((assetsUrl: string) => {
     try {
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = buildDownloadUrl(assetsUrl);
-      link.setAttribute("download", "");
+      link.setAttribute('download', '');
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
-      toast.error(m.processing_dialog_download_failed({ error: String(error) }));
+      toast.error(
+        m.processing_dialog_download_failed({ error: String(error) }),
+      );
     }
   }, []);
 
   const handleDownloadOrtho = useCallback((assetsUrl: string) => {
     try {
-      const orthoUrl = assetsUrl.replace(/\/$/, "/orthophoto/");
-      const link = document.createElement("a");
+      const orthoUrl = assetsUrl.replace(/\/$/, '/orthophoto/');
+      const link = document.createElement('a');
       link.href = buildDownloadUrl(orthoUrl);
-      link.setAttribute("download", "");
+      link.setAttribute('download', '');
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
-      toast.error(m.processing_dialog_download_failed({ error: String(error) }));
+      toast.error(
+        m.processing_dialog_download_failed({ error: String(error) }),
+      );
     }
   }, []);
 
-  const handleDownloadProjectFile = useCallback((url: string, filename: string) => {
-    try {
-      const link = document.createElement("a");
-      link.href = buildDownloadUrl(url);
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      toast.error(m.processing_dialog_download_failed({ error: String(error) }));
-    }
-  }, []);
+  const handleDownloadProjectFile = useCallback(
+    (url: string, filename: string) => {
+      try {
+        const link = document.createElement('a');
+        link.href = buildDownloadUrl(url);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (error) {
+        toast.error(
+          m.processing_dialog_download_failed({ error: String(error) }),
+        );
+      }
+    },
+    [],
+  );
 
   const getProcessButtonLabel = useCallback((task: ProcessingDialogTask) => {
-    if (task.state === "IMAGE_PROCESSING_FAILED") {
+    if (task.state === 'IMAGE_PROCESSING_FAILED') {
       return m.processing_dialog_button_retry();
     }
-    if (task.state === "IMAGE_PROCESSING_FINISHED") {
+    if (task.state === 'IMAGE_PROCESSING_FINISHED') {
       return m.processing_dialog_button_rerun();
     }
     return m.processing_dialog_button_process();
@@ -346,7 +379,7 @@ const ProcessingStatusDialog = () => {
   const { mutate: uploadGcpFile, isPending: isUploadingGcp } = useMutation({
     mutationFn: saveGcpFile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
+      queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       toast.success(m.processing_dialog_gcp_uploaded());
     },
     onError: () => {
@@ -360,7 +393,7 @@ const ProcessingStatusDialog = () => {
       if (!file) return;
       uploadGcpFile({ projectId, gcp_file: file });
       // Reset so the same file can be re-selected
-      e.target.value = "";
+      e.target.value = '';
     },
     [projectId, uploadGcpFile],
   );
@@ -379,12 +412,14 @@ const ProcessingStatusDialog = () => {
     try {
       const response = await postReconcileProcessing(projectId);
       const data = response?.data;
-      const finalisedTaskIds: string[] = Array.isArray(data?.task_ids) ? data.task_ids : [];
+      const finalisedTaskIds: string[] = Array.isArray(data?.task_ids)
+        ? data.task_ids
+        : [];
       if (finalisedTaskIds.length > 0) {
-        setProcessingTasks((prev) => {
+        setProcessingTasks(prev => {
           if (prev.size === 0) return prev;
           const next = new Set(prev);
-          finalisedTaskIds.forEach((id) => next.delete(id));
+          finalisedTaskIds.forEach(id => next.delete(id));
           return next.size === prev.size ? prev : next;
         });
       }
@@ -392,7 +427,7 @@ const ProcessingStatusDialog = () => {
       if (Array.isArray(assets)) {
         // useGetAllTaskAssetsInfo has `select: res => res.data`, so the
         // cache holds the raw axios-shaped response, not the payload.
-        queryClient.setQueryData(["all-task-assets-info", projectId], {
+        queryClient.setQueryData(['all-task-assets-info', projectId], {
           data: assets,
         });
         seededFromReconcile = true;
@@ -411,13 +446,17 @@ const ProcessingStatusDialog = () => {
       // refetch so the final results section (ortho/DSM/DTM download buttons)
       // appears without waiting for another user action.
       projectFinalised
-        ? queryClient.refetchQueries({ queryKey: ["project-detail", projectId] })
-        : queryClient.invalidateQueries({ queryKey: ["project-detail", projectId] }),
+        ? queryClient.refetchQueries({
+            queryKey: ['project-detail', projectId],
+          })
+        : queryClient.invalidateQueries({
+            queryKey: ['project-detail', projectId],
+          }),
     ]);
   }, [projectId, queryClient, refetchAllTaskAssets, refetchTaskSummary]);
 
   const totalTaskCount = useMemo(() => {
-    if (typeof projectDetail?.total_task_count === "number") {
+    if (typeof projectDetail?.total_task_count === 'number') {
       return projectDetail.total_task_count;
     }
     if (Array.isArray(taskSummary) && taskSummary.length > 0) {
@@ -437,14 +476,14 @@ const ProcessingStatusDialog = () => {
     if (Array.isArray(taskSummary) && taskSummary.length > 0) {
       return taskSummary
         .filter(
-          (task) =>
+          task =>
             task.assigned_images > 0 ||
-            task.task_state === "READY_FOR_PROCESSING" ||
-            task.task_state === "IMAGE_PROCESSING_STARTED" ||
-            task.task_state === "IMAGE_PROCESSING_FINISHED" ||
-            task.task_state === "IMAGE_PROCESSING_FAILED",
+            task.task_state === 'READY_FOR_PROCESSING' ||
+            task.task_state === 'IMAGE_PROCESSING_STARTED' ||
+            task.task_state === 'IMAGE_PROCESSING_FINISHED' ||
+            task.task_state === 'IMAGE_PROCESSING_FAILED',
         )
-        .map((task) => {
+        .map(task => {
           const assetInfo = assetsByTaskId.get(task.task_id);
           return {
             task_id: task.task_id,
@@ -466,10 +505,10 @@ const ProcessingStatusDialog = () => {
       .filter(
         (t: any) =>
           t.image_count > 0 ||
-          t.state === "READY_FOR_PROCESSING" ||
-          t.state === "IMAGE_PROCESSING_STARTED" ||
-          t.state === "IMAGE_PROCESSING_FINISHED" ||
-          t.state === "IMAGE_PROCESSING_FAILED",
+          t.state === 'READY_FOR_PROCESSING' ||
+          t.state === 'IMAGE_PROCESSING_STARTED' ||
+          t.state === 'IMAGE_PROCESSING_FINISHED' ||
+          t.state === 'IMAGE_PROCESSING_FAILED',
       )
       .map((task: any) => ({
         task_id: task.task_id,
@@ -487,17 +526,17 @@ const ProcessingStatusDialog = () => {
   }, [allTaskAssets, taskSummary]);
 
   const processableTasks = useMemo(
-    () => taskList.filter((task) => readinessMap.get(task.task_id) === true),
+    () => taskList.filter(task => readinessMap.get(task.task_id) === true),
     [taskList, readinessMap],
   );
 
   useEffect(() => {
-    setProcessingTasks((prev) => {
+    setProcessingTasks(prev => {
       if (prev.size === 0) return prev;
 
       const next = new Set(prev);
-      taskList.forEach((task) => {
-        if (next.has(task.task_id) && task.state !== "READY_FOR_PROCESSING") {
+      taskList.forEach(task => {
+        if (next.has(task.task_id) && task.state !== 'READY_FOR_PROCESSING') {
           next.delete(task.task_id);
         }
       });
@@ -518,12 +557,14 @@ const ProcessingStatusDialog = () => {
     if (selectedTasks.size === processableTasks.length) {
       setSelectedTasks(new Set());
     } else {
-      setSelectedTasks(new Set(processableTasks.map((task) => task.task_id)));
+      setSelectedTasks(new Set(processableTasks.map(task => task.task_id)));
     }
   }, [selectedTasks, processableTasks]);
 
   const processedCount = useMemo(
-    () => taskList.filter((t: any) => t.state === "IMAGE_PROCESSING_FINISHED").length,
+    () =>
+      taskList.filter((t: any) => t.state === 'IMAGE_PROCESSING_FINISHED')
+        .length,
     [taskList],
   );
 
@@ -532,7 +573,9 @@ const ProcessingStatusDialog = () => {
       totalTaskCount > 0 &&
       Array.isArray(taskSummary) &&
       taskSummary.length === totalTaskCount &&
-      taskSummary.every((task) => task.task_state === "IMAGE_PROCESSING_FINISHED"),
+      taskSummary.every(
+        task => task.task_state === 'IMAGE_PROCESSING_FINISHED',
+      ),
     [taskSummary, totalTaskCount],
   );
 
@@ -540,13 +583,14 @@ const ProcessingStatusDialog = () => {
 
   const tasksReady = useMemo(() => {
     if (!Array.isArray(taskSummary)) return 0;
-    return taskSummary.filter((t) => t.has_ready_imagery).length;
+    return taskSummary.filter(t => t.has_ready_imagery).length;
   }, [taskSummary]);
 
   const tasksWithImagery = useMemo(() => {
     if (!Array.isArray(taskSummary)) return 0;
-    return taskSummary.filter((t) => t.task_state === "HAS_IMAGERY" && t.assigned_images > 0)
-      .length;
+    return taskSummary.filter(
+      t => t.task_state === 'HAS_IMAGERY' && t.assigned_images > 0,
+    ).length;
   }, [taskSummary]);
 
   const totalProcessable = tasksReady + tasksWithImagery;
@@ -563,7 +607,7 @@ const ProcessingStatusDialog = () => {
     if (totalProcessable === 0) {
       return m.processing_dialog_no_imagery_available();
     }
-    return "";
+    return '';
   }, [isFinalProcessingRunning, totalTaskCount, totalProcessable]);
 
   const hasSavedGcp = Boolean(projectDetail?.has_gcp);
@@ -600,7 +644,8 @@ const ProcessingStatusDialog = () => {
                   <input
                     type="checkbox"
                     checked={
-                      processableTasks.length > 0 && selectedTasks.size === processableTasks.length
+                      processableTasks.length > 0 &&
+                      selectedTasks.size === processableTasks.length
                     }
                     onChange={toggleSelectAll}
                     disabled={processableTasks.length === 0}
@@ -624,21 +669,25 @@ const ProcessingStatusDialog = () => {
             <tbody>
               {taskList.map((task, index: number) => {
                 const isReprocess =
-                  task.state === "IMAGE_PROCESSING_FINISHED" ||
-                  task.state === "IMAGE_PROCESSING_FAILED";
+                  task.state === 'IMAGE_PROCESSING_FINISHED' ||
+                  task.state === 'IMAGE_PROCESSING_FAILED';
                 const canProcess =
                   (isReprocess
                     ? pendingTransferMap.get(task.task_id) !== true
                     : readinessMap.get(task.task_id) === true) &&
                   !processingTasks.has(task.task_id) &&
-                  task.state !== "IMAGE_PROCESSING_STARTED";
+                  task.state !== 'IMAGE_PROCESSING_STARTED';
                 const isTaskProcessing =
-                  processingTasks.has(task.task_id) || task.state === "IMAGE_PROCESSING_STARTED";
-                const displayState = isTaskProcessing ? "IMAGE_PROCESSING_STARTED" : task.state;
-                const stateColor = stateColors[displayState] || "#e5e7eb";
+                  processingTasks.has(task.task_id) ||
+                  task.state === 'IMAGE_PROCESSING_STARTED';
+                const displayState = isTaskProcessing
+                  ? 'IMAGE_PROCESSING_STARTED'
+                  : task.state;
+                const stateColor = stateColors[displayState] || '#e5e7eb';
                 // Imagery stuck in staging blocks processing; offer a resume.
                 const transferPending =
-                  !isTaskProcessing && pendingTransferMap.get(task.task_id) === true;
+                  !isTaskProcessing &&
+                  pendingTransferMap.get(task.task_id) === true;
                 const isTransferring = transferringTasks.has(task.task_id);
                 const pendingTransferCount = task.pending_transfer_count ?? 0;
 
@@ -669,12 +718,17 @@ const ProcessingStatusDialog = () => {
                           className="naxatw-flex naxatw-h-5 naxatw-w-5 naxatw-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded naxatw-text-gray-400 hover:naxatw-bg-gray-100 hover:naxatw-text-gray-600"
                           onClick={() => handleCopyTaskId(task.task_id)}
                         >
-                          <Icon name="content_copy" className="!naxatw-text-sm" />
+                          <Icon
+                            name="content_copy"
+                            className="!naxatw-text-sm"
+                          />
                         </button>
                       </div>
                     </td>
                     <td className="naxatw-px-3 naxatw-py-2 naxatw-text-gray-600">
-                      {m.processing_dialog_images_count({ count: task.image_count })}
+                      {m.processing_dialog_images_count({
+                        count: task.image_count,
+                      })}
                     </td>
                     <td className="naxatw-px-3 naxatw-py-2">
                       <div className="naxatw-flex naxatw-flex-col naxatw-items-start naxatw-gap-1">
@@ -683,24 +737,29 @@ const ProcessingStatusDialog = () => {
                           style={{
                             backgroundColor: `${stateColor}33`,
                             color:
-                              displayState === "IMAGE_PROCESSING_FINISHED"
-                                ? "#166534"
-                                : displayState === "IMAGE_PROCESSING_FAILED"
-                                  ? "#991b1b"
-                                  : "#374151",
+                              displayState === 'IMAGE_PROCESSING_FINISHED'
+                                ? '#166534'
+                                : displayState === 'IMAGE_PROCESSING_FAILED'
+                                  ? '#991b1b'
+                                  : '#374151',
                           }}
                         >
                           {isTaskProcessing && (
-                            <Icon name="sync" className="naxatw-animate-spin !naxatw-text-sm" />
+                            <Icon
+                              name="sync"
+                              className="naxatw-animate-spin !naxatw-text-sm"
+                            />
                           )}
-                          {displayState === "IMAGE_PROCESSING_FINISHED" && "✓ "}
-                          {formatString(displayState) || m.processing_dialog_no_images_state()}
+                          {displayState === 'IMAGE_PROCESSING_FINISHED' && '✓ '}
+                          {formatString(displayState) ||
+                            m.processing_dialog_no_images_state()}
                         </span>
-                        {task.state === "IMAGE_PROCESSING_FAILED" && task.failure_reason && (
-                          <p className="naxatw-max-w-[320px] naxatw-text-xs naxatw-text-red-700">
-                            {task.failure_reason}
-                          </p>
-                        )}
+                        {task.state === 'IMAGE_PROCESSING_FAILED' &&
+                          task.failure_reason && (
+                            <p className="naxatw-text-red-700 naxatw-max-w-[320px] naxatw-text-xs">
+                              {task.failure_reason}
+                            </p>
+                          )}
                         {transferPending && (
                           <p className="naxatw-max-w-[320px] naxatw-text-xs naxatw-text-amber-700">
                             {isTransferring
@@ -722,7 +781,8 @@ const ProcessingStatusDialog = () => {
                         </div>
                       ) : (
                         <div className="naxatw-flex naxatw-justify-end naxatw-gap-2">
-                          {task.state === "IMAGE_PROCESSING_FINISHED" && task.assets_url ? (
+                          {task.state === 'IMAGE_PROCESSING_FINISHED' &&
+                          task.assets_url ? (
                             <>
                               {task.orthophoto_url ? (
                                 <button
@@ -736,7 +796,10 @@ const ProcessingStatusDialog = () => {
                                     });
                                   }}
                                 >
-                                  <Icon name="visibility" className="!naxatw-text-base" />
+                                  <Icon
+                                    name="visibility"
+                                    className="!naxatw-text-base"
+                                  />
                                 </button>
                               ) : null}
                               <button
@@ -749,7 +812,10 @@ const ProcessingStatusDialog = () => {
                                   }
                                 }}
                               >
-                                <Icon name="download" className="!naxatw-text-base" />
+                                <Icon
+                                  name="download"
+                                  className="!naxatw-text-base"
+                                />
                               </button>
                               <button
                                 type="button"
@@ -761,7 +827,10 @@ const ProcessingStatusDialog = () => {
                                   }
                                 }}
                               >
-                                <Icon name="folder_zip" className="!naxatw-text-base" />
+                                <Icon
+                                  name="folder_zip"
+                                  className="!naxatw-text-base"
+                                />
                               </button>
                             </>
                           ) : null}
@@ -770,16 +839,18 @@ const ProcessingStatusDialog = () => {
                               variant="ghost"
                               className="naxatw-h-7 naxatw-bg-red naxatw-px-2 naxatw-text-xs naxatw-text-white hover:naxatw-bg-red/90"
                               leftIcon={
-                                task.state === "IMAGE_PROCESSING_FAILED" ||
-                                task.state === "IMAGE_PROCESSING_FINISHED"
-                                  ? "replay"
-                                  : "play_arrow"
+                                task.state === 'IMAGE_PROCESSING_FAILED' ||
+                                task.state === 'IMAGE_PROCESSING_FINISHED'
+                                  ? 'replay'
+                                  : 'play_arrow'
                               }
                               iconClassname="!naxatw-text-sm"
-                              onClick={(e) => {
+                              onClick={e => {
                                 if (
                                   isReprocess &&
-                                  !window.confirm(m.processing_dialog_reprocess_confirm())
+                                  !window.confirm(
+                                    m.processing_dialog_reprocess_confirm(),
+                                  )
                                 ) {
                                   return;
                                 }
@@ -788,7 +859,10 @@ const ProcessingStatusDialog = () => {
                                     m.processing_dialog_scaleodm_prompt(),
                                   );
                                   if (odmUrl !== null) {
-                                    handleProcessSingle(task.task_id, odmUrl || undefined);
+                                    handleProcessSingle(
+                                      task.task_id,
+                                      odmUrl || undefined,
+                                    );
                                   }
                                 } else {
                                   handleProcessSingle(task.task_id);
@@ -802,11 +876,13 @@ const ProcessingStatusDialog = () => {
                             <Button
                               variant="ghost"
                               className="naxatw-h-7 naxatw-border naxatw-border-amber-500 naxatw-px-2 naxatw-text-xs naxatw-text-amber-700 hover:naxatw-bg-amber-50 disabled:naxatw-opacity-60"
-                              leftIcon={isTransferring ? "sync" : "cloud_upload"}
+                              leftIcon={
+                                isTransferring ? 'sync' : 'cloud_upload'
+                              }
                               iconClassname={
                                 isTransferring
-                                  ? "!naxatw-text-sm naxatw-animate-spin"
-                                  : "!naxatw-text-sm"
+                                  ? '!naxatw-text-sm naxatw-animate-spin'
+                                  : '!naxatw-text-sm'
                               }
                               disabled={isTransferring}
                               title={m.processing_dialog_transfer_resume_title()}
@@ -837,7 +913,9 @@ const ProcessingStatusDialog = () => {
               onClick={() => {
                 if (
                   !window.confirm(
-                    m.processing_dialog_process_selected_confirm({ count: selectedTasks.size }),
+                    m.processing_dialog_process_selected_confirm({
+                      count: selectedTasks.size,
+                    }),
                   )
                 ) {
                   return;
@@ -846,7 +924,9 @@ const ProcessingStatusDialog = () => {
               }}
               disabled={selectedTasks.size === 0}
             >
-              {m.processing_dialog_process_selected({ count: selectedTasks.size })}
+              {m.processing_dialog_process_selected({
+                count: selectedTasks.size,
+              })}
             </Button>
           </div>
         )}
@@ -870,9 +950,11 @@ const ProcessingStatusDialog = () => {
             variant="outline"
             className="naxatw-h-8 naxatw-shrink-0 naxatw-border-blue-300 naxatw-px-3 naxatw-text-xs naxatw-text-blue-700"
             leftIcon="refresh"
-            iconClassname={`!naxatw-text-sm ${isTaskSummaryFetching || isCoverageFetching || isAllTasksFetching ? "naxatw-animate-spin" : ""}`}
+            iconClassname={`!naxatw-text-sm ${isTaskSummaryFetching || isCoverageFetching || isAllTasksFetching ? 'naxatw-animate-spin' : ''}`}
             onClick={handleRefreshProcessingStatus}
-            disabled={isTaskSummaryFetching || isCoverageFetching || isAllTasksFetching}
+            disabled={
+              isTaskSummaryFetching || isCoverageFetching || isAllTasksFetching
+            }
           >
             {m.common_refresh()}
           </Button>
@@ -883,8 +965,12 @@ const ProcessingStatusDialog = () => {
             <span className="material-icons naxatw-text-4xl naxatw-text-gray-300">
               image_search
             </span>
-            <p className="naxatw-text-sm">{m.processing_dialog_no_tasks_ready_title()}</p>
-            <p className="naxatw-text-xs">{m.processing_dialog_no_tasks_ready_help()}</p>
+            <p className="naxatw-text-sm">
+              {m.processing_dialog_no_tasks_ready_title()}
+            </p>
+            <p className="naxatw-text-xs">
+              {m.processing_dialog_no_tasks_ready_help()}
+            </p>
           </div>
         )}
 
@@ -905,14 +991,14 @@ const ProcessingStatusDialog = () => {
         <div
           className={`naxatw-w-full naxatw-rounded-lg naxatw-border naxatw-px-4 naxatw-py-3 naxatw-text-sm ${
             hasSavedGcp
-              ? "naxatw-border-green-200 naxatw-bg-green-50 naxatw-text-green-800"
-              : "naxatw-border-gray-200 naxatw-bg-gray-50 naxatw-text-gray-700"
+              ? 'naxatw-border-green-200 naxatw-bg-green-50 naxatw-text-green-800'
+              : 'naxatw-border-gray-200 naxatw-bg-gray-50 naxatw-text-gray-700'
           }`}
         >
           <div className="naxatw-flex naxatw-items-start naxatw-justify-between naxatw-gap-3">
             <div className="naxatw-flex naxatw-items-start naxatw-gap-2">
-              <span className="material-icons !naxatw-text-base naxatw-mt-0.5">
-                {hasSavedGcp ? "check_circle" : "pin_drop"}
+              <span className="material-icons naxatw-mt-0.5 !naxatw-text-base">
+                {hasSavedGcp ? 'check_circle' : 'pin_drop'}
               </span>
               <div>
                 <p className="naxatw-font-medium">
@@ -938,7 +1024,9 @@ const ProcessingStatusDialog = () => {
                   dispatch(toggleModal());
                 }}
               >
-                {hasSavedGcp ? m.processing_dialog_edit_gcp() : m.processing_dialog_gcp_editor()}
+                {hasSavedGcp
+                  ? m.processing_dialog_edit_gcp()
+                  : m.processing_dialog_gcp_editor()}
               </Button>
               <Button
                 variant="outline"
@@ -976,15 +1064,16 @@ const ProcessingStatusDialog = () => {
             <div
               className={`naxatw-w-full naxatw-rounded-lg naxatw-border naxatw-px-4 naxatw-py-3 naxatw-text-xs ${
                 coveragePercentage < 90
-                  ? "naxatw-border-amber-200 naxatw-bg-amber-50 naxatw-text-amber-800"
-                  : "naxatw-border-blue-200 naxatw-bg-blue-50 naxatw-text-blue-800"
+                  ? 'naxatw-border-amber-200 naxatw-bg-amber-50 naxatw-text-amber-800'
+                  : 'naxatw-border-blue-200 naxatw-bg-blue-50 naxatw-text-blue-800'
               }`}
             >
               <p className="naxatw-font-semibold">
                 {m.processing_dialog_coverage_percentage({
                   percentage: coveragePercentage,
                 })}
-                {isCoverageFetching && ` ${m.processing_dialog_coverage_calculating()}`}
+                {isCoverageFetching &&
+                  ` ${m.processing_dialog_coverage_calculating()}`}
               </p>
               <p className="naxatw-mt-0.5">
                 {m.processing_dialog_tasks_ready_for_processing({
@@ -993,13 +1082,18 @@ const ProcessingStatusDialog = () => {
                 })}
               </p>
               {coveragePercentage < 90 && (
-                <p className="naxatw-mt-1">{m.processing_dialog_coverage_below_warning()}</p>
+                <p className="naxatw-mt-1">
+                  {m.processing_dialog_coverage_below_warning()}
+                </p>
               )}
             </div>
           )}
           {isFinalProcessingRunning && (
             <div className="naxatw-flex naxatw-items-center naxatw-gap-2 naxatw-text-sm naxatw-text-gray-600">
-              <Icon name="sync" className="naxatw-animate-spin !naxatw-text-base" />
+              <Icon
+                name="sync"
+                className="naxatw-animate-spin !naxatw-text-base"
+              />
               <span>
                 {isProcessingAll
                   ? m.processing_dialog_final_submitting()
@@ -1007,23 +1101,27 @@ const ProcessingStatusDialog = () => {
               </span>
             </div>
           )}
-          {!isFinalProcessingRunning && projectDetail?.image_processing_status === "FAILED" && (
-            <div className="naxatw-flex naxatw-items-start naxatw-gap-2 naxatw-text-sm naxatw-text-red-700">
-              <Icon name="error" className="!naxatw-text-base" />
-              <span>{m.processing_dialog_final_failed()}</span>
-            </div>
-          )}
+          {!isFinalProcessingRunning &&
+            projectDetail?.image_processing_status === 'FAILED' && (
+              <div className="naxatw-text-red-700 naxatw-flex naxatw-items-start naxatw-gap-2 naxatw-text-sm">
+                <Icon name="error" className="!naxatw-text-base" />
+                <span>{m.processing_dialog_final_failed()}</span>
+              </div>
+            )}
           <Button
             variant="ghost"
             className="naxatw-bg-red naxatw-px-8 naxatw-py-2 naxatw-text-white disabled:naxatw-bg-gray-400"
-            leftIcon={isFinalProcessingRunning ? "sync" : "play_arrow"}
-            iconClassname={isFinalProcessingRunning ? "naxatw-animate-spin" : ""}
-            onClick={(e) => {
+            leftIcon={isFinalProcessingRunning ? 'sync' : 'play_arrow'}
+            iconClassname={
+              isFinalProcessingRunning ? 'naxatw-animate-spin' : ''
+            }
+            onClick={e => {
               const onDemand = e.ctrlKey || e.metaKey;
-              let confirmMessage: string = m.processing_dialog_final_confirm_intro({
-                processable: totalProcessable,
-                total: totalTaskCount,
-              });
+              let confirmMessage: string =
+                m.processing_dialog_final_confirm_intro({
+                  processable: totalProcessable,
+                  total: totalTaskCount,
+                });
 
               if (tasksWithImagery > 0) {
                 confirmMessage += m.processing_dialog_final_confirm_unverified({
@@ -1032,9 +1130,10 @@ const ProcessingStatusDialog = () => {
               }
 
               if (!allTasksProcessed && coveragePercentage < 90) {
-                confirmMessage += m.processing_dialog_final_confirm_coverage_warning({
-                  percentage: coveragePercentage,
-                });
+                confirmMessage +=
+                  m.processing_dialog_final_confirm_coverage_warning({
+                    percentage: coveragePercentage,
+                  });
               }
 
               if (onDemand) {
@@ -1044,7 +1143,10 @@ const ProcessingStatusDialog = () => {
               confirmMessage += m.processing_dialog_final_confirm_proceed();
 
               if (!window.confirm(confirmMessage)) return;
-              handleStartFinalProcessing(false, onDemand ? "on-demand" : undefined);
+              handleStartFinalProcessing(
+                false,
+                onDemand ? 'on-demand' : undefined,
+              );
             }}
             disabled={
               Boolean(finalProcessingDisabledReason) ||
@@ -1062,7 +1164,7 @@ const ProcessingStatusDialog = () => {
         </div>
 
         {/* Final processing results - shown once processing is complete */}
-        {projectDetail?.image_processing_status === "SUCCESS" && (
+        {projectDetail?.image_processing_status === 'SUCCESS' && (
           <>
             <hr className="naxatw-border-gray-200" />
             <div>
@@ -1097,7 +1199,10 @@ const ProcessingStatusDialog = () => {
                   leftIcon="download"
                   iconClassname="!naxatw-text-sm"
                   onClick={() =>
-                    handleDownloadProjectFile(projectDetail.dsm_url!, `dsm_${projectId}.tif`)
+                    handleDownloadProjectFile(
+                      projectDetail.dsm_url!,
+                      `dsm_${projectId}.tif`,
+                    )
                   }
                 >
                   {m.processing_dialog_dsm_tif()}
@@ -1110,7 +1215,10 @@ const ProcessingStatusDialog = () => {
                   leftIcon="download"
                   iconClassname="!naxatw-text-sm"
                   onClick={() =>
-                    handleDownloadProjectFile(projectDetail.dtm_url!, `dtm_${projectId}.tif`)
+                    handleDownloadProjectFile(
+                      projectDetail.dtm_url!,
+                      `dtm_${projectId}.tif`,
+                    )
                   }
                 >
                   {m.processing_dialog_dtm_tif()}

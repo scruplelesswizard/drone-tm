@@ -1,25 +1,26 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Flex } from "@Components/common/Layouts";
-import { toast } from "react-toastify";
-import { UserProfileDetailsType } from "./types";
-import { getRuntimeConfig } from "@/runtimeConfig";
-import { m } from "@/paraglide/messages";
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Flex } from '@Components/common/Layouts';
+import { toast } from 'react-toastify';
+import { UserProfileDetailsType } from './types';
+import { getRuntimeConfig } from '@/runtimeConfig';
+import { m } from '@/paraglide/messages';
 
-const API_URL = getRuntimeConfig("VITE_API_URL", "/api");
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
 
 function GoogleAuth() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isReadyToRedirect, setIsReadyToRedirect] = useState(false);
-  const [userProfileDetails, setUserProfileDetails] = useState<UserProfileDetailsType>();
-  const signedInAs = localStorage.getItem("signedInAs") || "PROJECT_CREATOR";
+  const [userProfileDetails, setUserProfileDetails] =
+    useState<UserProfileDetailsType>();
+  const signedInAs = localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const authcode = params.get("code");
-    const state = params.get("state");
+    const authcode = params.get('code');
+    const state = params.get('state');
 
     const loginRedirect = async () => {
       if (authcode) {
@@ -28,43 +29,54 @@ function GoogleAuth() {
 
         const completeLogin = async () => {
           // fetch callback api
-          const response = await fetch(callbackUrl, { credentials: "include" });
+          const response = await fetch(callbackUrl, { credentials: 'include' });
           if (!response.ok) {
             const msg = await response.text();
-            throw new Error(`Google callback failed (${response.status}): ${msg}`);
+            throw new Error(
+              `Google callback failed (${response.status}): ${msg}`,
+            );
           }
           const token = await response.json();
-          localStorage.setItem("token", token.access_token);
-          localStorage.setItem("refresh", token.refresh_token);
+          localStorage.setItem('token', token.access_token);
+          localStorage.setItem('refresh', token.refresh_token);
 
           // fetch user details
           const response2 = await fetch(userDetailsUrl, {
-            credentials: "include",
-            headers: { "access-token": token.access_token },
+            credentials: 'include',
+            headers: { 'access-token': token.access_token },
           });
           if (!response2.ok) {
             const msg2 = await response2.text();
-            throw new Error(`Fetching my-info failed (${response2.status}): ${msg2}`);
+            throw new Error(
+              `Fetching my-info failed (${response2.status}): ${msg2}`,
+            );
           }
 
           const userDetails = await response2.json();
           // stringify the response and set it to local storage
           const userDetailsString = JSON.stringify(userDetails);
-          localStorage.setItem("userprofile", userDetailsString);
+          localStorage.setItem('userprofile', userDetailsString);
           setUserProfileDetails(userDetails);
 
-          const savedPath = sessionStorage.getItem("postLoginRedirect");
+          const savedPath = sessionStorage.getItem('postLoginRedirect');
           if (savedPath) {
-            sessionStorage.removeItem("postLoginRedirect");
+            sessionStorage.removeItem('postLoginRedirect');
           }
 
           // navigate according the user profile completion
-          if (savedPath && savedPath.startsWith("/") && !savedPath.startsWith("//")) {
+          if (
+            savedPath &&
+            savedPath.startsWith('/') &&
+            !savedPath.startsWith('//')
+          ) {
             navigate(savedPath, { replace: true });
-          } else if (userDetails?.has_user_profile && userDetails?.role?.includes(signedInAs)) {
-            navigate("/projects");
+          } else if (
+            userDetails?.has_user_profile &&
+            userDetails?.role?.includes(signedInAs)
+          ) {
+            navigate('/projects');
           } else {
-            navigate("/complete-profile");
+            navigate('/complete-profile');
           }
         };
         try {
@@ -73,7 +85,7 @@ function GoogleAuth() {
         } catch (e: any) {
           console.error(e);
           toast.error(e?.message || m.auth_login_failed_generic());
-          navigate("/", { replace: true });
+          navigate('/', { replace: true });
           return;
         }
       }

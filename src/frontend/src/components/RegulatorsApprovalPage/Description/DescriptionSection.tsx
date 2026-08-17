@@ -1,37 +1,37 @@
-/* eslint-disable no-nested-ternary */
-import { useMemo } from "react";
-import { useDispatch } from "react-redux";
+import { useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import {
   descriptionItems,
   getDescriptionItems,
   getFinalOutputLabels,
-} from "@Constants/projectDescription";
-import { toggleModal } from "@Store/actions/common";
-import { useGetUserDetailsQuery } from "@Api/projects";
-import Skeleton from "@Components/RadixComponents/Skeleton";
-import { formatString, gsdToAltitude, altitudeToGsd } from "@Utils/index";
-import { m } from "@/paraglide/messages";
-import ApprovalSection from "./ApprovalSection";
+} from '@Constants/projectDescription';
+import { toggleModal } from '@Store/actions/common';
+import { useGetUserDetailsQuery } from '@Api/projects';
+import Skeleton from '@Components/RadixComponents/Skeleton';
+import { formatString, gsdToAltitude, altitudeToGsd } from '@Utils/index';
+import { m } from '@/paraglide/messages';
+import ApprovalSection from './ApprovalSection';
 
 const statusAfterImageUploaded = [
-  "READY_FOR_PROCESSING",
-  "IMAGE_PROCESSING_FAILED",
-  "IMAGE_PROCESSING_STARTED",
-  "IMAGE_PROCESSING_FINISHED",
+  'READY_FOR_PROCESSING',
+  'IMAGE_PROCESSING_FAILED',
+  'IMAGE_PROCESSING_STARTED',
+  'IMAGE_PROCESSING_FINISHED',
 ];
 
-type DescriptionDataType = (typeof descriptionItems)[number]["expectedDataType"];
+type DescriptionDataType =
+  (typeof descriptionItems)[number]['expectedDataType'];
 
 const hasDescriptionValue = (value: unknown, dataType: DescriptionDataType) => {
-  if (dataType === "boolean") return typeof value === "boolean";
+  if (dataType === 'boolean') return typeof value === 'boolean';
   if (Array.isArray(value)) return value.length > 0;
-  return value !== undefined && value !== null && value !== "";
+  return value !== undefined && value !== null && value !== '';
 };
 
 const formatNumber = (value: unknown, decimalPlaces: number) => {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) return String(value);
-  return numericValue.toFixed(decimalPlaces).replace(/\.?0+$/, "");
+  return numericValue.toFixed(decimalPlaces).replace(/\.?0+$/, '');
 };
 
 const formatDate = (value: unknown) => {
@@ -39,39 +39,49 @@ const formatDate = (value: unknown) => {
   if (Number.isNaN(dateValue.getTime())) return String(value);
 
   return dateValue.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 };
 
-const formatDescriptionValue = (value: unknown, dataType: DescriptionDataType) => {
-  if (dataType === "boolean") return value ? m.proj_desc_value_yes() : m.proj_desc_value_no();
-  if (dataType === "double") return formatNumber(value, 3);
-  if (dataType === "number") return formatNumber(value, 2);
-  if (dataType === "array") return Array.isArray(value) ? value.length : String(value);
-  if (dataType === "date") return formatDate(value);
-  if (dataType === "finalOutput") {
+const formatDescriptionValue = (
+  value: unknown,
+  dataType: DescriptionDataType,
+) => {
+  if (dataType === 'boolean')
+    return value ? m.proj_desc_value_yes() : m.proj_desc_value_no();
+  if (dataType === 'double') return formatNumber(value, 3);
+  if (dataType === 'number') return formatNumber(value, 2);
+  if (dataType === 'array')
+    return Array.isArray(value) ? value.length : String(value);
+  if (dataType === 'date') return formatDate(value);
+  if (dataType === 'finalOutput') {
     const outputs = Array.isArray(value) ? value : [value];
     const labels = getFinalOutputLabels();
     return outputs
-      .map((output) => labels[String(output)] || formatString(String(output)))
-      .join(", ");
+      .map(output => labels[String(output)] || formatString(String(output)))
+      .join(', ');
   }
   return String(value);
 };
 
 const getDescriptionValue = (projectData: Record<string, any>, key: string) => {
-  if (key === "gsd_cm_px") {
-    if (projectData?.gsd_cm_px !== undefined && projectData?.gsd_cm_px !== null) {
+  if (key === 'gsd_cm_px') {
+    if (
+      projectData?.gsd_cm_px !== undefined &&
+      projectData?.gsd_cm_px !== null
+    ) {
       return projectData.gsd_cm_px;
     }
 
     const altitude = Number(projectData?.altitude_from_ground);
-    return Number.isFinite(altitude) && altitude > 0 ? altitudeToGsd(altitude) : null;
+    return Number.isFinite(altitude) && altitude > 0
+      ? altitudeToGsd(altitude)
+      : null;
   }
 
-  if (key === "flight_altitude") {
+  if (key === 'flight_altitude') {
     if (
       projectData?.altitude_from_ground !== undefined &&
       projectData?.altitude_from_ground !== null
@@ -87,7 +97,7 @@ const getDescriptionValue = (projectData: Record<string, any>, key: string) => {
 };
 
 const DescriptionSection = ({
-  page = "project-approval",
+  page = 'project-approval',
   projectData,
   isProjectDataLoading = false,
   onOpenUpload,
@@ -96,7 +106,7 @@ const DescriptionSection = ({
   onOpenWorkflow,
 }: {
   projectData: Record<string, any>;
-  page?: "project-description" | "project-approval";
+  page?: 'project-description' | 'project-approval';
   isProjectDataLoading?: boolean;
   onOpenUpload?: () => void;
   onOpenClassify?: () => void;
@@ -120,17 +130,18 @@ const DescriptionSection = ({
   // OAM publishing is author-only, and only makes sense once final processing
   // produced an orthophoto. The OAM API token itself is gated inside the
   // upload dialog, which links the user to their profile if it is missing.
-  const isProjectAuthor = String(projectData?.author_id || "") === String(userDetails?.id || "");
+  const isProjectAuthor =
+    String(projectData?.author_id || '') === String(userDetails?.id || '');
   const isRegulatorApproved =
     !projectData?.requires_approval_from_regulator ||
-    projectData?.regulator_approval_status === "APPROVED";
+    projectData?.regulator_approval_status === 'APPROVED';
   const oamUploadStatus = projectData?.oam_upload_status;
   const canUploadToOam =
     isProjectAuthor &&
     isRegulatorApproved &&
-    projectData?.image_processing_status === "SUCCESS" &&
+    projectData?.image_processing_status === 'SUCCESS' &&
     Boolean(projectData?.orthophoto_url) &&
-    (oamUploadStatus === "NOT_STARTED" || oamUploadStatus === "FAILED");
+    (oamUploadStatus === 'NOT_STARTED' || oamUploadStatus === 'FAILED');
 
   const localizedItems = getDescriptionItems();
 
@@ -143,13 +154,13 @@ const DescriptionSection = ({
 
   return (
     <div className="naxatw-mt-4 naxatw-flex naxatw-flex-col naxatw-gap-3">
-      {page === "project-approval" && (
+      {page === 'project-approval' && (
         <p className="naxatw-text-[0.875rem] naxatw-font-semibold naxatw-leading-normal naxatw-tracking-[0.0175rem] naxatw-text-[#D73F3F]">
           {m.proj_desc_description_heading()}
         </p>
       )}
       <div className="naxatw-flex naxatw-flex-col naxatw-gap-3 naxatw-text-sm">
-        <p>{projectData?.description || ""}</p>
+        <p>{projectData?.description || ''}</p>
         <div className="naxatw-flex naxatw-flex-col naxatw-gap-1">
           {projectData?.id && (
             <div className="naxatw-flex naxatw-gap-2">
@@ -158,13 +169,17 @@ const DescriptionSection = ({
               <p className="naxatw-font-semibold">{projectData.id}</p>
             </div>
           )}
-          {localizedItems.map((descriptionItem) => {
+          {localizedItems.map(descriptionItem => {
             const dataType = descriptionItem.expectedDataType;
             const value = getDescriptionValue(projectData, descriptionItem.key);
             if (hasDescriptionValue(value, dataType)) {
-              const unit = descriptionItem?.unit || descriptionItem?.unite || "";
+              const unit =
+                descriptionItem?.unit || descriptionItem?.unite || '';
               return (
-                <div className="naxatw-flex naxatw-gap-2" key={descriptionItem.key}>
+                <div
+                  className="naxatw-flex naxatw-gap-2"
+                  key={descriptionItem.key}
+                >
                   <p className="naxatw-w-[146px]">{descriptionItem.label}</p>
                   <p>:</p>
                   <p className="naxatw-font-semibold">
@@ -176,27 +191,31 @@ const DescriptionSection = ({
             return null;
           })}
 
-          {(projectData?.oam_upload_status === "UPLOADING" ||
-            projectData?.oam_upload_status === "FAILED" ||
-            projectData?.oam_upload_status === "UPLOADED") && (
+          {(projectData?.oam_upload_status === 'UPLOADING' ||
+            projectData?.oam_upload_status === 'FAILED' ||
+            projectData?.oam_upload_status === 'UPLOADED') && (
             <div className="naxatw-flex naxatw-gap-2">
-              <p className="naxatw-w-[146px]">{m.proj_desc_uploaded_to_oam()}</p>
+              <p className="naxatw-w-[146px]">
+                {m.proj_desc_uploaded_to_oam()}
+              </p>
               <p>:</p>
-              <p className="naxatw-font-semibold">{formatString(projectData?.oam_upload_status)}</p>
+              <p className="naxatw-font-semibold">
+                {formatString(projectData?.oam_upload_status)}
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {page === "project-description" && (onOpenUpload || onOpenWorkflow) && (
-        <div className="naxatw-flex naxatw-flex-col naxatw-gap-3 naxatw-mt-2">
+      {page === 'project-description' && (onOpenUpload || onOpenWorkflow) && (
+        <div className="naxatw-mt-2 naxatw-flex naxatw-flex-col naxatw-gap-3">
           <p className="naxatw-text-sm naxatw-font-semibold naxatw-text-gray-800">
             {m.proj_desc_imagery_workflow_heading()}
           </p>
 
           {/* Step 1: Upload Imagery */}
           <button
-            className="naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-border-gray-200 naxatw-bg-white naxatw-p-3 naxatw-text-left naxatw-transition-all hover:naxatw-border-red-300 hover:naxatw-bg-red-50"
+            className="hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-border-gray-200 naxatw-bg-white naxatw-p-3 naxatw-text-left naxatw-transition-all"
             onClick={onOpenUpload || onOpenWorkflow}
           >
             <div className="naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-bg-red naxatw-text-sm naxatw-font-bold naxatw-text-white">
@@ -210,21 +229,23 @@ const DescriptionSection = ({
                 {m.proj_desc_step_upload_imagery_desc()}
               </p>
             </div>
-            <span className="material-icons naxatw-text-gray-400">chevron_right</span>
+            <span className="material-icons naxatw-text-gray-400">
+              chevron_right
+            </span>
           </button>
 
           {/* Step 2: Classify Imagery */}
           <button
             className={`naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-p-3 naxatw-text-left naxatw-transition-all ${
               onOpenClassify
-                ? "naxatw-border-gray-200 naxatw-bg-white hover:naxatw-border-red-300 hover:naxatw-bg-red-50"
-                : "naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-cursor-not-allowed naxatw-opacity-60"
+                ? 'hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-border-gray-200 naxatw-bg-white'
+                : 'naxatw-cursor-not-allowed naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-opacity-60'
             }`}
             onClick={onOpenClassify}
             disabled={!onOpenClassify}
           >
             <div
-              className={`naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-text-sm naxatw-font-bold naxatw-text-white ${onOpenClassify ? "naxatw-bg-red" : "naxatw-bg-gray-400"}`}
+              className={`naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-text-sm naxatw-font-bold naxatw-text-white ${onOpenClassify ? 'naxatw-bg-red' : 'naxatw-bg-gray-400'}`}
             >
               2
             </div>
@@ -236,21 +257,23 @@ const DescriptionSection = ({
                 {m.proj_desc_step_classify_imagery_desc()}
               </p>
             </div>
-            <span className="material-icons naxatw-text-gray-400">chevron_right</span>
+            <span className="material-icons naxatw-text-gray-400">
+              chevron_right
+            </span>
           </button>
 
           {/* Step 3: Verify Imagery */}
           <button
             className={`naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-p-3 naxatw-text-left naxatw-transition-all ${
               onOpenVerify
-                ? "naxatw-border-gray-200 naxatw-bg-white hover:naxatw-border-red-300 hover:naxatw-bg-red-50"
-                : "naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-cursor-not-allowed naxatw-opacity-60"
+                ? 'hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-border-gray-200 naxatw-bg-white'
+                : 'naxatw-cursor-not-allowed naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-opacity-60'
             }`}
             onClick={onOpenVerify}
             disabled={!onOpenVerify}
           >
             <div
-              className={`naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-text-sm naxatw-font-bold naxatw-text-white ${onOpenVerify ? "naxatw-bg-red" : "naxatw-bg-gray-400"}`}
+              className={`naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-text-sm naxatw-font-bold naxatw-text-white ${onOpenVerify ? 'naxatw-bg-red' : 'naxatw-bg-gray-400'}`}
             >
               3
             </div>
@@ -262,21 +285,26 @@ const DescriptionSection = ({
                 {m.proj_desc_step_verify_imagery_desc()}
               </p>
             </div>
-            <span className="material-icons naxatw-text-gray-400">chevron_right</span>
+            <span className="material-icons naxatw-text-gray-400">
+              chevron_right
+            </span>
           </button>
 
           {/* Step 4: Processing */}
           <button
             className={`naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-p-3 naxatw-text-left naxatw-transition-all ${
               isAbleToStartProcessing
-                ? "naxatw-border-gray-200 naxatw-bg-white hover:naxatw-border-red-300 hover:naxatw-bg-red-50"
-                : "naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-cursor-not-allowed naxatw-opacity-60"
+                ? 'hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-border-gray-200 naxatw-bg-white'
+                : 'naxatw-cursor-not-allowed naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-opacity-60'
             }`}
-            onClick={() => isAbleToStartProcessing && dispatch(toggleModal("processing-status"))}
+            onClick={() =>
+              isAbleToStartProcessing &&
+              dispatch(toggleModal('processing-status'))
+            }
             disabled={!isAbleToStartProcessing}
           >
             <div
-              className={`naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-text-sm naxatw-font-bold naxatw-text-white ${isAbleToStartProcessing ? "naxatw-bg-red" : "naxatw-bg-gray-400"}`}
+              className={`naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-text-sm naxatw-font-bold naxatw-text-white ${isAbleToStartProcessing ? 'naxatw-bg-red' : 'naxatw-bg-gray-400'}`}
             >
               4
             </div>
@@ -288,7 +316,9 @@ const DescriptionSection = ({
                 {m.proj_desc_step_processing_desc()}
               </p>
             </div>
-            <span className="material-icons naxatw-text-gray-400">chevron_right</span>
+            <span className="material-icons naxatw-text-gray-400">
+              chevron_right
+            </span>
           </button>
 
           {/* Step 5: Upload to OAM - author only */}
@@ -296,46 +326,52 @@ const DescriptionSection = ({
             <button
               className={`naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-p-3 naxatw-text-left naxatw-transition-all ${
                 canUploadToOam
-                  ? "naxatw-border-gray-200 naxatw-bg-white hover:naxatw-border-red-300 hover:naxatw-bg-red-50"
-                  : "naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-cursor-not-allowed naxatw-opacity-60"
+                  ? 'hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-border-gray-200 naxatw-bg-white'
+                  : 'naxatw-cursor-not-allowed naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-opacity-60'
               }`}
-              onClick={() => canUploadToOam && dispatch(toggleModal("upload-to-oam"))}
+              onClick={() =>
+                canUploadToOam && dispatch(toggleModal('upload-to-oam'))
+              }
               disabled={!canUploadToOam}
             >
               <div
-                className={`naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-text-sm naxatw-font-bold naxatw-text-white ${canUploadToOam ? "naxatw-bg-red" : "naxatw-bg-gray-400"}`}
+                className={`naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-text-sm naxatw-font-bold naxatw-text-white ${canUploadToOam ? 'naxatw-bg-red' : 'naxatw-bg-gray-400'}`}
               >
                 5
               </div>
               <div className="naxatw-flex-1">
                 <p className="naxatw-text-sm naxatw-font-medium naxatw-text-gray-900">
-                  {oamUploadStatus === "FAILED"
+                  {oamUploadStatus === 'FAILED'
                     ? m.proj_desc_reupload_to_oam()
                     : m.proj_desc_upload_to_oam()}
                 </p>
                 <p className="naxatw-text-xs naxatw-text-gray-500">
-                  {oamUploadStatus && oamUploadStatus !== "NOT_STARTED"
+                  {oamUploadStatus && oamUploadStatus !== 'NOT_STARTED'
                     ? m.proj_desc_step_upload_to_oam_status({
                         status: formatString(oamUploadStatus),
                       })
                     : m.proj_desc_step_upload_to_oam_desc()}
                 </p>
               </div>
-              <span className="material-icons naxatw-text-gray-400">chevron_right</span>
+              <span className="material-icons naxatw-text-gray-400">
+                chevron_right
+              </span>
             </button>
           )}
         </div>
       )}
 
-      {page !== "project-approval" &&
+      {page !== 'project-approval' &&
         (!projectData?.requires_approval_from_regulator ||
-          projectData?.regulator_approval_status === "APPROVED") &&
+          projectData?.regulator_approval_status === 'APPROVED') &&
         isAbleToStartProcessing && (
           <div className="naxatw-flex naxatw-flex-wrap naxatw-gap-2">
-            {projectData?.image_processing_status === "PROCESSING" && (
+            {projectData?.image_processing_status === 'PROCESSING' && (
               <div className="naxatw-flex naxatw-flex-col naxatw-gap-1">
                 <div className="naxatw-flex naxatw-items-center naxatw-gap-2 naxatw-text-sm naxatw-text-gray-600">
-                  <span className="material-icons naxatw-animate-spin !naxatw-text-base">sync</span>
+                  <span className="material-icons naxatw-animate-spin !naxatw-text-base">
+                    sync
+                  </span>
                   <span>{m.proj_desc_imagery_processing_in_progress()}</span>
                 </div>
                 <p className="naxatw-text-xs naxatw-text-gray-400">
@@ -346,9 +382,10 @@ const DescriptionSection = ({
           </div>
         )}
 
-      {page === "project-approval" && projectData?.regulator_approval_status === "PENDING" && (
-        <ApprovalSection />
-      )}
+      {page === 'project-approval' &&
+        projectData?.regulator_approval_status === 'PENDING' && (
+          <ApprovalSection />
+        )}
     </div>
   );
 };

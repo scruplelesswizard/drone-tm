@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Button } from "@Components/RadixComponents/Button";
-import { ProjectUser, useGetUsersQuery } from "@Api/projects";
-import { createMentionToken } from "@Utils/mentions";
-import { m } from "@/paraglide/messages";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Button } from '@Components/RadixComponents/Button';
+import { ProjectUser, useGetUsersQuery } from '@Api/projects';
+import { createMentionToken } from '@Utils/mentions';
+import { m } from '@/paraglide/messages';
 
 interface ILockTaskDialogProps {
   handleLockTask: (comment: string) => void;
@@ -19,13 +19,20 @@ interface SelectedMention {
 const MENTION_MIN_CHARS = 3;
 const DEBOUNCE_MS = 300;
 
-const LockTaskDialog = ({ handleLockTask, setShowLockDialog }: ILockTaskDialogProps) => {
-  const [comment, setComment] = useState("");
+const LockTaskDialog = ({
+  handleLockTask,
+  setShowLockDialog,
+}: ILockTaskDialogProps) => {
+  const [comment, setComment] = useState('');
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
-  const [debouncedMentionQuery, setDebouncedMentionQuery] = useState<string | null>(null);
+  const [debouncedMentionQuery, setDebouncedMentionQuery] = useState<
+    string | null
+  >(null);
   const [mentionStartIndex, setMentionStartIndex] = useState<number>(-1);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
-  const [selectedMentions, setSelectedMentions] = useState<SelectedMention[]>([]);
+  const [selectedMentions, setSelectedMentions] = useState<SelectedMention[]>(
+    [],
+  );
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -65,19 +72,21 @@ const LockTaskDialog = ({ handleLockTask, setShowLockDialog }: ILockTaskDialogPr
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { value, selectionStart } = e.target;
     setComment(value);
-    setSelectedMentions((prev) => prev.filter((mention) => value.includes(mention.displayText)));
+    setSelectedMentions(prev =>
+      prev.filter(mention => value.includes(mention.displayText)),
+    );
 
     // Check if we're in a mention context
     const textBeforeCursor = value.slice(0, selectionStart);
-    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
     if (lastAtIndex !== -1) {
       const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1);
       // Only show dropdown if there's no space before @ (or @ is at start) and no space in the query
-      const charBeforeAt = lastAtIndex > 0 ? value[lastAtIndex - 1] : " ";
+      const charBeforeAt = lastAtIndex > 0 ? value[lastAtIndex - 1] : ' ';
       if (
-        (charBeforeAt === " " || charBeforeAt === "\n" || lastAtIndex === 0) &&
-        !textAfterAt.includes(" ")
+        (charBeforeAt === ' ' || charBeforeAt === '\n' || lastAtIndex === 0) &&
+        !textAfterAt.includes(' ')
       ) {
         setMentionQuery(textAfterAt);
         setMentionStartIndex(lastAtIndex);
@@ -93,12 +102,14 @@ const LockTaskDialog = ({ handleLockTask, setShowLockDialog }: ILockTaskDialogPr
   const insertMention = useCallback(
     (user: ProjectUser) => {
       const before = comment.slice(0, mentionStartIndex);
-      const after = comment.slice(mentionStartIndex + (mentionQuery?.length || 0) + 1);
+      const after = comment.slice(
+        mentionStartIndex + (mentionQuery?.length || 0) + 1,
+      );
       const displayText = `@${user.name}`;
       const mentionToken = createMentionToken(user.name, String(user.id));
       const newComment = `${before}${displayText} ${after}`;
       setComment(newComment);
-      setSelectedMentions((prev) => [
+      setSelectedMentions(prev => [
         ...prev,
         { id: `${user.id}-${prev.length}`, displayText, token: mentionToken },
       ]);
@@ -119,16 +130,20 @@ const LockTaskDialog = ({ handleLockTask, setShowLockDialog }: ILockTaskDialogPr
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (mentionQuery !== null && filteredUsers.length > 0) {
-      if (e.key === "ArrowDown") {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedMentionIndex((prev) => (prev < filteredUsers.length - 1 ? prev + 1 : 0));
-      } else if (e.key === "ArrowUp") {
+        setSelectedMentionIndex(prev =>
+          prev < filteredUsers.length - 1 ? prev + 1 : 0,
+        );
+      } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedMentionIndex((prev) => (prev > 0 ? prev - 1 : filteredUsers.length - 1));
-      } else if (e.key === "Enter") {
+        setSelectedMentionIndex(prev =>
+          prev > 0 ? prev - 1 : filteredUsers.length - 1,
+        );
+      } else if (e.key === 'Enter') {
         e.preventDefault();
         insertMention(filteredUsers[selectedMentionIndex]);
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         e.preventDefault();
         setMentionQuery(null);
       }
@@ -150,9 +165,11 @@ const LockTaskDialog = ({ handleLockTask, setShowLockDialog }: ILockTaskDialogPr
   // Scroll selected item into view
   useEffect(() => {
     if (dropdownRef.current && mentionQuery !== null) {
-      const selected = dropdownRef.current.children[selectedMentionIndex] as HTMLElement;
+      const selected = dropdownRef.current.children[
+        selectedMentionIndex
+      ] as HTMLElement;
       if (selected) {
-        selected.scrollIntoView({ block: "nearest" });
+        selected.scrollIntoView({ block: 'nearest' });
       }
     }
   }, [selectedMentionIndex, mentionQuery]);
@@ -201,7 +218,7 @@ const LockTaskDialog = ({ handleLockTask, setShowLockDialog }: ILockTaskDialogPr
                 key={user.id}
                 type="button"
                 className={`naxatw-flex naxatw-w-full naxatw-items-center naxatw-gap-2 naxatw-px-3 naxatw-py-2 naxatw-text-left naxatw-text-body-md hover:naxatw-bg-grey-100 ${
-                  index === selectedMentionIndex ? "naxatw-bg-grey-100" : ""
+                  index === selectedMentionIndex ? 'naxatw-bg-grey-100' : ''
                 }`}
                 onClick={() => insertMention(user)}
               >
@@ -223,7 +240,10 @@ const LockTaskDialog = ({ handleLockTask, setShowLockDialog }: ILockTaskDialogPr
           document.body,
         )}
       <div className="naxatw-flex naxatw-justify-end naxatw-gap-3">
-        <Button className="!naxatw-text-red" onClick={() => setShowLockDialog(false)}>
+        <Button
+          className="!naxatw-text-red"
+          onClick={() => setShowLockDialog(false)}
+        >
           {m.common_cancel()}
         </Button>
         <Button

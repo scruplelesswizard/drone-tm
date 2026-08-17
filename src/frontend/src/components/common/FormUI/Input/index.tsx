@@ -1,6 +1,6 @@
-import * as React from "react";
-import { cn } from "@Utils/index";
-import { m } from "@/paraglide/messages";
+import * as React from 'react';
+import { cn } from '@Utils/index';
+import { m } from '@/paraglide/messages';
 
 export interface IInputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
@@ -20,6 +20,6 @@ const Input = React.forwardRef<HTMLInputElement, IInputProps>(
     );
   },
 );
-Input.displayName = "Input";
+Input.displayName = 'Input';
 
 export default Input;

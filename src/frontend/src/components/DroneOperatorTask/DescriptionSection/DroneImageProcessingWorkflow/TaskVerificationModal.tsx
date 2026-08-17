@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Map as MapLibreMap,
   NavigationControl,
   AttributionControl,
   LngLatBoundsLike,
   Popup,
-} from "maplibre-gl";
-import bbox from "@turf/bbox";
-import { toast } from "react-toastify";
+} from 'maplibre-gl';
+import bbox from '@turf/bbox';
+import { toast } from 'react-toastify';
 import {
   getProjectTaskVerificationData,
   getTaskImageUrls,
@@ -19,17 +19,17 @@ import {
   FlightGapDetectionData,
   getFlightGapDetectionData,
   ImageUrls,
-} from "@Services/classification";
-import { FlexRow } from "@Components/common/Layouts";
-import { Button } from "@Components/RadixComponents/Button";
-import MapContainer from "@Components/common/MapLibreComponents/MapContainer";
-import VectorLayer from "@Components/common/MapLibreComponents/Layers/VectorLayer";
-import BaseLayerSwitcherUI from "@Components/common/BaseLayerSwitcher";
-import { GeojsonType } from "@Components/common/MapLibreComponents/types";
-import { setProjectState } from "@Store/actions/project";
-import { useTypedDispatch, useTypedSelector } from "@Store/hooks";
-import { m } from "@/paraglide/messages";
-import FlightGapDetectionModal from "./FlightGapDetectionModal";
+} from '@Services/classification';
+import { FlexRow } from '@Components/common/Layouts';
+import { Button } from '@Components/RadixComponents/Button';
+import MapContainer from '@Components/common/MapLibreComponents/MapContainer';
+import VectorLayer from '@Components/common/MapLibreComponents/Layers/VectorLayer';
+import BaseLayerSwitcherUI from '@Components/common/BaseLayerSwitcher';
+import { GeojsonType } from '@Components/common/MapLibreComponents/types';
+import { setProjectState } from '@Store/actions/project';
+import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
+import { m } from '@/paraglide/messages';
+import FlightGapDetectionModal from './FlightGapDetectionModal';
 
 interface TaskVerificationModalProps {
   isOpen: boolean;
@@ -50,7 +50,7 @@ const TaskVerificationModal = ({
 }: TaskVerificationModalProps) => {
   const queryClient = useQueryClient();
   const dispatch = useTypedDispatch();
-  const tasksData = useTypedSelector((state) => state.project.tasksData);
+  const tasksData = useTypedSelector(state => state.project.tasksData);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isStyleReady, setIsStyleReady] = useState(false);
@@ -72,14 +72,14 @@ const TaskVerificationModal = ({
     isLoading,
     refetch,
   } = useQuery<TaskVerificationData>({
-    queryKey: ["taskVerification", projectId, taskId],
+    queryKey: ['taskVerification', projectId, taskId],
     queryFn: () => getProjectTaskVerificationData(projectId, taskId),
     enabled: isOpen && !!projectId && !!taskId,
   });
 
   // Fetch presigned image URLs on demand when modal opens
   const { data: imageUrlsData } = useQuery({
-    queryKey: ["taskImageUrls", projectId, taskId],
+    queryKey: ['taskImageUrls', projectId, taskId],
     queryFn: () => getTaskImageUrls(projectId, taskId),
     enabled: isOpen && !!projectId && !!taskId,
     staleTime: 30 * 60 * 1000, // 30 min
@@ -135,14 +135,14 @@ const TaskVerificationModal = ({
     if (!isOpen || !verificationData || map) return;
 
     const timer = setTimeout(() => {
-      const container = document.getElementById("task-verification-map");
+      const container = document.getElementById('task-verification-map');
       if (!container) {
-        console.error("Map container not found");
+        console.error('Map container not found');
         return;
       }
 
       const mapInstance = new MapLibreMap({
-        container: container,
+        container,
         style: { version: 8, sources: {}, layers: [] },
         center: [0, 0],
         zoom: 2,
@@ -151,7 +151,7 @@ const TaskVerificationModal = ({
         renderWorldCopies: false,
       });
 
-      mapInstance.on("load", () => {
+      mapInstance.on('load', () => {
         setIsMapLoaded(true);
         setTimeout(() => {
           if (mapInstance.getStyle()) {
@@ -172,8 +172,8 @@ const TaskVerificationModal = ({
   // Add map controls
   useEffect(() => {
     if (isMapLoaded && map) {
-      map.addControl(new NavigationControl(), "top-right");
-      map.addControl(new AttributionControl({ compact: true }), "bottom-right");
+      map.addControl(new NavigationControl(), 'top-right');
+      map.addControl(new AttributionControl({ compact: true }), 'bottom-right');
     }
   }, [isMapLoaded, map]);
 
@@ -191,7 +191,7 @@ const TaskVerificationModal = ({
 
     try {
       const geojson = {
-        type: "FeatureCollection" as const,
+        type: 'FeatureCollection' as const,
         features: [verificationData.task_geometry],
       };
       const [minLng, minLat, maxLng, maxLat] = bbox(geojson);
@@ -215,13 +215,13 @@ const TaskVerificationModal = ({
   useEffect(() => {
     if (!map || !isMapLoaded) return;
 
-    const layerId = "task-image-points-layer";
+    const layerId = 'task-image-points-layer';
 
     const onMouseEnter = () => {
-      map.getCanvas().style.cursor = "pointer";
+      map.getCanvas().style.cursor = 'pointer';
     };
     const onMouseLeave = () => {
-      map.getCanvas().style.cursor = "";
+      map.getCanvas().style.cursor = '';
     };
 
     const handleClick = (e: any) => {
@@ -241,7 +241,7 @@ const TaskVerificationModal = ({
       const html = `
         <div style="min-width:160px;max-width:280px;font-family:system-ui,sans-serif;">
           <p style="font-size:13px;font-weight:600;margin-bottom:4px;word-break:break-all;">${props.filename}</p>
-          <p style="font-size:12px;color:#555;text-transform:capitalize;">Status: ${(props.status || "").replace("_", " ")}</p>
+          <p style="font-size:12px;color:#555;text-transform:capitalize;">Status: ${(props.status || '').replace('_', ' ')}</p>
         </div>
       `;
 
@@ -249,8 +249,8 @@ const TaskVerificationModal = ({
         closeButton: true,
         closeOnClick: false,
         offset: 12,
-        anchor: "bottom",
-        maxWidth: "300px",
+        anchor: 'bottom',
+        maxWidth: '300px',
       })
         .setLngLat(coords)
         .setHTML(html)
@@ -263,19 +263,19 @@ const TaskVerificationModal = ({
       setTimeout(() => {
         const el = imageRefs.current[props.id];
         if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       }, 100);
     };
 
-    map.on("mouseenter", layerId, onMouseEnter);
-    map.on("mouseleave", layerId, onMouseLeave);
-    map.on("click", layerId, handleClick);
+    map.on('mouseenter', layerId, onMouseEnter);
+    map.on('mouseleave', layerId, onMouseLeave);
+    map.on('click', layerId, handleClick);
 
     return () => {
-      map.off("mouseenter", layerId, onMouseEnter);
-      map.off("mouseleave", layerId, onMouseLeave);
-      map.off("click", layerId, handleClick);
+      map.off('mouseenter', layerId, onMouseEnter);
+      map.off('mouseleave', layerId, onMouseLeave);
+      map.off('click', layerId, handleClick);
       if (popupRef.current) {
         popupRef.current.remove();
         popupRef.current = null;
@@ -287,34 +287,34 @@ const TaskVerificationModal = ({
   useEffect(() => {
     if (!map || !isMapLoaded) return;
 
-    const layerId = "task-image-points-layer";
+    const layerId = 'task-image-points-layer';
 
     try {
       if (!map.getLayer(layerId)) return;
 
       if (selectedImageId) {
-        map.setPaintProperty(layerId, "circle-stroke-width", [
-          "case",
-          ["==", ["get", "id"], selectedImageId],
+        map.setPaintProperty(layerId, 'circle-stroke-width', [
+          'case',
+          ['==', ['get', 'id'], selectedImageId],
           4,
           2,
         ]);
-        map.setPaintProperty(layerId, "circle-stroke-color", [
-          "case",
-          ["==", ["get", "id"], selectedImageId],
-          "#2563eb",
-          "#ffffff",
+        map.setPaintProperty(layerId, 'circle-stroke-color', [
+          'case',
+          ['==', ['get', 'id'], selectedImageId],
+          '#2563eb',
+          '#ffffff',
         ]);
-        map.setPaintProperty(layerId, "circle-radius", [
-          "case",
-          ["==", ["get", "id"], selectedImageId],
+        map.setPaintProperty(layerId, 'circle-radius', [
+          'case',
+          ['==', ['get', 'id'], selectedImageId],
           8,
           6,
         ]);
       } else {
-        map.setPaintProperty(layerId, "circle-stroke-width", 2);
-        map.setPaintProperty(layerId, "circle-stroke-color", "#ffffff");
-        map.setPaintProperty(layerId, "circle-radius", 6);
+        map.setPaintProperty(layerId, 'circle-stroke-width', 2);
+        map.setPaintProperty(layerId, 'circle-stroke-color', '#ffffff');
+        map.setPaintProperty(layerId, 'circle-radius', 6);
       }
     } catch {
       // Layer not ready yet
@@ -326,9 +326,9 @@ const TaskVerificationModal = ({
     if (!verificationData?.images) return null;
 
     const features = verificationData.images
-      .filter((img) => img.location?.coordinates)
-      .map((img) => ({
-        type: "Feature" as const,
+      .filter(img => img.location?.coordinates)
+      .map(img => ({
+        type: 'Feature' as const,
         properties: {
           id: img.id,
           filename: img.filename,
@@ -338,7 +338,7 @@ const TaskVerificationModal = ({
       }));
 
     return {
-      type: "FeatureCollection" as const,
+      type: 'FeatureCollection' as const,
       features,
     };
   }, [verificationData]);
@@ -347,26 +347,29 @@ const TaskVerificationModal = ({
   const verifyMutation = useMutation({
     mutationFn: () => markTaskAsVerified(projectId, taskId),
     onSuccess: () => {
-      const nextState = "READY_FOR_PROCESSING";
+      const nextState = 'READY_FOR_PROCESSING';
 
-      queryClient.setQueryData(["project-task-states", projectId], (existing: any) => {
-        if (Array.isArray(existing)) {
-          return existing.map((task: Record<string, any>) =>
-            task.task_id === taskId ? { ...task, state: nextState } : task,
-          );
-        }
-
-        if (Array.isArray(existing?.data)) {
-          return {
-            ...existing,
-            data: existing.data.map((task: Record<string, any>) =>
+      queryClient.setQueryData(
+        ['project-task-states', projectId],
+        (existing: any) => {
+          if (Array.isArray(existing)) {
+            return existing.map((task: Record<string, any>) =>
               task.task_id === taskId ? { ...task, state: nextState } : task,
-            ),
-          };
-        }
+            );
+          }
 
-        return existing;
-      });
+          if (Array.isArray(existing?.data)) {
+            return {
+              ...existing,
+              data: existing.data.map((task: Record<string, any>) =>
+                task.task_id === taskId ? { ...task, state: nextState } : task,
+              ),
+            };
+          }
+
+          return existing;
+        },
+      );
 
       if (tasksData) {
         dispatch(
@@ -394,41 +397,47 @@ const TaskVerificationModal = ({
       // button becomes available immediately (before the refetch lands).
       // Use setQueriesData (partial match) because the cache key may use
       // either the project UUID or a slug, depending on how the user navigated.
-      queryClient.setQueriesData<any>({ queryKey: ["project-detail"] }, (existing: any) => {
-        const data = existing?.data ?? existing;
-        if (data?.tasks && Array.isArray(data.tasks)) {
-          const updatedTasks = data.tasks.map((task: Record<string, any>) =>
-            task.id === taskId ? { ...task, state: nextState } : task,
-          );
-          if (existing?.data) {
-            return { ...existing, data: { ...data, tasks: updatedTasks } };
+      queryClient.setQueriesData<any>(
+        { queryKey: ['project-detail'] },
+        (existing: any) => {
+          const data = existing?.data ?? existing;
+          if (data?.tasks && Array.isArray(data.tasks)) {
+            const updatedTasks = data.tasks.map((task: Record<string, any>) =>
+              task.id === taskId ? { ...task, state: nextState } : task,
+            );
+            if (existing?.data) {
+              return { ...existing, data: { ...data, tasks: updatedTasks } };
+            }
+            return { ...data, tasks: updatedTasks };
           }
-          return { ...data, tasks: updatedTasks };
-        }
-        return existing;
-      });
+          return existing;
+        },
+      );
 
       toast.success(`Task #${taskIndex} marked ready for processing`);
-      queryClient.invalidateQueries({ queryKey: ["taskVerification"] });
+      queryClient.invalidateQueries({ queryKey: ['taskVerification'] });
       queryClient.invalidateQueries({
-        queryKey: ["project-task-states", projectId],
+        queryKey: ['project-task-states', projectId],
       });
-      queryClient.invalidateQueries({ queryKey: ["projectReview", projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
       queryClient.invalidateQueries({
-        queryKey: ["projectMapData", projectId],
+        queryKey: ['projectMapData', projectId],
       });
-      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
+      queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       queryClient.invalidateQueries({
-        queryKey: ["projectTaskImagerySummary", projectId],
+        queryKey: ['projectTaskImagerySummary', projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["all-task-assets-info", projectId],
+        queryKey: ['all-task-assets-info', projectId],
       });
       onVerified?.();
       onClose();
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.detail || error.message || "Failed to verify task";
+      const message =
+        error?.response?.data?.detail ||
+        error.message ||
+        'Failed to verify task';
       toast.error(message);
     },
   });
@@ -442,14 +451,21 @@ const TaskVerificationModal = ({
       setSelectedImageId(null);
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.detail || error.message || "Failed to delete image";
+      const message =
+        error?.response?.data?.detail ||
+        error.message ||
+        'Failed to delete image';
       toast.error(message);
     },
   });
 
-  const flightGapAnalysisMutation = useMutation<FlightGapDetectionData, Error, void>({
+  const flightGapAnalysisMutation = useMutation<
+    FlightGapDetectionData,
+    Error,
+    void
+  >({
     mutationFn: () => getFlightGapDetectionData(projectId, taskId),
-    onSuccess: (data) => {
+    onSuccess: data => {
       setFlightGapModal({
         isOpen: true,
         gapData: data,
@@ -457,7 +473,9 @@ const TaskVerificationModal = ({
     },
     onError: (error: any) => {
       const message =
-        error?.response?.data?.detail || error.message || "Failed to run flight gap analysis";
+        error?.response?.data?.detail ||
+        error.message ||
+        'Failed to run flight gap analysis';
       toast.error(message);
     },
   });
@@ -467,7 +485,7 @@ const TaskVerificationModal = ({
     setSelectedImageId(imageId);
 
     if (map && verificationData?.images) {
-      const img = verificationData.images.find((i) => i.id === imageId);
+      const img = verificationData.images.find(i => i.id === imageId);
       if (img?.location?.coordinates) {
         const coords = img.location.coordinates as [number, number];
 
@@ -479,7 +497,7 @@ const TaskVerificationModal = ({
         const html = `
           <div style="min-width:160px;max-width:280px;font-family:system-ui,sans-serif;">
             <p style="font-size:13px;font-weight:600;margin-bottom:4px;word-break:break-all;">${img.filename}</p>
-            <p style="font-size:12px;color:#555;text-transform:capitalize;">Status: ${(img.status || "").replace("_", " ")}</p>
+            <p style="font-size:12px;color:#555;text-transform:capitalize;">Status: ${(img.status || '').replace('_', ' ')}</p>
           </div>
         `;
 
@@ -487,8 +505,8 @@ const TaskVerificationModal = ({
           closeButton: true,
           closeOnClick: false,
           offset: 12,
-          anchor: "bottom",
-          maxWidth: "300px",
+          anchor: 'bottom',
+          maxWidth: '300px',
         })
           .setLngLat(coords)
           .setHTML(html)
@@ -539,7 +557,9 @@ const TaskVerificationModal = ({
             <div className="naxatw-flex naxatw-flex-1 naxatw-items-center naxatw-justify-center">
               <div className="naxatw-flex naxatw-flex-col naxatw-items-center naxatw-gap-3">
                 <div className="naxatw-h-8 naxatw-w-8 naxatw-animate-spin naxatw-rounded-full naxatw-border-4 naxatw-border-gray-200 naxatw-border-t-red" />
-                <p className="naxatw-text-gray-500">{m.task_verification_loading_task_data()}</p>
+                <p className="naxatw-text-gray-500">
+                  {m.task_verification_loading_task_data()}
+                </p>
               </div>
             </div>
           ) : (
@@ -551,58 +571,64 @@ const TaskVerificationModal = ({
                   isMapLoaded={isMapLoaded}
                   containerId="task-verification-map"
                   style={{
-                    width: "100%",
-                    height: "100%",
+                    width: '100%',
+                    height: '100%',
                   }}
                 >
                   <BaseLayerSwitcherUI />
 
                   {/* Task polygon */}
-                  {map && isMapLoaded && isStyleReady && verificationData?.task_geometry && (
-                    <VectorLayer
-                      map={map}
-                      isMapLoaded={isMapLoaded}
-                      id="task-polygon"
-                      geojson={
-                        {
-                          type: "FeatureCollection",
-                          features: [verificationData.task_geometry],
-                        } as GeojsonType
-                      }
-                      visibleOnMap={true}
-                      layerOptions={{
-                        type: "fill",
-                        paint: {
-                          "fill-color": "#98BBC8",
-                          "fill-outline-color": "#484848",
-                          "fill-opacity": 0.4,
-                        },
-                      }}
-                    />
-                  )}
+                  {map &&
+                    isMapLoaded &&
+                    isStyleReady &&
+                    verificationData?.task_geometry && (
+                      <VectorLayer
+                        map={map}
+                        isMapLoaded={isMapLoaded}
+                        id="task-polygon"
+                        geojson={
+                          {
+                            type: 'FeatureCollection',
+                            features: [verificationData.task_geometry],
+                          } as GeojsonType
+                        }
+                        visibleOnMap
+                        layerOptions={{
+                          type: 'fill',
+                          paint: {
+                            'fill-color': '#98BBC8',
+                            'fill-outline-color': '#484848',
+                            'fill-opacity': 0.4,
+                          },
+                        }}
+                      />
+                    )}
 
                   {/* Task polygon outline */}
-                  {map && isMapLoaded && isStyleReady && verificationData?.task_geometry && (
-                    <VectorLayer
-                      map={map}
-                      isMapLoaded={isMapLoaded}
-                      id="task-polygon-outline"
-                      geojson={
-                        {
-                          type: "FeatureCollection",
-                          features: [verificationData.task_geometry],
-                        } as GeojsonType
-                      }
-                      visibleOnMap={true}
-                      layerOptions={{
-                        type: "line",
-                        paint: {
-                          "line-color": "#484848",
-                          "line-width": 2,
-                        },
-                      }}
-                    />
-                  )}
+                  {map &&
+                    isMapLoaded &&
+                    isStyleReady &&
+                    verificationData?.task_geometry && (
+                      <VectorLayer
+                        map={map}
+                        isMapLoaded={isMapLoaded}
+                        id="task-polygon-outline"
+                        geojson={
+                          {
+                            type: 'FeatureCollection',
+                            features: [verificationData.task_geometry],
+                          } as GeojsonType
+                        }
+                        visibleOnMap
+                        layerOptions={{
+                          type: 'line',
+                          paint: {
+                            'line-color': '#484848',
+                            'line-width': 2,
+                          },
+                        }}
+                      />
+                    )}
 
                   {/* Image points */}
                   {map &&
@@ -615,15 +641,15 @@ const TaskVerificationModal = ({
                         isMapLoaded={isMapLoaded}
                         id="task-image-points"
                         geojson={imageGeoJsonData as GeojsonType}
-                        visibleOnMap={true}
+                        visibleOnMap
                         layerOptions={{
-                          type: "circle",
+                          type: 'circle',
                           paint: {
-                            "circle-color": "#22c55e",
-                            "circle-radius": 6,
-                            "circle-stroke-width": 2,
-                            "circle-stroke-color": "#ffffff",
-                            "circle-stroke-opacity": 0.8,
+                            'circle-color': '#22c55e',
+                            'circle-radius': 6,
+                            'circle-stroke-width': 2,
+                            'circle-stroke-color': '#ffffff',
+                            'circle-stroke-opacity': 0.8,
                           },
                         }}
                       />
@@ -650,7 +676,9 @@ const TaskVerificationModal = ({
                       </span>
                       <span
                         className={`naxatw-font-medium ${
-                          isLowCoverage ? "naxatw-text-yellow-600" : "naxatw-text-green-600"
+                          isLowCoverage
+                            ? 'naxatw-text-yellow-600'
+                            : 'naxatw-text-green-600'
                         }`}
                       >
                         {coveragePercentage.toFixed(0)}%
@@ -663,7 +691,9 @@ const TaskVerificationModal = ({
                 {isLowCoverage && (
                   <div className="naxatw-absolute naxatw-bottom-4 naxatw-left-4 naxatw-right-4 naxatw-z-10 naxatw-rounded-lg naxatw-border naxatw-border-yellow-300 naxatw-bg-yellow-50 naxatw-p-3">
                     <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
-                      <span className="material-icons naxatw-text-yellow-600">warning</span>
+                      <span className="material-icons naxatw-text-yellow-600">
+                        warning
+                      </span>
                       <div>
                         <p className="naxatw-text-sm naxatw-font-medium naxatw-text-yellow-800">
                           {m.task_verification_low_coverage_warning()}
@@ -695,40 +725,42 @@ const TaskVerificationModal = ({
                   <div
                     style={{
                       height: `${sidebarVirtualizer.getTotalSize()}px`,
-                      width: "100%",
-                      position: "relative",
+                      width: '100%',
+                      position: 'relative',
                     }}
                   >
-                    {sidebarVirtualizer.getVirtualItems().map((virtualRow) => {
+                    {sidebarVirtualizer.getVirtualItems().map(virtualRow => {
                       const rowImages = sidebarRows[virtualRow.index];
                       return (
                         <div
                           key={virtualRow.key}
                           style={{
-                            position: "absolute",
+                            position: 'absolute',
                             top: 0,
                             left: 0,
-                            width: "100%",
+                            width: '100%',
                             height: `${virtualRow.size}px`,
                             transform: `translateY(${virtualRow.start}px)`,
                           }}
                           className="naxatw-grid naxatw-grid-cols-2 naxatw-gap-2"
                         >
-                          {rowImages.map((image) => {
+                          {rowImages.map(image => {
                             const urls = imageUrlMap[image.id];
                             const thumbSrc = urls?.thumbnail_url || urls?.url;
                             return (
                               <div
                                 key={image.id}
-                                ref={(el) => {
+                                ref={el => {
                                   imageRefs.current[image.id] = el;
                                 }}
                                 className={`naxatw-group naxatw-relative naxatw-aspect-square naxatw-cursor-pointer naxatw-overflow-hidden naxatw-rounded naxatw-border-2 naxatw-transition-all hover:naxatw-shadow-md ${
                                   selectedImageId === image.id
-                                    ? "naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-200"
-                                    : "naxatw-border-gray-200"
+                                    ? 'naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-200'
+                                    : 'naxatw-border-gray-200'
                                 }`}
-                                onClick={() => handleSidebarImageClick(image.id)}
+                                onClick={() =>
+                                  handleSidebarImageClick(image.id)
+                                }
                               >
                                 {thumbSrc ? (
                                   <img
@@ -737,7 +769,7 @@ const TaskVerificationModal = ({
                                     className="naxatw-h-full naxatw-w-full naxatw-object-cover"
                                     loading="lazy"
                                   />
-                                ) : image.status === "duplicate" ? (
+                                ) : image.status === 'duplicate' ? (
                                   <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-center naxatw-bg-gray-100 naxatw-text-gray-400">
                                     <span className="material-icons naxatw-text-2xl">
                                       content_copy
@@ -753,13 +785,15 @@ const TaskVerificationModal = ({
                                 )}
                                 <button
                                   className="naxatw-bg-red-500 hover:naxatw-bg-red-600 naxatw-absolute naxatw-right-1 naxatw-top-1 naxatw-rounded-full naxatw-p-1 naxatw-text-white naxatw-opacity-0 naxatw-transition-opacity group-hover:naxatw-opacity-100"
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.stopPropagation();
                                     deleteMutation.mutate(image.id);
                                   }}
                                   title={m.task_verification_delete_image_title()}
                                 >
-                                  <span className="material-icons naxatw-text-sm">close</span>
+                                  <span className="material-icons naxatw-text-sm">
+                                    close
+                                  </span>
                                 </button>
                               </div>
                             );
@@ -791,8 +825,11 @@ const TaskVerificationModal = ({
               variant="outline"
               className="naxatw-border-red-600 naxatw-text-red-700 hover:naxatw-bg-red-50 disabled:naxatw-opacity-50"
               onClick={() => flightGapAnalysisMutation.mutate()}
-              disabled={flightGapAnalysisMutation.isPending || !verificationData?.images.length}
-              leftIcon={flightGapAnalysisMutation.isPending ? "sync" : "search"}
+              disabled={
+                flightGapAnalysisMutation.isPending ||
+                !verificationData?.images.length
+              }
+              leftIcon={flightGapAnalysisMutation.isPending ? 'sync' : 'search'}
             >
               {flightGapAnalysisMutation.isPending
                 ? m.task_verification_finding_gaps()
@@ -803,9 +840,11 @@ const TaskVerificationModal = ({
               className="naxatw-bg-green-600 naxatw-text-white hover:naxatw-bg-green-700 disabled:naxatw-opacity-50"
               onClick={() => verifyMutation.mutate()}
               disabled={
-                verifyMutation.isPending || !verificationData?.images.length || isAlreadyVerified
+                verifyMutation.isPending ||
+                !verificationData?.images.length ||
+                isAlreadyVerified
               }
-              leftIcon={verifyMutation.isPending ? "sync" : "check_circle"}
+              leftIcon={verifyMutation.isPending ? 'sync' : 'check_circle'}
             >
               {verifyMutation.isPending
                 ? m.common_verifying()

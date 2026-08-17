@@ -1,13 +1,17 @@
-import { ChangeEvent, useEffect, useState } from "react";
-import type { UseFormRegister, UseFormSetValue, FieldValues } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
-import { format } from "date-fns";
-import useCustomUpload from "@Hooks/useCustomUpload";
-import { FlexColumn, FlexRow } from "@Components/common/Layouts";
-import Icon from "@Components/common/Icon";
-import Image from "@Components/RadixComponents/Image";
-import { m } from "@/paraglide/messages";
-import Input from "../Input";
+import { ChangeEvent, useEffect, useState } from 'react';
+import type {
+  UseFormRegister,
+  UseFormSetValue,
+  FieldValues,
+} from 'react-hook-form';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
+import useCustomUpload from '@Hooks/useCustomUpload';
+import { FlexColumn, FlexRow } from '@Components/common/Layouts';
+import Icon from '@Components/common/Icon';
+import Image from '@Components/RadixComponents/Image';
+import { m } from '@/paraglide/messages';
+import Input from '../Input';
 
 type FileType = File & {
   lastModifiedDate: Date;
@@ -39,7 +43,7 @@ export default function FileUpload({
   register,
   setValue,
   multiple,
-  fileAccept = "image/*",
+  fileAccept = 'image/*',
   data,
   placeholder,
   onChange,
@@ -50,9 +54,9 @@ export default function FileUpload({
   // for edit
   useEffect(() => {
     // @ts-ignore
-    if (!data || (data && typeof data?.[0] !== "string")) return;
+    if (!data || (data && typeof data?.[0] !== 'string')) return;
     const uploaded = data.map((url: string) => {
-      const urlArray = url?.split("/");
+      const urlArray = url?.split('/');
       return {
         id: uuidv4(),
         previewURL: url,
@@ -71,12 +75,14 @@ export default function FileUpload({
 
   const handleFileUpload = (event: FileEvent) => {
     const { files } = event.target;
-    const uploaded = Array.from(files).map((file) => ({
+    const uploaded = Array.from(files).map(file => ({
       id: uuidv4(),
       previewURL: URL.createObjectURL(file),
       file,
     }));
-    const uploadedFilesState = multiple ? [...uploadedFiles, ...uploaded] : uploaded;
+    const uploadedFilesState = multiple
+      ? [...uploadedFiles, ...uploaded]
+      : uploaded;
     //   @ts-ignore
     setUploadedFiles(uploadedFilesState);
     setValue(name, uploadedFilesState, { shouldDirty: true });
@@ -84,7 +90,7 @@ export default function FileUpload({
   };
 
   function downloadBlob(blobURL: string, fileName: string) {
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = blobURL;
     link.download = fileName;
     document.body.appendChild(link);
@@ -93,7 +99,7 @@ export default function FileUpload({
   }
 
   const handleDeleteFile = (id: string) => {
-    const updatedData = uploadedFiles.filter((file) => file.id !== id);
+    const updatedData = uploadedFiles.filter(file => file.id !== id);
     setUploadedFiles(updatedData);
     setValue(name, updatedData, { shouldDirty: true });
   };
@@ -105,7 +111,10 @@ export default function FileUpload({
         //   @ts-ignore
         onClick={onFileUpload}
       >
-        <Icon name="cloud_upload" className="naxatw-text-primary-400 naxatw-text-3xl" />
+        <Icon
+          name="cloud_upload"
+          className="naxatw-text-primary-400 naxatw-text-3xl"
+        />
         <p className="naxatw-text-xs naxatw-text-grey-600">
           {placeholder || m.common_default_file_upload_placeholder()}
         </p>
@@ -118,7 +127,10 @@ export default function FileUpload({
           accept={fileAccept}
         />
       </FlexColumn>
-      <FlexColumn gap={2} className="scrollbar naxatw-max-h-52 naxatw-overflow-auto">
+      <FlexColumn
+        gap={2}
+        className="scrollbar naxatw-max-h-52 naxatw-overflow-auto"
+      >
         {/* @ts-ignore */}
         {uploadedFiles.map(({ file, id, previewURL }) => (
           <FlexRow
@@ -132,7 +144,10 @@ export default function FileUpload({
                 {file && file?.lastModified && (
                   <p className="naxatw-text-xs naxatw-text-grey-600">
                     {m.common_uploaded_on_with_date({
-                      date: format(new Date(file.lastModifiedDate), "MMM dd yyyy"),
+                      date: format(
+                        new Date(file.lastModifiedDate),
+                        'MMM dd yyyy',
+                      ),
                     })}
                   </p>
                 )}

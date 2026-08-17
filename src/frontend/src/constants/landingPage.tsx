@@ -1,7 +1,6 @@
-/* eslint-disable import/prefer-default-export */
-import rocketIcon from "@Assets/images/LandingPage/RockerIcon.svg";
-import targetIcon from "@Assets/images/LandingPage/TargetIcon.svg";
-import { m } from "@/paraglide/messages";
+import rocketIcon from '@Assets/images/LandingPage/RockerIcon.svg';
+import targetIcon from '@Assets/images/LandingPage/TargetIcon.svg';
+import { m } from '@/paraglide/messages';
 
 export const accordionData = () => [
   {
@@ -177,7 +176,7 @@ export const caseStudiesData = () => [
     location: m.landing_case_freetown_location(),
     title: m.landing_case_freetown_title(),
     description: m.landing_case_freetown_desc(),
-    link: "https://www.hotosm.org/en/projects/kyc-africa-drone-mapping-in-freetown-city/",
+    link: 'https://www.hotosm.org/en/projects/kyc-africa-drone-mapping-in-freetown-city/',
   },
   {
     id: 2,
@@ -185,7 +184,7 @@ export const caseStudiesData = () => [
     location: m.landing_case_dominica_location(),
     title: m.landing_case_dominica_title(),
     description: m.landing_case_dominica_desc(),
-    link: "https://www.hotosm.org/en/news/boosting-caribbean-resilience-collaborative-efforts-using-drone-imagery-in-coulibistrie-dominica/",
+    link: 'https://www.hotosm.org/en/news/boosting-caribbean-resilience-collaborative-efforts-using-drone-imagery-in-coulibistrie-dominica/',
   },
   {
     id: 3,
@@ -193,6 +192,6 @@ export const caseStudiesData = () => [
     location: m.landing_case_mexico_location(),
     title: m.landing_case_mexico_title(),
     description: m.landing_case_mexico_desc(),
-    link: "https://www.hotosm.org/en/news/can-low-cost-drones-contribute-to-mangrove-monitoring-and-conservation-testing-drone-tasking-manager-in-la-paz-mexico/",
+    link: 'https://www.hotosm.org/en/news/can-low-cost-drones-contribute-to-mangrove-monitoring-and-conservation-testing-drone-tasking-manager-in-la-paz-mexico/',
   },
 ];

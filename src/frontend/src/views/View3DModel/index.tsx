@@ -1,25 +1,32 @@
 // In-app 3D Tiles viewer for the obj2tiles output (cloud_mesh_tileset_url).
 // Opened via the Ctrl/Cmd path on the project page; a normal click uses the
 // drone-mesh GLB viewer instead.
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import maplibregl, { type CustomLayerInterface, type CustomRenderMethodInput } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
-import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
-import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
-import { TilesRenderer } from "3d-tiles-renderer";
-import { LoadRegionPlugin, SphereRegion, TilesFadePlugin } from "3d-tiles-renderer/three/plugins";
-import centroid from "@turf/centroid";
-import { useGetProjectsDetailQuery } from "@Api/projects";
-import hasErrorBoundary from "@Utils/hasErrorBoundary";
-import { m } from "@/paraglide/messages";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import maplibregl, {
+  type CustomLayerInterface,
+  type CustomRenderMethodInput,
+} from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { TilesRenderer } from '3d-tiles-renderer';
+import {
+  LoadRegionPlugin,
+  SphereRegion,
+  TilesFadePlugin,
+} from '3d-tiles-renderer/three/plugins';
+import centroid from '@turf/centroid';
+import { useGetProjectsDetailQuery } from '@Api/projects';
+import hasErrorBoundary from '@Utils/hasErrorBoundary';
+import { m } from '@/paraglide/messages';
 
 // DRACO/KTX2 decoder assets are copied into public/three-libs/ at build time.
 // Self-hosted so the viewer doesn't break if a third-party CDN goes down.
-const DRACO_DECODER_PATH = "/three-libs/draco/";
-const KTX2_TRANSCODER_PATH = "/three-libs/basis/";
+const DRACO_DECODER_PATH = '/three-libs/draco/';
+const KTX2_TRANSCODER_PATH = '/three-libs/basis/';
 
 const MAX_TILE_ERRORS_BEFORE_FAIL = 25;
 const TILE_ERROR_TARGET = 10;
@@ -41,7 +48,7 @@ const TILE_FADE_DURATION_MS = 180;
 const TILE_FADE_OUT_LIMIT = 250;
 const EMPTY_PARENT_MIN_GEOMETRIC_ERROR = TILE_REGION_ERROR_TARGET + 1;
 
-type ModelState = "idle" | "loading" | "loaded" | "error" | "unavailable";
+type ModelState = 'idle' | 'loading' | 'loaded' | 'error' | 'unavailable';
 
 type ProjectData = {
   name?: string;
@@ -54,7 +61,6 @@ function matrixFromArray(matrix: Iterable<number>): THREE.Matrix4 {
 }
 
 function forceRendererContentZUp(tiles: TilesRenderer) {
-  // eslint-disable-next-line no-underscore-dangle
   const internal = tiles as unknown as { _upRotationMatrix?: THREE.Matrix4 };
   // eslint-disable-next-line no-underscore-dangle
   internal._upRotationMatrix?.identity();
@@ -94,11 +100,15 @@ function repairTilesetGeometricErrors(root: unknown) {
     const maxRenderableChild = childRenderableErrors.length
       ? Math.max(...childRenderableErrors)
       : null;
-    const original = typeof record.geometricError === "number" ? record.geometricError : null;
+    const original =
+      typeof record.geometricError === 'number' ? record.geometricError : null;
 
     if (!hasRenderableContent) {
       if (maxRenderableChild === null) return null;
-      const adjusted = Math.max(maxRenderableChild * 1.01, EMPTY_PARENT_MIN_GEOMETRIC_ERROR);
+      const adjusted = Math.max(
+        maxRenderableChild * 1.01,
+        EMPTY_PARENT_MIN_GEOMETRIC_ERROR,
+      );
       if (original === null || original < adjusted) {
         record.geometricError = Number(adjusted.toFixed(6));
       }
@@ -106,7 +116,8 @@ function repairTilesetGeometricErrors(root: unknown) {
     }
 
     if (original === null) {
-      const adjusted = maxRenderableChild === null ? 0 : maxRenderableChild * 1.01;
+      const adjusted =
+        maxRenderableChild === null ? 0 : maxRenderableChild * 1.01;
       record.geometricError = Number(adjusted.toFixed(6));
       return record.geometricError as number;
     }
@@ -131,7 +142,10 @@ function ecefToLngLatAlt(x: number, y: number, z: number) {
   const p = Math.sqrt(x * x + y * y);
   const th = Math.atan2(a * z, b * p);
   const lon = Math.atan2(y, x);
-  const lat = Math.atan2(z + ep2 * b * Math.sin(th) ** 3, p - e2 * a * Math.cos(th) ** 3);
+  const lat = Math.atan2(
+    z + ep2 * b * Math.sin(th) ** 3,
+    p - e2 * a * Math.cos(th) ** 3,
+  );
   const n = a / Math.sqrt(1 - e2 * Math.sin(lat) * Math.sin(lat));
   const alt = p / Math.cos(lat) - n;
   return { lng: (lon * 180) / Math.PI, lat: (lat * 180) / Math.PI, alt };
@@ -144,11 +158,11 @@ function inferTilesetLocalUpAxis(
   transform: unknown,
   lng: number,
   lat: number,
-): "x" | "y" | "z" | null {
+): 'x' | 'y' | 'z' | null {
   if (
     !Array.isArray(transform) ||
     transform.length !== 16 ||
-    transform.some((value) => typeof value !== "number")
+    transform.some(value => typeof value !== 'number')
   ) {
     return null;
   }
@@ -160,17 +174,23 @@ function inferTilesetLocalUpAxis(
     Math.sin(latRad),
   );
   const xDot = Math.abs(
-    new THREE.Vector3(transform[0], transform[1], transform[2]).normalize().dot(up),
+    new THREE.Vector3(transform[0], transform[1], transform[2])
+      .normalize()
+      .dot(up),
   );
   const yDot = Math.abs(
-    new THREE.Vector3(transform[4], transform[5], transform[6]).normalize().dot(up),
+    new THREE.Vector3(transform[4], transform[5], transform[6])
+      .normalize()
+      .dot(up),
   );
   const zDot = Math.abs(
-    new THREE.Vector3(transform[8], transform[9], transform[10]).normalize().dot(up),
+    new THREE.Vector3(transform[8], transform[9], transform[10])
+      .normalize()
+      .dot(up),
   );
-  if (zDot >= xDot && zDot >= yDot) return "z";
-  if (yDot >= xDot) return "y";
-  return "x";
+  if (zDot >= xDot && zDot >= yDot) return 'z';
+  if (yDot >= xDot) return 'y';
+  return 'x';
 }
 
 const View3DModel = () => {
@@ -180,7 +200,7 @@ const View3DModel = () => {
   const mapRef = useRef<maplibregl.Map | null>(null);
   // Set when the tileset finishes loading; used by the re-centre button.
   const modelLocationRef = useRef<{ lng: number; lat: number } | null>(null);
-  const [modelState, setModelState] = useState<ModelState>("idle");
+  const [modelState, setModelState] = useState<ModelState>('idle');
 
   const handleRecenter = useCallback(() => {
     if (!mapRef.current || !modelLocationRef.current) return;
@@ -198,7 +218,7 @@ const View3DModel = () => {
   // RTK Query returns a new projectData reference on every refetch (e.g. on
   // window focus). Read `outline` via a ref so the effect doesn't tear down
   // the WebGL scene on each refetch.
-  const outlineRef = useRef<ProjectData["outline"]>(undefined);
+  const outlineRef = useRef<ProjectData['outline']>(undefined);
   outlineRef.current = projectData?.outline;
 
   useEffect(() => {
@@ -206,18 +226,21 @@ const View3DModel = () => {
     if (mapRef.current) return undefined;
 
     if (!tilesetUrl) {
-      setModelState("unavailable");
+      setModelState('unavailable');
       return undefined;
     }
 
     const projectCentroid = outlineRef.current
-      ? (centroid(outlineRef.current as any).geometry.coordinates as [number, number])
+      ? (centroid(outlineRef.current as any).geometry.coordinates as [
+          number,
+          number,
+        ])
       : [0, 0];
     const [initLng, initLat] = projectCentroid;
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: "https://tiles.openfreemap.org/styles/bright",
+      style: 'https://tiles.openfreemap.org/styles/bright',
       zoom: 14,
       center: [initLng, initLat],
       pitch: 60,
@@ -262,10 +285,17 @@ const View3DModel = () => {
       });
     }
 
-    function buildLocalTransform(lng: number, lat: number, alt: number): THREE.Matrix4 {
+    function buildLocalTransform(
+      lng: number,
+      lat: number,
+      alt: number,
+    ): THREE.Matrix4 {
       const mc = maplibregl.MercatorCoordinate.fromLngLat([lng, lat], alt);
       const scale = mc.meterInMercatorCoordinateUnits();
-      const rotX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+      const rotX = new THREE.Matrix4().makeRotationAxis(
+        new THREE.Vector3(1, 0, 0),
+        Math.PI / 2,
+      );
       return new THREE.Matrix4()
         .makeTranslation(mc.x, mc.y, mc.z ?? 0)
         .scale(new THREE.Vector3(scale, -scale, scale))
@@ -276,9 +306,9 @@ const View3DModel = () => {
       updateTileResolution();
       triggerRepaint();
     };
-    map.on("load", scheduleMapResize);
-    map.on("resize", handleMapResize);
-    if (typeof ResizeObserver !== "undefined") {
+    map.on('load', scheduleMapResize);
+    map.on('resize', handleMapResize);
+    if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(scheduleMapResize);
       resizeObserver.observe(mapContainerRef.current);
     }
@@ -302,7 +332,7 @@ const View3DModel = () => {
       gltfLoader.setKTX2Loader(ktx2Loader);
 
       tiles = new TilesRenderer(url);
-      tiles.group.name = "tiles";
+      tiles.group.name = 'tiles';
       configureTilesRendererForPhotogrammetry(tiles);
       fadePlugin = new TilesFadePlugin({
         fadeDuration: TILE_FADE_DURATION_MS,
@@ -324,7 +354,7 @@ const View3DModel = () => {
       const onLoadTileset = () => {
         if (handled || !tiles) return;
         handled = true;
-        tiles.removeEventListener("load-tileset", onLoadTileset);
+        tiles.removeEventListener('load-tileset', onLoadTileset);
 
         const sphere = new THREE.Sphere();
         tiles.getBoundingSphere(sphere);
@@ -372,21 +402,30 @@ const View3DModel = () => {
         );
         const finalMatrix = new THREE.Matrix4()
           .setFromMatrix3(rotMat3)
-          .multiply(new THREE.Matrix4().makeTranslation(-centre.x, -centre.y, -centre.z));
+          .multiply(
+            new THREE.Matrix4().makeTranslation(
+              -centre.x,
+              -centre.y,
+              -centre.z,
+            ),
+          );
 
         tiles.group.matrix.copy(finalMatrix);
         tiles.group.matrixAutoUpdate = false;
         tiles.group.updateMatrixWorld(true);
 
         const declaredGltfUpAxis =
-          typeof rootRecord?.asset?.gltfUpAxis === "string"
+          typeof rootRecord?.asset?.gltfUpAxis === 'string'
             ? (rootRecord.asset.gltfUpAxis as string).toLowerCase()
             : null;
         const inferredUpAxis = inferTilesetLocalUpAxis(m, lng, lat);
         // Skip the renderer's default Y-up correction when the root transform
         // says Z is vertical (ODM/Obj2Tiles content) and the tileset doesn't
         // declare otherwise.
-        if (inferredUpAxis === "z" && (!declaredGltfUpAxis || declaredGltfUpAxis === "y")) {
+        if (
+          inferredUpAxis === 'z' &&
+          (!declaredGltfUpAxis || declaredGltfUpAxis === 'y')
+        ) {
           forceRendererContentZUp(tiles);
         }
 
@@ -394,19 +433,19 @@ const View3DModel = () => {
         // means metadata is available. Wait for the first load-model so the
         // loading overlay stays up until a mesh is actually visible.
       };
-      tiles.addEventListener("load-tileset", onLoadTileset);
-      tiles.addEventListener("needs-update", triggerRepaint);
-      tiles.addEventListener("needs-render", triggerRepaint);
-      tiles.addEventListener("fade-change", triggerRepaint);
-      tiles.addEventListener("fade-start", triggerRepaint);
-      tiles.addEventListener("fade-end", triggerRepaint);
-      tiles.addEventListener("tiles-load-start", triggerRepaint);
-      tiles.addEventListener("tiles-load-end", triggerRepaint);
+      tiles.addEventListener('load-tileset', onLoadTileset);
+      tiles.addEventListener('needs-update', triggerRepaint);
+      tiles.addEventListener('needs-render', triggerRepaint);
+      tiles.addEventListener('fade-change', triggerRepaint);
+      tiles.addEventListener('fade-start', triggerRepaint);
+      tiles.addEventListener('fade-end', triggerRepaint);
+      tiles.addEventListener('tiles-load-start', triggerRepaint);
+      tiles.addEventListener('tiles-load-end', triggerRepaint);
       let firstModelLoaded = false;
-      tiles.addEventListener("load-model", () => {
+      tiles.addEventListener('load-model', () => {
         if (firstModelLoaded || cancelled) return;
         firstModelLoaded = true;
-        setModelState("loaded");
+        setModelState('loaded');
       });
 
       // Seed localTransform with a placeholder so render() will call
@@ -416,28 +455,32 @@ const View3DModel = () => {
 
       // load-error fires per failed asset. Failing on the tileset itself is
       // fatal; sporadic per-tile failures aren't.
-      tiles.addEventListener("load-error", (event: any) => {
+      tiles.addEventListener('load-error', (event: any) => {
         const failedUrl: string | undefined = event?.url;
-        const isTileset = !!failedUrl && failedUrl.endsWith("tileset.json");
+        const isTileset = !!failedUrl && failedUrl.endsWith('tileset.json');
         if (isTileset) {
           // eslint-disable-next-line no-console
-          console.error("Failed to load 3D tileset", event?.error);
-          if (!cancelled) setModelState("error");
+          console.error('Failed to load 3D tileset', event?.error);
+          if (!cancelled) setModelState('error');
           return;
         }
         tileErrorCount += 1;
-        if (tileErrorCount >= MAX_TILE_ERRORS_BEFORE_FAIL && !firstModelLoaded && !cancelled) {
+        if (
+          tileErrorCount >= MAX_TILE_ERRORS_BEFORE_FAIL &&
+          !firstModelLoaded &&
+          !cancelled
+        ) {
           // eslint-disable-next-line no-console
           console.error(`Aborting after ${tileErrorCount} tile load errors`);
-          setModelState("error");
+          setModelState('error');
         }
       });
     }
 
     const customLayer: CustomLayerInterface = {
-      id: "3d-tiles",
-      type: "custom",
-      renderingMode: "3d",
+      id: '3d-tiles',
+      type: 'custom',
+      renderingMode: '3d',
       onAdd(mapArg, gl) {
         camera = new THREE.PerspectiveCamera();
         scene = new THREE.Scene();
@@ -463,13 +506,19 @@ const View3DModel = () => {
       // MapLibre's internal world-space coordinates and must not be mixed
       // with MercatorCoordinate.fromLngLat output.
       render(_gl, matrix, options: CustomRenderMethodInput) {
-        if (!camera || !renderer || !scene || !localTransform || !tilesCamera) return;
+        if (!camera || !renderer || !scene || !localTransform || !tilesCamera)
+          return;
 
-        camera.projectionMatrix.fromArray(Array.from(matrix as Iterable<number>));
+        camera.projectionMatrix.fromArray(
+          Array.from(matrix as Iterable<number>),
+        );
         camera.projectionMatrix.multiply(localTransform);
 
         const P = matrixFromArray(options.projectionMatrix as Iterable<number>);
-        const V = new THREE.Matrix4().multiplyMatrices(P.clone().invert(), camera.projectionMatrix);
+        const V = new THREE.Matrix4().multiplyMatrices(
+          P.clone().invert(),
+          camera.projectionMatrix,
+        );
 
         tilesCamera.projectionMatrix.copy(P);
         // Keep projectionMatrixInverse coherent with projectionMatrix -
@@ -490,19 +539,19 @@ const View3DModel = () => {
       },
     };
 
-    setModelState("loading");
+    setModelState('loading');
     if (map.isStyleLoaded()) {
       map.addLayer(customLayer);
     } else {
-      map.once("style.load", () => {
+      map.once('style.load', () => {
         if (!cancelled) map.addLayer(customLayer);
       });
     }
 
     return () => {
       cancelled = true;
-      map.off("load", scheduleMapResize);
-      map.off("resize", handleMapResize);
+      map.off('load', scheduleMapResize);
+      map.off('resize', handleMapResize);
       resizeObserver?.disconnect();
       resizeObserver = null;
       if (resizeFrame !== null) {
@@ -545,14 +594,16 @@ const View3DModel = () => {
           arrow_back
         </button>
         <span className="naxatw-text-base naxatw-font-semibold naxatw-text-gray-800">
-          {projectName ? m.viewer_3d_title({ projectName }) : m.viewer_3d_fallback_title()}
+          {projectName
+            ? m.viewer_3d_title({ projectName })
+            : m.viewer_3d_fallback_title()}
         </span>
       </div>
 
       <div className="naxatw-relative naxatw-flex-1">
         <div ref={mapContainerRef} className="naxatw-h-full naxatw-w-full" />
 
-        {modelState === "loaded" && (
+        {modelState === 'loaded' && (
           <button
             type="button"
             aria-label={m.viewer_3d_recenter()}
@@ -560,7 +611,9 @@ const View3DModel = () => {
             className="naxatw-absolute naxatw-right-4 naxatw-top-4 naxatw-z-10 naxatw-flex naxatw-h-10 naxatw-w-10 naxatw-cursor-pointer naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-bg-white naxatw-shadow-lg hover:naxatw-bg-gray-50"
             onClick={handleRecenter}
           >
-            <span className="material-icons naxatw-text-[#D73F3F]">center_focus_strong</span>
+            <span className="material-icons naxatw-text-[#D73F3F]">
+              center_focus_strong
+            </span>
           </button>
         )}
 
@@ -572,13 +625,13 @@ const View3DModel = () => {
           </div>
         )}
 
-        {!isFetching && modelState === "loading" && (
+        {!isFetching && modelState === 'loading' && (
           <div className="naxatw-pointer-events-none naxatw-absolute naxatw-bottom-8 naxatw-left-1/2 naxatw-z-10 -naxatw-translate-x-1/2 naxatw-rounded naxatw-bg-white/90 naxatw-px-4 naxatw-py-2 naxatw-text-sm naxatw-text-gray-700 naxatw-shadow">
             {m.viewer_3d_loading()}
           </div>
         )}
 
-        {!isFetching && modelState === "unavailable" && (
+        {!isFetching && modelState === 'unavailable' && (
           <div className="naxatw-absolute naxatw-inset-0 naxatw-flex naxatw-items-center naxatw-justify-center">
             <div className="naxatw-rounded-lg naxatw-bg-white naxatw-p-8 naxatw-text-center naxatw-shadow-xl">
               <span className="material-icons naxatw-mb-3 naxatw-block naxatw-text-4xl naxatw-text-gray-400">
@@ -594,7 +647,7 @@ const View3DModel = () => {
           </div>
         )}
 
-        {!isFetching && modelState === "error" && (
+        {!isFetching && modelState === 'error' && (
           <div className="naxatw-absolute naxatw-inset-0 naxatw-flex naxatw-items-center naxatw-justify-center">
             <div className="naxatw-rounded-lg naxatw-bg-white naxatw-p-8 naxatw-text-center naxatw-shadow-xl">
               <span className="material-icons naxatw-text-red-500 naxatw-mb-3 naxatw-block naxatw-text-4xl">
@@ -610,7 +663,7 @@ const View3DModel = () => {
           </div>
         )}
 
-        {!isFetching && modelState === "loaded" && (
+        {!isFetching && modelState === 'loaded' && (
           <div className="naxatw-pointer-events-none naxatw-absolute naxatw-bottom-8 naxatw-left-1/2 naxatw-z-10 -naxatw-translate-x-1/2 naxatw-rounded naxatw-bg-white/90 naxatw-px-4 naxatw-py-2 naxatw-text-sm naxatw-text-gray-600 naxatw-shadow">
             {m.viewer_3d_controls_help()}
           </div>

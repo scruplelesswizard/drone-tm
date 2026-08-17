@@ -1,6 +1,6 @@
-import { FlexColumn } from "@Components/common/Layouts";
-import NoDataImage from "@Assets/images/no-data.png";
-import { m } from "@/paraglide/messages";
+import { FlexColumn } from '@Components/common/Layouts';
+import NoDataImage from '@Assets/images/no-data.png';
+import { m } from '@/paraglide/messages';
 
 interface INoDataComponent {
   className?: string;
@@ -22,7 +22,7 @@ export default function NoDataComponent({
       className={`${className} naxatw-flex naxatw-h-full naxatw-min-h-[150px] naxatw-w-full naxatw-items-center naxatw-justify-center naxatw-rounded-lg `}
     >
       <FlexColumn
-        className={`${isExport ? "naxatw-h-full naxatw-justify-center naxatw-gap-1" : " naxatw-gap-3"}  `}
+        className={`${isExport ? 'naxatw-h-full naxatw-justify-center naxatw-gap-1' : ' naxatw-gap-3'}  `}
       >
         <img
           src={NoDataImage}
@@ -31,7 +31,9 @@ export default function NoDataComponent({
           width={100}
           className={`naxatw-mx-auto naxatw-w-full ${iconClassName}`}
         />
-        <h6 className={`naxatw-text-center ${isExport ? "fs-xs-medium" : ""}  ${messageStyles}`}>
+        <h6
+          className={`naxatw-text-center ${isExport ? 'fs-xs-medium' : ''}  ${messageStyles}`}
+        >
           {message || m.common_no_data_available()}
         </h6>
       </FlexColumn>

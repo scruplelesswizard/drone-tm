@@ -42,7 +42,6 @@ const MapSection = () => {
     map?.fitBounds(bbox as LngLatBoundsLike, { padding: 25, duration: 500 });
   }, [map, projectArea]);
 
-  // eslint-disable-next-line no-unused-vars
   const takeScreenshot = useCallback(async () => {
     if (!map || !isMapLoaded || !splitGeojson) return;
     // const data = map.getCanvas().toDataURL('image/jpeg', 0.95);

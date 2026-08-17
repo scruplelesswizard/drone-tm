@@ -1,24 +1,24 @@
-import fs from "node:fs";
-import path from "node:path";
-import react from "@vitejs/plugin-react";
-import { paraglideVitePlugin } from "@inlang/paraglide-js";
-import { domToCodePlugin } from "dom-to-code/vite";
-import { defineConfig } from "vite";
-import { viteStaticCopy } from "vite-plugin-static-copy";
+import fs from 'node:fs';
+import path from 'node:path';
+import react from '@vitejs/plugin-react';
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
+import { domToCodePlugin } from 'dom-to-code/vite';
+import { defineConfig } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
-  base: "/",
+  base: '/',
   plugins: [
     react(),
     paraglideVitePlugin({
-      project: "./project.inlang",
-      outdir: "./src/paraglide",
-      strategy: ["localStorage", "preferredLanguage", "baseLocale"],
+      project: './project.inlang',
+      outdir: './src/paraglide',
+      strategy: ['localStorage', 'preferredLanguage', 'baseLocale'],
       emitTsDeclarations: true,
     }),
-    process.env.NODE_ENV !== "production"
+    process.env.NODE_ENV !== 'production'
       ? domToCodePlugin({
-          mode: "react",
+          mode: 'react',
         })
       : undefined,
     // Dev server: serve the pre-built drone-mesh viewer at /mesh. Baked into
@@ -26,30 +26,38 @@ export default defineConfig({
     // ../drone-mesh/dist. Prod serves it from dist/mesh instead (see
     // frontend/Dockerfile mesh-build stage).
     {
-      name: "serve-drone-mesh",
+      name: 'serve-drone-mesh',
       configureServer(server) {
         const meshDir =
-          process.env.MESH_DIST_DIR ?? new URL("../drone-mesh/dist/", import.meta.url).pathname;
+          process.env.MESH_DIST_DIR ??
+          new URL('../drone-mesh/dist/', import.meta.url).pathname;
         const mime: Record<string, string> = {
-          ".html": "text/html",
-          ".js": "text/javascript",
-          ".mjs": "text/javascript",
-          ".css": "text/css",
-          ".json": "application/json",
-          ".map": "application/json",
-          ".svg": "image/svg+xml",
-          ".wasm": "application/wasm",
-          ".ico": "image/x-icon",
+          '.html': 'text/html',
+          '.js': 'text/javascript',
+          '.mjs': 'text/javascript',
+          '.css': 'text/css',
+          '.json': 'application/json',
+          '.map': 'application/json',
+          '.svg': 'image/svg+xml',
+          '.wasm': 'application/wasm',
+          '.ico': 'image/x-icon',
         };
-        server.middlewares.use("/mesh", (req, res, next) => {
-          let rel = decodeURIComponent((req.url ?? "/").split("?")[0]);
-          if (rel === "" || rel === "/") rel = "/index.html";
+        server.middlewares.use('/mesh', (req, res, next) => {
+          let rel = decodeURIComponent((req.url ?? '/').split('?')[0]);
+          if (rel === '' || rel === '/') rel = '/index.html';
           const file = path.join(meshDir, rel);
-          if (!file.startsWith(meshDir) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+          if (
+            !file.startsWith(meshDir) ||
+            !fs.existsSync(file) ||
+            !fs.statSync(file).isFile()
+          ) {
             next();
             return;
           }
-          res.setHeader("Content-Type", mime[path.extname(file)] ?? "application/octet-stream");
+          res.setHeader(
+            'Content-Type',
+            mime[path.extname(file)] ?? 'application/octet-stream',
+          );
           fs.createReadStream(file).pipe(res);
         });
       },
@@ -59,68 +67,71 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
-          src: "node_modules/three/examples/jsm/libs/draco/*",
-          dest: "three-libs/draco",
+          src: 'node_modules/three/examples/jsm/libs/draco/*',
+          dest: 'three-libs/draco',
         },
         {
-          src: "node_modules/three/examples/jsm/libs/basis/*",
-          dest: "three-libs/basis",
+          src: 'node_modules/three/examples/jsm/libs/basis/*',
+          dest: 'three-libs/basis',
         },
       ],
     }),
   ],
   optimizeDeps: {
     esbuildOptions: {
-      target: "esnext",
+      target: 'esnext',
     },
   },
   resolve: {
-    extensions: [".js", ".jsx", ".ts", ".tsx"],
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
     alias: {
-      "@": new URL("./src/", import.meta.url).pathname,
-      "@Assets": new URL("./src/assets/", import.meta.url).pathname,
-      "@Utils": new URL("./src/utils/", import.meta.url).pathname,
-      "@Store": new URL("./src/store/", import.meta.url).pathname,
-      "@Schemas": new URL("./src/schemas/", import.meta.url).pathname,
-      "@Hooks": new URL("./src/hooks/", import.meta.url).pathname,
-      "@Api": new URL("./src/api/", import.meta.url).pathname,
-      "@Services": new URL("./src/services/", import.meta.url).pathname,
-      "@Constants": new URL("./src/constants/", import.meta.url).pathname,
-      "@Queries": new URL("./src/api/queries/", import.meta.url).pathname,
-      "@Routes": new URL("./src/routes/", import.meta.url).pathname,
-      "@Views": new URL("./src/views/", import.meta.url).pathname,
-      "@Components": new URL("./src/components/", import.meta.url).pathname,
-      "@UserModule": new URL("./src/modules/user-auth-module/src/", import.meta.url).pathname,
+      '@': new URL('./src/', import.meta.url).pathname,
+      '@Assets': new URL('./src/assets/', import.meta.url).pathname,
+      '@Utils': new URL('./src/utils/', import.meta.url).pathname,
+      '@Store': new URL('./src/store/', import.meta.url).pathname,
+      '@Schemas': new URL('./src/schemas/', import.meta.url).pathname,
+      '@Hooks': new URL('./src/hooks/', import.meta.url).pathname,
+      '@Api': new URL('./src/api/', import.meta.url).pathname,
+      '@Services': new URL('./src/services/', import.meta.url).pathname,
+      '@Constants': new URL('./src/constants/', import.meta.url).pathname,
+      '@Queries': new URL('./src/api/queries/', import.meta.url).pathname,
+      '@Routes': new URL('./src/routes/', import.meta.url).pathname,
+      '@Views': new URL('./src/views/', import.meta.url).pathname,
+      '@Components': new URL('./src/components/', import.meta.url).pathname,
+      '@UserModule': new URL(
+        './src/modules/user-auth-module/src/',
+        import.meta.url,
+      ).pathname,
     },
   },
   build: {
-    target: "esnext",
-    sourcemap: process.env.NODE_ENV === "development",
+    target: 'esnext',
+    sourcemap: process.env.NODE_ENV === 'development',
     rollupOptions: {
       output: {
         manualChunks: {
           // Split large vendor dependencies into separate cacheable chunks
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
-          "vendor-redux": ["@reduxjs/toolkit", "react-redux", "redux-persist"],
-          "vendor-map": ["maplibre-gl"],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-redux': ['@reduxjs/toolkit', 'react-redux', 'redux-persist'],
+          'vendor-map': ['maplibre-gl'],
         },
       },
     },
   },
   define: {
-    "process.env": {
+    'process.env': {
       VITE_API_URL: process.env.VITE_API_URL,
     },
   },
   server: {
     open: false,
     port: 3040,
-    host: "0.0.0.0",
+    host: '0.0.0.0',
     strictPort: true,
-    allowedHosts: ["dronetm.hotosm.test", "localhost", "127.0.0.1", ".test"],
+    allowedHosts: ['dronetm.hotosm.test', 'localhost', '127.0.0.1', '.test'],
     hmr: {
       clientPort: 443,
-      host: "dronetm.hotosm.test",
+      host: 'dronetm.hotosm.test',
     },
   },
 });

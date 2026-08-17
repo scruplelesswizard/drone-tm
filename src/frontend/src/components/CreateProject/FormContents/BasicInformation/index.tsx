@@ -1,20 +1,24 @@
-import { useEffect, useRef } from "react";
-import { FormControl, Label, Input } from "@Components/common/FormUI";
-import ErrorMessage from "@Components/common/FormUI/ErrorMessage";
-import { UseFormPropsType } from "@Components/common/FormUI/types";
-import { Controller } from "react-hook-form";
-import { getProjectsList } from "@Services/createproject";
-import { m } from "@/paraglide/messages";
-import AdvancedConfig from "./AdvancedConfig";
+import { useEffect, useRef } from 'react';
+import { FormControl, Label, Input } from '@Components/common/FormUI';
+import ErrorMessage from '@Components/common/FormUI/ErrorMessage';
+import { UseFormPropsType } from '@Components/common/FormUI/types';
+import { Controller } from 'react-hook-form';
+import { getProjectsList } from '@Services/createproject';
+import { m } from '@/paraglide/messages';
+import AdvancedConfig from './AdvancedConfig';
 
-export default function BasicInformation({ formProps }: { formProps: UseFormPropsType }) {
+export default function BasicInformation({
+  formProps,
+}: {
+  formProps: UseFormPropsType;
+}) {
   const { register, errors, control, watch, setError, clearErrors } = formProps;
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const nameValue = watch("name");
+  const nameValue = watch('name');
 
   useEffect(() => {
-    clearErrors?.("name");
+    clearErrors?.('name');
 
     if (!nameValue || nameValue.trim().length === 0) return;
 
@@ -31,7 +35,10 @@ export default function BasicInformation({ formProps }: { formProps: UseFormProp
           (p: any) => p.name?.toLowerCase() === trimmedName.toLowerCase(),
         );
         if (exactMatch) {
-          setError?.("name", { type: "duplicate", message: m.create_basic_name_exists() });
+          setError?.('name', {
+            type: 'duplicate',
+            message: m.create_basic_name_exists(),
+          });
         }
       } catch {
         // silently ignore lookup errors
@@ -51,7 +58,7 @@ export default function BasicInformation({ formProps }: { formProps: UseFormProp
         <Label required>{m.create_basic_name_label()}</Label>
         <Input
           placeholder={m.create_basic_name_placeholder()}
-          {...register("name", {
+          {...register('name', {
             required: m.create_basic_name_required(),
             setValueAs: (value: string) => value.trim(),
           })}

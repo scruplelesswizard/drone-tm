@@ -1,28 +1,37 @@
-import { useTypedDispatch, useTypedSelector } from "@Store/hooks";
-import { FlexColumn } from "@Components/common/Layouts";
-import { FormControl, Label, Input } from "@Components/common/FormUI";
-import ErrorMessage from "@Components/common/ErrorMessage";
-import { UseFormPropsType } from "@Components/common/FormUI/types";
-import RadioButton from "@Components/common/RadioButton";
-import MultipleEmailInput from "@Components/common/MultipleEmailInput";
-import { lockApprovalOptions, regulatorApprovalOptions } from "@Constants/createProject";
-import { setCreateProjectState } from "@Store/actions/createproject";
-import { m } from "@/paraglide/messages";
+import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
+import { FlexColumn } from '@Components/common/Layouts';
+import { FormControl, Label, Input } from '@Components/common/FormUI';
+import ErrorMessage from '@Components/common/ErrorMessage';
+import { UseFormPropsType } from '@Components/common/FormUI/types';
+import RadioButton from '@Components/common/RadioButton';
+import MultipleEmailInput from '@Components/common/MultipleEmailInput';
+import {
+  lockApprovalOptions,
+  regulatorApprovalOptions,
+} from '@Constants/createProject';
+import { setCreateProjectState } from '@Store/actions/createproject';
+import { m } from '@/paraglide/messages';
 
-export default function AdvancedConfig({ formProps }: { formProps: UseFormPropsType }) {
+export default function AdvancedConfig({
+  formProps,
+}: {
+  formProps: UseFormPropsType;
+}) {
   const dispatch = useTypedDispatch();
   const { register, errors } = formProps;
   const requireApprovalFromManagerForLocking = useTypedSelector(
-    (state) => state.createproject.requireApprovalFromManagerForLocking,
+    state => state.createproject.requireApprovalFromManagerForLocking,
   );
   const requiresApprovalFromRegulator = useTypedSelector(
-    (state) => state.createproject.requiresApprovalFromRegulator,
+    state => state.createproject.requiresApprovalFromRegulator,
   );
-  const regulatorEmails = useTypedSelector((state) => state.createproject.regulatorEmails);
+  const regulatorEmails = useTypedSelector(
+    state => state.createproject.regulatorEmails,
+  );
 
   return (
     <details className="naxatw-mt-6 naxatw-rounded naxatw-border naxatw-border-[#D7D7D7] naxatw-bg-[#FAFAFA] [&[open]>summary>svg]:naxatw-rotate-90">
-      <summary className="naxatw-flex naxatw-cursor-pointer naxatw-items-center naxatw-gap-2 naxatw-px-4 naxatw-py-3 naxatw-text-body-btn naxatw-select-none">
+      <summary className="naxatw-flex naxatw-cursor-pointer naxatw-select-none naxatw-items-center naxatw-gap-2 naxatw-px-4 naxatw-py-3 naxatw-text-body-btn">
         <svg
           className="naxatw-h-4 naxatw-w-4 naxatw-transition-transform"
           viewBox="0 0 20 20"
@@ -38,11 +47,13 @@ export default function AdvancedConfig({ formProps }: { formProps: UseFormPropsT
           <Label>{m.create_contributions_instructions_key()}</Label>
           <Input
             placeholder={m.create_contributions_instructions_placeholder()}
-            {...register("per_task_instructions", {
+            {...register('per_task_instructions', {
               setValueAs: (value: string) => value.trim(),
             })}
           />
-          <ErrorMessage message={errors?.per_task_instructions?.message as string} />
+          <ErrorMessage
+            message={errors?.per_task_instructions?.message as string}
+          />
         </FormControl>
 
         <FormControl className="naxatw-gap-1">
@@ -52,7 +63,7 @@ export default function AdvancedConfig({ formProps }: { formProps: UseFormPropsT
               placeholder={m.create_contributions_deadline_placeholder()}
               type="date"
               className="naxatw-mt-1"
-              {...register("deadline_at")}
+              {...register('deadline_at')}
             />
           </div>
           <ErrorMessage message={errors?.deadline_at?.message as string} />
@@ -63,7 +74,7 @@ export default function AdvancedConfig({ formProps }: { formProps: UseFormPropsT
             topic={m.create_contributions_regulator_key()}
             options={regulatorApprovalOptions()}
             direction="column"
-            onChangeData={(value) => {
+            onChangeData={value => {
               dispatch(
                 setCreateProjectState({
                   requiresApprovalFromRegulator: value,
@@ -74,16 +85,20 @@ export default function AdvancedConfig({ formProps }: { formProps: UseFormPropsT
           />
         </FormControl>
 
-        {requiresApprovalFromRegulator === "required" && (
+        {requiresApprovalFromRegulator === 'required' && (
           <FormControl className="naxatw-gap-2">
-            <Label required>{m.create_contributions_regulator_email_label()}</Label>
+            <Label required>
+              {m.create_contributions_regulator_email_label()}
+            </Label>
             <MultipleEmailInput
               emails={regulatorEmails}
-              onEmailAdd={(emails) => {
+              onEmailAdd={emails => {
                 dispatch(setCreateProjectState({ regulatorEmails: emails }));
               }}
             />
-            <ErrorMessage message={errors?.regulator_emails?.message as string} />
+            <ErrorMessage
+              message={errors?.regulator_emails?.message as string}
+            />
           </FormControl>
         )}
 
@@ -92,7 +107,7 @@ export default function AdvancedConfig({ formProps }: { formProps: UseFormPropsT
             topic={m.create_contributions_lock_approval_key()}
             options={lockApprovalOptions()}
             direction="column"
-            onChangeData={(value) => {
+            onChangeData={value => {
               dispatch(
                 setCreateProjectState({
                   requireApprovalFromManagerForLocking: value,

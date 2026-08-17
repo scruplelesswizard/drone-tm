@@ -1,5 +1,5 @@
-import { m } from "@/paraglide/messages";
-import { formatString } from "./index";
+import { m } from '@/paraglide/messages';
+import { formatString } from './index';
 
 const TASK_STATE_LABELS: Record<string, () => string> = {
   UNLOCKED: m.task_state_unlocked,
@@ -15,6 +15,6 @@ const TASK_STATE_LABELS: Record<string, () => string> = {
 };
 
 const getTaskStateLabel = (state?: string | null) =>
-  state ? TASK_STATE_LABELS[state]?.() || formatString(state) : "";
+  state ? TASK_STATE_LABELS[state]?.() || formatString(state) : '';
 
 export default getTaskStateLabel;

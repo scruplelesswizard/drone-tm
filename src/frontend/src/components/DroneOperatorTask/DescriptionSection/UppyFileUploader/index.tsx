@@ -1,14 +1,14 @@
-import { useEffect, useContext, useRef } from "react";
-import AwsS3 from "@uppy/aws-s3";
-import Dashboard from "@uppy/react/dashboard";
-import { UppyContext } from "@uppy/react";
-import { toast } from "react-toastify";
-import { authenticated, api } from "@Services/index";
-import { m } from "@/paraglide/messages";
+import { useEffect, useContext, useRef } from 'react';
+import AwsS3 from '@uppy/aws-s3';
+import Dashboard from '@uppy/react/dashboard';
+import { UppyContext } from '@uppy/react';
+import { toast } from 'react-toastify';
+import { authenticated, api } from '@Services/index';
+import { m } from '@/paraglide/messages';
 
-import "@uppy/core/css/style.min.css";
-import "@uppy/dashboard/css/style.min.css";
-import "./uppy-theme.css";
+import '@uppy/core/css/style.min.css';
+import '@uppy/dashboard/css/style.min.css';
+import './uppy-theme.css';
 
 interface UppyFileUploaderProps {
   projectId: string;
@@ -24,23 +24,23 @@ interface UppyFileUploaderProps {
 const UppyFileUploader = ({
   projectId,
   taskId,
-  label = "Upload Files",
+  label = 'Upload Files',
   onUploadStart,
   onUploadComplete,
   allowedFileTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/tiff",
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".tif",
-    ".tiff",
-    ".txt",
-    ".laz",
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/tiff',
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.tif',
+    '.tiff',
+    '.txt',
+    '.laz',
   ],
-  note = "Drag and drop files here, or click to browse",
+  note = 'Drag and drop files here, or click to browse',
   staging = false,
 }: UppyFileUploaderProps) => {
   // Generate a batch ID when upload starts (for staging uploads only)
@@ -52,7 +52,7 @@ const UppyFileUploader = ({
   const { uppy } = useContext(UppyContext);
 
   if (!uppy) {
-    throw new Error("UppyFileUploader must be used within UppyContextProvider");
+    throw new Error('UppyFileUploader must be used within UppyContextProvider');
   }
 
   // Configure AWS S3 plugin for this component
@@ -66,7 +66,7 @@ const UppyFileUploader = ({
     });
 
     // Remove existing AwsS3 plugin and re-add with fresh configuration
-    const pluginId = "AwsS3";
+    const pluginId = 'AwsS3';
     const existingPlugin = uppy.getPlugin(pluginId);
     if (existingPlugin) {
       uppy.removePlugin(existingPlugin);
@@ -81,7 +81,7 @@ const UppyFileUploader = ({
       limit: 2,
       retryDelays: [0, 1000, 3000, 5000],
       shouldUseMultipart: true,
-      createMultipartUpload: async (file) => {
+      createMultipartUpload: async file => {
         try {
           const requestData: any = {
             project_id: projectId,
@@ -95,11 +95,11 @@ const UppyFileUploader = ({
           }
 
           const response = await authenticated(api).post(
-            "/projects/initiate-multipart-upload",
+            '/projects/initiate-multipart-upload',
             requestData,
             {
               headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
               },
             },
           );
@@ -116,7 +116,7 @@ const UppyFileUploader = ({
       signPart: async (file, partData) => {
         try {
           const response = await authenticated(api).post(
-            "/projects/sign-part-upload",
+            '/projects/sign-part-upload',
             {
               upload_id: partData.uploadId,
               file_key: partData.key,
@@ -125,7 +125,7 @@ const UppyFileUploader = ({
             },
             {
               headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
               },
             },
           );
@@ -134,7 +134,9 @@ const UppyFileUploader = ({
             url: response.data.url,
           };
         } catch (error: any) {
-          toast.error(`Failed to sign part ${partData.partNumber} for ${file.name}`);
+          toast.error(
+            `Failed to sign part ${partData.partNumber} for ${file.name}`,
+          );
           throw error;
         }
       },
@@ -153,11 +155,15 @@ const UppyFileUploader = ({
             requestBody.batch_id = batchIdRef.current;
           }
 
-          await authenticated(api).post("/projects/complete-multipart-upload", requestBody, {
-            headers: {
-              "Content-Type": "application/json",
+          await authenticated(api).post(
+            '/projects/complete-multipart-upload',
+            requestBody,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
             },
-          });
+          );
 
           return {
             location: data.key,
@@ -170,14 +176,14 @@ const UppyFileUploader = ({
       abortMultipartUpload: async (file, data) => {
         try {
           await authenticated(api).post(
-            "/projects/abort-multipart-upload",
+            '/projects/abort-multipart-upload',
             {
               upload_id: data.uploadId,
               file_key: data.key,
             },
             {
               headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
               },
             },
           );
@@ -243,7 +249,10 @@ const UppyFileUploader = ({
         notificationShownRef.current = true;
 
         if (onUploadComplete) {
-          onUploadComplete(result, staging ? batchIdRef.current || undefined : undefined);
+          onUploadComplete(
+            result,
+            staging ? batchIdRef.current || undefined : undefined,
+          );
         }
 
         // Reset batch ID after successful upload
@@ -269,16 +278,16 @@ const UppyFileUploader = ({
       }
     };
 
-    uppy.on("upload", handleUpload);
-    uppy.on("upload-error", handleUploadError);
-    uppy.on("complete", handleComplete);
-    uppy.on("cancel-all", handleCancelAll);
+    uppy.on('upload', handleUpload);
+    uppy.on('upload-error', handleUploadError);
+    uppy.on('complete', handleComplete);
+    uppy.on('cancel-all', handleCancelAll);
 
     return () => {
-      uppy.off("upload", handleUpload);
-      uppy.off("upload-error", handleUploadError);
-      uppy.off("complete", handleComplete);
-      uppy.off("cancel-all", handleCancelAll);
+      uppy.off('upload', handleUpload);
+      uppy.off('upload-error', handleUploadError);
+      uppy.off('complete', handleComplete);
+      uppy.off('cancel-all', handleCancelAll);
     };
   }, [uppy, onUploadStart, onUploadComplete, staging, projectId]);
 

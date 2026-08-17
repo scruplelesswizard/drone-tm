@@ -1,6 +1,14 @@
-import { Adb, AdbDaemonTransport, AdbShellProtocolProcess, encodeUtf8 } from "@yume-chan/adb";
-import AdbWebCredentialStore from "@yume-chan/adb-credential-web";
-import { AdbDaemonWebUsbDevice, AdbDaemonWebUsbDeviceManager } from "@yume-chan/adb-daemon-webusb";
+import {
+  Adb,
+  AdbDaemonTransport,
+  AdbShellProtocolProcess,
+  encodeUtf8,
+} from '@yume-chan/adb';
+import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
+import {
+  AdbDaemonWebUsbDevice,
+  AdbDaemonWebUsbDeviceManager,
+} from '@yume-chan/adb-daemon-webusb';
 
 async function sendDjiGoFileViaAdb(data: Blob) {
   const adb = await _getAdbConnection();
@@ -10,9 +18,11 @@ async function sendDjiGoFileViaAdb(data: Blob) {
 
   // Find an existing waypoint UUID directory to replace
   const waypointBase = `/sdcard/Android/data/dji.go.v5/files/waypoint`;
-  const listDirs = await adb.subprocess.shellProtocol!.spawn(`ls -1t ${waypointBase}`);
+  const listDirs = await adb.subprocess.shellProtocol!.spawn(
+    `ls -1t ${waypointBase}`,
+  );
   const dirOutput = await _readShellOutput(listDirs);
-  const dirs = dirOutput.split("\n").filter(Boolean);
+  const dirs = dirOutput.split('\n').filter(Boolean);
   if (dirs.length === 0) {
     throw new Error(
       `No existing waypoint missions found. Fly a waypoint mission first so DJI registers it in its database.`,
@@ -23,7 +33,9 @@ async function sendDjiGoFileViaAdb(data: Blob) {
   console.log(`Replacing: ${targetFile}`);
 
   // Send file to phone via ADB STDIN
-  const process = await adb.subprocess.shellProtocol!.spawn(`sh -c "base64 -d > '${targetFile}'"`);
+  const process = await adb.subprocess.shellProtocol!.spawn(
+    `sh -c "base64 -d > '${targetFile}'"`,
+  );
   const writer = process.stdin.getWriter();
   await writer.write(encodeUtf8(base64String));
   console.log(`Copied flightplan to ${targetFile}`);
@@ -37,9 +49,9 @@ async function sendPotensicProFileViaAdb(data: Blob) {
 
   // Cleanup old journal files
   await adb.subprocess.shellProtocol!.spawn(
-    "run-as com.ipotensic.potensicpro rm -f databases/map.db-journal",
+    'run-as com.ipotensic.potensicpro rm -f databases/map.db-journal',
   );
-  console.log("Deleted db journal");
+  console.log('Deleted db journal');
 
   // Send file to phone via ADB STDIN
   const process = await adb.subprocess.shellProtocol!.spawn(
@@ -48,13 +60,15 @@ async function sendPotensicProFileViaAdb(data: Blob) {
   const writer = process.stdin.getWriter();
   // Send as UTF-8 encoded data
   await writer.write(encodeUtf8(base64String));
-  console.log("Copied flightplan to databases/map.db");
+  console.log('Copied flightplan to databases/map.db');
 }
 
-async function _readShellOutput(process: AdbShellProtocolProcess): Promise<string> {
+async function _readShellOutput(
+  process: AdbShellProtocolProcess,
+): Promise<string> {
   const decoder = new TextDecoder();
   const reader = process.stdout.getReader();
-  let output = "";
+  let output = '';
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -64,12 +78,12 @@ async function _readShellOutput(process: AdbShellProtocolProcess): Promise<strin
 }
 
 async function _encodeDataAsBase64String(data: Blob): Promise<string> {
-  return await new Promise<string>((resolve) => {
+  return await new Promise<string>(resolve => {
     const reader = new FileReader();
     reader.onload = () => {
       const arrayBuffer = reader.result as ArrayBuffer;
       const bytes = new Uint8Array(arrayBuffer);
-      let binary = "";
+      let binary = '';
       for (let i = 0; i < bytes.byteLength; i++) {
         binary += String.fromCharCode(bytes[i]);
       }
@@ -80,18 +94,20 @@ async function _encodeDataAsBase64String(data: Blob): Promise<string> {
 }
 
 async function _getAdbConnection(): Promise<Adb | undefined> {
-  const Manager: AdbDaemonWebUsbDeviceManager | undefined = AdbDaemonWebUsbDeviceManager.BROWSER;
+  const Manager: AdbDaemonWebUsbDeviceManager | undefined =
+    AdbDaemonWebUsbDeviceManager.BROWSER;
 
   if (!Manager) {
-    alert("WebUSB is not supported in this browser");
+    alert('WebUSB is not supported in this browser');
     return;
   }
 
   const CredentialStore = new AdbWebCredentialStore();
 
-  const device: AdbDaemonWebUsbDevice | undefined = await Manager.requestDevice();
+  const device: AdbDaemonWebUsbDevice | undefined =
+    await Manager.requestDevice();
   if (!device) {
-    alert("No device selected");
+    alert('No device selected');
     return;
   }
 

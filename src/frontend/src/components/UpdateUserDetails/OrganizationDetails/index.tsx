@@ -1,22 +1,22 @@
-import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import ErrorMessage from "@Components/common/ErrorMessage";
-import { FormControl, Input, Label } from "@Components/common/FormUI";
-import { Flex, FlexColumn } from "@Components/common/Layouts";
-import { Button } from "@Components/RadixComponents/Button";
-import { patchUserProfile } from "@Services/common";
-import { getLocalStorageValue } from "@Utils/getLocalStorageValue";
-import { m } from "@/paraglide/messages";
+import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import ErrorMessage from '@Components/common/ErrorMessage';
+import { FormControl, Input, Label } from '@Components/common/FormUI';
+import { Flex, FlexColumn } from '@Components/common/Layouts';
+import { Button } from '@Components/RadixComponents/Button';
+import { patchUserProfile } from '@Services/common';
+import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
+import { m } from '@/paraglide/messages';
 
 const OrganizationDetails = () => {
-  const userProfile = getLocalStorageValue("userprofile");
+  const userProfile = getLocalStorageValue('userprofile');
 
   const initialState = {
     organization_name: userProfile?.organization_name || null,
     organization_address: userProfile?.organization_address || null,
     job_title: userProfile?.job_title || null,
-    oam_api_token: userProfile?.oam_api_token || "",
+    oam_api_token: userProfile?.oam_api_token || '',
   };
   const queryClient = useQueryClient();
 
@@ -24,17 +24,24 @@ const OrganizationDetails = () => {
     defaultValues: initialState,
   });
 
-  const { mutate: updateOrganizationDetails, isPending } = useMutation<any, any, any, unknown>({
-    mutationFn: (payloadDataObject) => patchUserProfile(payloadDataObject),
+  const { mutate: updateOrganizationDetails, isPending } = useMutation<
+    any,
+    any,
+    any,
+    unknown
+  >({
+    mutationFn: payloadDataObject => patchUserProfile(payloadDataObject),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
 
       toast.success(m.profile_details_updated_success_lower());
     },
-    onError: (err) => {
+    onError: err => {
       // eslint-disable-next-line no-console
       console.log(err);
-      toast.error(err?.response?.data?.detail || m.profile_something_went_wrong());
+      toast.error(
+        err?.response?.data?.detail || m.profile_something_went_wrong(),
+      );
     },
   });
 
@@ -55,33 +62,39 @@ const OrganizationDetails = () => {
           <Input
             placeholder={m.profile_organization_name_placeholder()}
             className="naxatw-mt-1"
-            {...register("organization_name", {
+            {...register('organization_name', {
               // required: 'Organization name is Required',
             })}
           />
-          <ErrorMessage message={formState.errors?.organization_name?.message as string} />
+          <ErrorMessage
+            message={formState.errors?.organization_name?.message as string}
+          />
         </FormControl>
         <FormControl>
           <Label>{m.profile_organization_address_label()}</Label>
           <Input
             placeholder={m.profile_organization_address_placeholder()}
             className="naxatw-mt-1"
-            {...register("organization_address", {
+            {...register('organization_address', {
               // required: 'Organization Address is Required',
             })}
           />
-          <ErrorMessage message={formState.errors?.organization_address?.message as string} />
+          <ErrorMessage
+            message={formState.errors?.organization_address?.message as string}
+          />
         </FormControl>
         <FormControl>
           <Label>{m.profile_job_title_label()}</Label>
           <Input
             placeholder={m.profile_job_title_placeholder()}
             className="naxatw-mt-1"
-            {...register("job_title", {
+            {...register('job_title', {
               // required: 'Job Title is Required',
             })}
           />
-          <ErrorMessage message={formState.errors?.job_title?.message as string} />
+          <ErrorMessage
+            message={formState.errors?.job_title?.message as string}
+          />
         </FormControl>
 
         <FormControl>
@@ -89,17 +102,19 @@ const OrganizationDetails = () => {
           <Input
             placeholder={m.profile_oam_token_placeholder()}
             className="naxatw-mt-1"
-            {...register("oam_api_token", {
+            {...register('oam_api_token', {
               // required: 'Job Title is Required',
             })}
           />
-          <ErrorMessage message={formState.errors?.job_title?.message as string} />
+          <ErrorMessage
+            message={formState.errors?.job_title?.message as string}
+          />
         </FormControl>
       </FlexColumn>
       <div className="naxatw-flex naxatw-justify-center naxatw-py-4">
         <Button
           className="naxatw-bg-red"
-          onClick={(e) => {
+          onClick={e => {
             e.preventDefault();
             handleSubmit(onSubmit)();
           }}
