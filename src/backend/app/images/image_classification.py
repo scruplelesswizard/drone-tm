@@ -1133,7 +1133,7 @@ class ImageClassifier:
         tasks = [classify_with_commit(image) for image in images]
         gather_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for image_record, result_or_exc in zip(images, gather_results):
+        for image_record, result_or_exc in zip(images, gather_results, strict=True):
             if isinstance(result_or_exc, BaseException):
                 image_id = image_record["id"]
                 log.error(

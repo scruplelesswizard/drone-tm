@@ -124,9 +124,61 @@ warn_unreachable = true
 src = ["../..", ".."]
 
 [tool.ruff.lint]
+# Was ignore-only, which (with no `select`) falls back to Ruff's minimal
+# default rule set (E4/E7/E9/F) - meaning several of the entries below were
+# silently inert (their rule families were never actually enabled). This
+# select turns bugbear/security/naming/etc. on for real; D (pydocstyle) is
+# deliberately left off - restoring it surfaces ~275 pre-existing
+# undocumented-* violations, which is a documentation-coverage project of
+# its own, not a lint-config fix.
+select = ["F", "E4", "E7", "E9", "W", "I", "N", "UP", "ASYNC", "B", "S", "SIM", "BLE"]
 # Worker, API, and migration boundaries intentionally catch arbitrary failures
 # so they can log, clean up, or translate them into HTTP/task state.
-ignore = ["ASYNC230", "BLE001", "S110", "S112", "SIM117", "UP017", "UP041"]
+ignore = [
+  "ASYNC230",
+  "BLE001",
+  "S110",
+  "S112",
+  "SIM117",
+  "UP017",
+  "UP041",
+  # --- Pre-existing debt surfaced by turning `select` on for real. Each is a
+  # real, individually-triageable finding, not a false positive - fixing
+  # them properly needs per-site review, tracked in todo.md as a follow-up
+  # rather than done as a drive-by part of enabling the rule. ---
+  "B904",  # raise-without-from-inside-except (51 sites): needs per-site
+  # decision between `from err` and `from None`.
+  "N805",  # invalid-first-argument-name-for-method (21 sites) and
+  "N806",  # non-lowercase-variable-in-function (22 sites): mix of real
+  # violations and Pydantic/SQLAlchemy conventions that look like violations;
+  # needs per-site review, not a blind rename.
+  "S608",  # hardcoded-sql-expression (17 sites): all are the same
+  # allowlist-guarded dynamic column name pattern (see project_routes.py's
+  # _GENERATING_COLUMNS) - safe as implemented, but relies on the allowlist
+  # guard staying in place rather than a structural guarantee.
+  "ASYNC240",  # blocking-path-method-in-async-function (11 sites): needs
+  # per-site review of actual hot-path impact before wrapping in
+  # asyncio.to_thread.
+  "SIM105",  # suppressible-exception (7 sites): stylistic
+  # (try/except/pass vs contextlib.suppress), not worth the churn.
+  "S105",  # hardcoded-password-string / "S106" hardcoded-password-func-arg
+  "S106",  # (5 sites total): false positives - the rule matches on
+  # variable/argument *names* containing "password"/"token" (a dev-default
+  # POSTGRES_PASSWORD, a `token_url` OAuth endpoint, a `token_type` field),
+  # not actual hardcoded secrets. Manually reviewed.
+  "N802",  # invalid-function-name (3 sites): PUBLIC_BASE_URL/
+  # SCALEODM_WEBHOOK_URL are deliberately SCREAMING_CASE to match the env
+  # var naming convention; splitBySquare is legacy camelCase worth renaming
+  # separately (has callers to check first).
+  "N815",  # mixed-case-variable-in-class-scope (1 site): matches an
+  # external webhook payload's JSON casing (statusCode) verbatim.
+  "S314",  # suspicious-xml-element-tree-usage (3 sites): parses XML from
+  # ScaleODM/S3 (trusted infra, not user-supplied input). Switching to
+  # defusedxml is a reasonable follow-up but a new dependency, not a
+  # lint-config change.
+  "S603",  # subprocess-without-shell-equals-true (1 site): controlled arg
+  # list, no shell=True, no untrusted input - reviewed safe as-is.
+]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI evaluates these factories once while constructing its dependency graph.
@@ -147,17 +199,3 @@ extend-immutable-calls = [
 "tests/test_project_processing.py" = ["DTZ001"]
 # This test deliberately passes a naive datetime to exercise input validation.
 "tests/test_solar_position.py" = ["DTZ001"]
-
-#[tool.ruff]
-#fix = true
-#line-length = 88
-#target-version = "py311"
-#exclude = [
-#    ".ruff_cache",
-#    "app/__version__.py",
-#    "app/migrations",
-#]
-#[tool.ruff.lint]
-#select = ["I", "E", "W", "D", "B", "F", "N", "Q"]
-#[tool.ruff.lint.pydocstyle]
-#convention = "google"

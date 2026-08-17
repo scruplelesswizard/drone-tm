@@ -1,10 +1,6 @@
 """Enum definitions to translate values into human enum strings."""
 
-from enum import Enum
-
-
-class StrEnum(str, Enum):
-    """Wrapper for string enums, until Python 3.11 upgrade."""
+from enum import Enum, StrEnum
 
 
 class IntEnum(int, Enum):
