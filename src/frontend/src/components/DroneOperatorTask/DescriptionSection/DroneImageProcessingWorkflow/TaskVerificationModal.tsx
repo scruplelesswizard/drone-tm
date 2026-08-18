@@ -128,7 +128,7 @@ const TaskVerificationModal = ({
     if (!isOpen) {
       setFlightGapModal({ isOpen: false, gapData: null });
     }
-  }, [isOpen]);
+  }, [isOpen, map]);
 
   // Initialize map after data is loaded and DOM is ready
   useEffect(() => {

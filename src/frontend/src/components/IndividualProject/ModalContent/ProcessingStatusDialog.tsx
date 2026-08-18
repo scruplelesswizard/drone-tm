@@ -292,7 +292,7 @@ const ProcessingStatusDialog = () => {
         });
       }
     },
-    [retryTransfer, queryClient, projectId],
+    [retryTransfer],
   );
 
   const handleCopyTaskId = useCallback((taskId: string) => {

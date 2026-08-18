@@ -68,6 +68,67 @@ function getImageTileBorderClass(
   return 'naxatw-border-gray-200 hover:naxatw-border-blue-500';
 }
 
+const escapeHtml = (str: string): string => {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+};
+
+const escapeAttr = (str: string): string =>
+  str
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+function buildPopupHtml(props: {
+  id: string;
+  filename: string;
+  status: string;
+  rejection_reason?: string;
+}) {
+  const statusColors: Record<string, string> = {
+    assigned: '#22c55e',
+    rejected: '#D73F3F',
+    unmatched: '#eab308',
+    invalid_exif: '#f97316',
+    duplicate: '#6b7280',
+  };
+  const dotColor = statusColors[props.status] || '#3b82f6';
+  const showMatchBtn = canManuallyMatchImage(props.status);
+  const btnStyle =
+    'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:none;margin-top:8px;margin-right:6px;';
+  const safeFilename = escapeHtml(props.filename || 'Unknown');
+  const safeFilenameAttr = escapeAttr(props.filename || '');
+  const safeReason = props.rejection_reason
+    ? escapeHtml(props.rejection_reason)
+    : '';
+  const safeId = escapeAttr(props.id);
+  return `
+      <div style="min-width:180px;max-width:280px;font-family:system-ui,sans-serif;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px;word-break:break-all;">${safeFilename}</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};"></span>
+          ${escapeHtml((props.status || 'unknown').replace('_', ' '))}
+        </div>
+${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(props.status) ? `<div style="font-size:11px;color:#b91c1c;margin-top:4px;">${safeReason}</div>` : ''}
+        <div>
+          <button data-inspect-image-id="${safeId}" style="${btnStyle}background:#2563eb;color:white;">
+            <span class="material-icons" style="font-size:14px;">visibility</span> Inspect
+          </button>
+          ${
+            showMatchBtn
+              ? `<button data-match-image-id="${safeId}" data-match-image-filename="${safeFilenameAttr}" style="${btnStyle}background:#eab308;color:white;">
+            <span class="material-icons" style="font-size:14px;">my_location</span> Match to task
+          </button>`
+              : ''
+          }
+        </div>
+      </div>
+    `;
+}
+
 // Run async `worker` over `items` with at most `limit` in-flight at a time.
 // Each worker rejection is counted, never thrown - caller gets success/fail tallies.
 const BULK_CONCURRENCY = 8;
@@ -734,7 +795,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         }
       }
     };
-  }, [container]); // Re-run when container becomes available
+  }, [container, map]); // Re-run when container becomes available
 
   // Observe container resize events
   useEffect(() => {
@@ -810,67 +871,6 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       map.off('mouseleave', layerId, onMouseLeave);
     };
   }, [map, isMapLoaded]);
-
-  const escapeHtml = (str: string): string => {
-    const div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
-  };
-
-  const escapeAttr = (str: string): string =>
-    str
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
-  const buildPopupHtml = (props: {
-    id: string;
-    filename: string;
-    status: string;
-    rejection_reason?: string;
-  }) => {
-    const statusColors: Record<string, string> = {
-      assigned: '#22c55e',
-      rejected: '#D73F3F',
-      unmatched: '#eab308',
-      invalid_exif: '#f97316',
-      duplicate: '#6b7280',
-    };
-    const dotColor = statusColors[props.status] || '#3b82f6';
-    const showMatchBtn = canManuallyMatchImage(props.status);
-    const btnStyle =
-      'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:none;margin-top:8px;margin-right:6px;';
-    const safeFilename = escapeHtml(props.filename || 'Unknown');
-    const safeFilenameAttr = escapeAttr(props.filename || '');
-    const safeReason = props.rejection_reason
-      ? escapeHtml(props.rejection_reason)
-      : '';
-    const safeId = escapeAttr(props.id);
-    return `
-      <div style="min-width:180px;max-width:280px;font-family:system-ui,sans-serif;">
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px;word-break:break-all;">${safeFilename}</div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;">
-          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};"></span>
-          ${escapeHtml((props.status || 'unknown').replace('_', ' '))}
-        </div>
-${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(props.status) ? `<div style="font-size:11px;color:#b91c1c;margin-top:4px;">${safeReason}</div>` : ''}
-        <div>
-          <button data-inspect-image-id="${safeId}" style="${btnStyle}background:#2563eb;color:white;">
-            <span class="material-icons" style="font-size:14px;">visibility</span> Inspect
-          </button>
-          ${
-            showMatchBtn
-              ? `<button data-match-image-id="${safeId}" data-match-image-filename="${safeFilenameAttr}" style="${btnStyle}background:#eab308;color:white;">
-            <span class="material-icons" style="font-size:14px;">my_location</span> Match to task
-          </button>`
-              : ''
-          }
-        </div>
-      </div>
-    `;
-  };
 
   // Document-level click handlers for popup buttons (raw HTML, not React)
   useEffect(() => {
@@ -1167,6 +1167,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
 
     map.dragPan.disable();
     const canvas = map.getCanvas();
+    const overlayEl = boxOverlayRef.current;
 
     let dragStart: { x: number; y: number } | null = null;
 
@@ -1174,12 +1175,12 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      if (boxOverlayRef.current) {
-        boxOverlayRef.current.style.left = `${dragStart.x}px`;
-        boxOverlayRef.current.style.top = `${dragStart.y}px`;
-        boxOverlayRef.current.style.width = '0px';
-        boxOverlayRef.current.style.height = '0px';
-        boxOverlayRef.current.style.display = 'block';
+      if (overlayEl) {
+        overlayEl.style.left = `${dragStart.x}px`;
+        overlayEl.style.top = `${dragStart.y}px`;
+        overlayEl.style.width = '0px';
+        overlayEl.style.height = '0px';
+        overlayEl.style.display = 'block';
       }
     };
 
@@ -1194,11 +1195,11 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
         0,
         Math.min(e.clientY - rect.top, canvas.offsetHeight),
       );
-      if (boxOverlayRef.current) {
-        boxOverlayRef.current.style.left = `${Math.min(dragStart.x, curX)}px`;
-        boxOverlayRef.current.style.top = `${Math.min(dragStart.y, curY)}px`;
-        boxOverlayRef.current.style.width = `${Math.abs(curX - dragStart.x)}px`;
-        boxOverlayRef.current.style.height = `${Math.abs(curY - dragStart.y)}px`;
+      if (overlayEl) {
+        overlayEl.style.left = `${Math.min(dragStart.x, curX)}px`;
+        overlayEl.style.top = `${Math.min(dragStart.y, curY)}px`;
+        overlayEl.style.width = `${Math.abs(curX - dragStart.x)}px`;
+        overlayEl.style.height = `${Math.abs(curY - dragStart.y)}px`;
       }
     };
 
@@ -1214,8 +1215,8 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
         Math.min(e.clientY - rect.top, canvas.offsetHeight),
       );
 
-      if (boxOverlayRef.current) {
-        boxOverlayRef.current.style.display = 'none';
+      if (overlayEl) {
+        overlayEl.style.display = 'none';
       }
 
       if (
@@ -1262,8 +1263,8 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       map.dragPan.enable();
-      if (boxOverlayRef.current) {
-        boxOverlayRef.current.style.display = 'none';
+      if (overlayEl) {
+        overlayEl.style.display = 'none';
       }
     };
   }, [map, isMapLoaded, boxSelectMode]);

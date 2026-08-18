@@ -456,6 +456,27 @@ than as inline notes on the item that found them:
             MapLibre cursor-style mutation, locally-generated QR SVG) -
             left as scoped `eslint-disable`s with reasons rather than
             restructured.
+      - [x] `react-hooks/exhaustive-deps` (9) - each reviewed individually
+            for actual runtime-behavior risk, not blindly satisfied:
+            4 sites (`map`/`queryClient` missing from map-lifecycle or
+            auth-redirect effects) were safe to add outright, since the
+            referenced value is either guarded against re-triggering side
+            effects internally or referentially stable across renders.
+            2 sites got real fixes instead of a wider dependency: switched
+            `setModifiedWaypointModeOptions` to the functional-update form
+            (avoids both the missing dep and a same-render infinite loop),
+            and captured `droneModel` in a ref instead of adding it as a
+            dep, since the toast it's used in should reflect whichever
+            waypoint-data fetch just resolved, not re-fire when the drone
+            model selector changes on its own. Hoisted `ImageReview.tsx`'s
+            `escapeHtml`/`escapeAttr`/`buildPopupHtml` (pure, closed-in
+            only on their own arguments) to module scope, which
+            structurally removed the missing-dep warning rather than
+            papering over it. Fixed a real stale-ref risk in the
+            box-select effect's cleanup by capturing
+            `boxOverlayRef.current` once at effect-setup time. One
+            genuinely-unnecessary dep pair (`queryClient`, `projectId` on
+            a `useCallback` that never referenced either) removed outright.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
