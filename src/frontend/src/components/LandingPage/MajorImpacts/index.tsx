@@ -40,7 +40,7 @@ export default function MajorImpacts() {
               {m.landing_major_impacts_heading()}
             </p>
             <div>
-              {accordionData().map((data: Record<string, any>) => (
+              {accordionData().map(data => (
                 <motion.div variants={fadeUpVariant} key={data.id}>
                   <Accordion
                     title={data.title}

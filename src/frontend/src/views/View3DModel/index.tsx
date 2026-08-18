@@ -241,10 +241,7 @@ const View3DModel = () => {
     }
 
     const projectCentroid = outlineRef.current
-      ? (centroid(outlineRef.current).geometry.coordinates as [
-          number,
-          number,
-        ])
+      ? (centroid(outlineRef.current).geometry.coordinates as [number, number])
       : [0, 0];
     const [initLng, initLat] = projectCentroid;
 

@@ -354,12 +354,14 @@ than as inline notes on the item that found them:
       mechanical rules — see the PR for the full list). Verified `pnpm
       run build` clean and the Vitest suite unchanged (5/5) before
       committing, fixer output only, no manual edits.
-- [ ] Triage the remaining ~640 errors + 21 warnings `eslint .` still
+- [x] Triage the remaining ~640 errors + 21 warnings `eslint .` still
       reports (mostly `@typescript-eslint/no-explicit-any` at 448 sites,
       `@typescript-eslint/ban-ts-comment` at 78, plus a long tail —
       `no-nested-ternary`, `consistent-return`, `no-shadow`,
       `jsx-a11y/*`, etc.) — not auto-fixable, needs individual review.
-      Doing this in reviewable batches, mechanical/low-risk rules first:
+      DONE — `eslint .` now reports 0 errors, 0 warnings across the whole
+      frontend tree (verified after the final no-explicit-any batch below).
+      Was done in reviewable batches, mechanical/low-risk rules first:
       - [x] `no-console` (12 sites) — allow `warn`/`error` in config (all
             existing sites were legitimate diagnostics, not debug
             leftovers); kept 4 genuine `console.log` breadcrumbs in
@@ -904,10 +906,49 @@ than as inline notes on the item that found them:
             index.tsx` (4): reused the existing `ProjectInfo` interface
             instead of a bespoke local type, since all the accessed fields
             (`cloud_ortho_cog_url`, `outline`, `name`) are already on it.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~34 sites,
-            spread across ~13 files with no single large concentration left
-            - continue in small file/directory-scoped batches.
-      - [ ] Everything else listed above, still open.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 17 (34 of 34
+            sites) - FINAL BATCH, backlog now at 0. Cleared every remaining
+            file: `Dashboard/TaskLogs/**` (reused `UserTasksOut` from
+            `services/dashboard.ts`, same source as `RequestLogs` in batch
+            3/7); `GoogleAuth/index.tsx`, `LandingPage/**`, `common/
+            Navbar/index.tsx` (the `(import.meta as any).env.
+            VITE_FRONTEND_URL` pattern recurred in 3 more files - all now
+            plain `import.meta.env.VITE_FRONTEND_URL` using the
+            `ImportMetaEnv` augmentation added in batch 3/15);
+            `Projects/MapSection/VectorLayerWithCluster.tsx` (typed against
+            `MapInstanceType`/`GeojsonType`/`MapMouseEvent`, then fixed the
+            resulting MapLibre GeoJSONSource/geometry-narrowing fallout);
+            `Projects/Pagination/index.tsx` and `ProjectsHeader/index.tsx`
+            (redundant `any` removed once `Select`'s prop was already
+            correctly typed); `RadixComponents/Image.tsx`, `common/
+            BaseLayerSwitcher`, `Chip`, `CustomDatePicker`, `ErrorBoundary`
+            (React's own `ErrorInfo` type), `FormUI/FileUpload`, `FormUI/
+            MultiSelect`+`Select` (kept `Record<string, unknown>` +
+            per-access casts since `labelKey`/`valueKey` are genuinely
+            dynamic prop-driven object keys), `Layouts/types.ts`,
+            `RadioButton`, `UserProfile`, and all three `constants/*`
+            files. `common/DataTable/DataTablePagination/index.tsx` (typed
+            against `Table<ColumnData>`) surfaced a real dead-prop bug in
+            `DataTable/index.tsx` - it was passing `currentPage`/
+            `totalCount`/`pageSize` to `DataTablePagination`, which never
+            read any of them (only `table`); removed the unused props at
+            the call site rather than fabricating a use for them. Typing
+            `RadioButton.onChangeData` and `Select.onChange` away from
+            `any` cascaded into 4 call sites across `CompleteUserProfile`,
+            `UpdateUserDetails`, and `CreateProject/BasicInformation/
+            AdvancedConfig.tsx` needing a narrow-union cast (e.g. `val as
+            'yes' | 'no'`) where the emitted `string` was being dispatched
+            into Redux state typed with a specific literal union.
+            Ran `pnpm eslint . --fix` to auto-fix the ~38 residual prettier
+            formatting diffs this batch's edits accumulated (no logic
+            changes) - `eslint .` now reports 0 errors, 0 warnings across
+            the whole frontend. tsc, `pnpm build`, and `pnpm test` (5/5)
+            all clean. This closes out the entire "fix remaining eslint
+            errors and warnings" effort from the original ~640-error
+            triage - every `@typescript-eslint/no-explicit-any` site in
+            the frontend is now a real type.
+      - [x] Everything else listed above, done - see individual `[x]`
+            entries in the batch history above for what each covered.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
       HTTP request that triggered it. Needs touching every enqueue call

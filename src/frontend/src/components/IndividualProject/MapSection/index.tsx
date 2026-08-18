@@ -212,9 +212,9 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
     return new Set(
       tasksData
         .filter(task => {
-          const outline = task?.outline as
-            | { properties?: { lock_comment?: string } }
-            | null;
+          const outline = task?.outline as {
+            properties?: { lock_comment?: string };
+          } | null;
           const comment = task?.comment || outline?.properties?.lock_comment;
           return commentMentionsUserId(comment, userDetails.id as string);
         })
@@ -523,8 +523,9 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
                   {
                     ...(task.outline as Record<string, unknown>),
                     properties: {
-                      ...(task.outline as { properties?: Record<string, unknown> })
-                        ?.properties,
+                      ...(
+                        task.outline as { properties?: Record<string, unknown> }
+                      )?.properties,
                       project_task_index: task?.project_task_index,
                     },
                   } as unknown as GeojsonType
@@ -557,8 +558,9 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
                   {
                     ...(task.outline as Record<string, unknown>),
                     properties: {
-                      ...(task.outline as { properties?: Record<string, unknown> })
-                        ?.properties,
+                      ...(
+                        task.outline as { properties?: Record<string, unknown> }
+                      )?.properties,
                       project_task_index: task?.project_task_index,
                     },
                   } as unknown as GeojsonType

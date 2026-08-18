@@ -4,7 +4,7 @@ import capitalizeFirstLetter from '@Utils/capitalizeFirstLetter';
 
 interface IChipProps {
   label: string | ReactElement;
-  onClose: any;
+  onClose: () => void;
 }
 
 export default function Chip({ label, onClose }: IChipProps) {

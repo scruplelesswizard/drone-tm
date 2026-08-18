@@ -29,7 +29,8 @@ const HANKO_URL = getRuntimeConfig(
   'VITE_HANKO_URL',
   'https://dev.login.hotosm.org',
 );
-const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+const FRONTEND_URL =
+  import.meta.env.VITE_FRONTEND_URL || window.location.origin;
 
 const initialState = {
   username: '',

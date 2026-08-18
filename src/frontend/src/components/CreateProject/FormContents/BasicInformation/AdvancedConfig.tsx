@@ -77,7 +77,9 @@ export default function AdvancedConfig({
             onChangeData={value => {
               dispatch(
                 setCreateProjectState({
-                  requiresApprovalFromRegulator: value,
+                  requiresApprovalFromRegulator: value as
+                    | 'required'
+                    | 'not_required',
                 }),
               );
             }}

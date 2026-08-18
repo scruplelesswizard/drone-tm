@@ -6,9 +6,7 @@ import { Controller } from 'react-hook-form';
 import ErrorMessage from '@Components/common/FormUI/ErrorMessage';
 import { UseFormPropsType } from '@Components/common/FormUI/types';
 import { FormControl, Label } from '@Components/common/FormUI';
-import FileUpload, {
-  UploadedFilesType,
-} from '@Components/common/UploadArea';
+import FileUpload, { UploadedFilesType } from '@Components/common/UploadArea';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import { m2ToKm2 } from '@Utils/index';
 import { setCreateProjectState } from '@Store/actions/createproject';

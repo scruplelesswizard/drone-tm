@@ -272,14 +272,7 @@ export default function DataTable({
       </Table>
 
       {/* Pagination */}
-      {withPagination && (
-        <Pagination
-          currentPage={table.getState().pagination.pageIndex + 1}
-          totalCount={dataList.count}
-          pageSize={pageSize}
-          table={table}
-        />
-      )}
+      {withPagination && <Pagination table={table} />}
     </FlexColumn>
   );
 }

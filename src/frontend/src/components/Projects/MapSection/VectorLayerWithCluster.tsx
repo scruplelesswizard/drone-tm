@@ -1,4 +1,10 @@
 import { useEffect } from 'react';
+import { MapMouseEvent, GeoJSONSource } from 'maplibre-gl';
+import type { Point } from 'geojson';
+import {
+  MapInstanceType,
+  GeojsonType,
+} from '@Components/common/MapLibreComponents/types';
 
 export default function VectorLayerWithCluster({
   map,
@@ -6,7 +12,13 @@ export default function VectorLayerWithCluster({
   mapLoaded,
   sourceId,
   geojson,
-}: any) {
+}: {
+  map: MapInstanceType | null;
+  visibleOnMap?: boolean;
+  mapLoaded?: boolean;
+  sourceId: string;
+  geojson: GeojsonType | null;
+}) {
   useEffect(() => {
     if (!map || !mapLoaded || !visibleOnMap || !sourceId) return undefined;
 
@@ -31,7 +43,7 @@ export default function VectorLayerWithCluster({
     if (!map.getSource(sourceId)) {
       map.addSource(sourceId, {
         type: 'geojson',
-        data: geojson,
+        data: geojson ?? { type: 'FeatureCollection', features: [] },
         cluster: true,
         clusterMaxZoom: 14,
         clusterRadius: 40,
@@ -86,16 +98,15 @@ export default function VectorLayerWithCluster({
     });
 
     // inspect a cluster on click
-    map.on('click', 'clusters', async (e: any) => {
+    map.on('click', 'clusters', async (e: MapMouseEvent) => {
       const features = map.queryRenderedFeatures(e.point, {
         layers: ['clusters'],
       });
       const clusterId = features[0].properties.cluster_id;
-      const zoom = await map
-        .getSource(sourceId)
-        .getClusterExpansionZoom(clusterId);
+      const source = map.getSource(sourceId) as GeoJSONSource | undefined;
+      const zoom = await source?.getClusterExpansionZoom(clusterId);
       map.easeTo({
-        center: features[0].geometry.coordinates,
+        center: (features[0].geometry as Point).coordinates as [number, number],
         zoom,
       });
     });

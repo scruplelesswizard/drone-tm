@@ -46,7 +46,9 @@ const MapSection = ({ projectData }: IMapSectionProps) => {
         features: [],
       },
     );
-    const bbox = getBbox(tasksCollectiveGeojson as unknown as FeatureCollection);
+    const bbox = getBbox(
+      tasksCollectiveGeojson as unknown as FeatureCollection,
+    );
     map?.fitBounds(bbox as LngLatBoundsLike, { padding: 25, duration: 500 });
   }, [map, tasksData]);
 

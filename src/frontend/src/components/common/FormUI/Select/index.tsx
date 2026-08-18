@@ -7,10 +7,10 @@ import { m } from '@/paraglide/messages';
 import Input from '../Input';
 
 interface ISelectProps {
-  options: Record<string, any>[];
+  options: Record<string, unknown>[];
   selectedOption?: string | number | null;
   placeholder?: string;
-  onChange?: (selectedOption: any) => void;
+  onChange?: (selectedOption: string) => void;
   labelKey?: string;
   valueKey?: string;
   direction?: string;
@@ -90,7 +90,7 @@ export default function Select({
   // check if selected option value matches with item value key
   const selectedLabel = options.find(item => item[valueKey] === selected)?.[
     labelKey
-  ];
+  ] as string | undefined;
 
   const getPlaceholderText = () => {
     if (selected) {
@@ -100,7 +100,7 @@ export default function Select({
   };
 
   const filterOptions = options?.filter(opt =>
-    opt[labelKey].toLowerCase().includes(searchText.toLowerCase()),
+    (opt[labelKey] as string)?.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   const showClearIcon = !!searchText.length;
@@ -164,10 +164,10 @@ export default function Select({
             filterOptions.map(option => (
               <li
                 className="hover:naxatw-bg-primary-50 naxatw-flex naxatw-cursor-pointer naxatw-list-none naxatw-items-start naxatw-px-4 naxatw-py-2.5 naxatw-text-sm naxatw-text-grey-800"
-                key={option[valueKey]}
-                onClick={() => handleOptionClick(option[valueKey])}
+                key={option[valueKey] as string}
+                onClick={() => handleOptionClick(option[valueKey] as string)}
               >
-                <div>{option[labelKey]}</div>
+                <div>{option[labelKey] as string}</div>
               </li>
             ))
           ) : (

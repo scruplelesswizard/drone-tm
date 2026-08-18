@@ -1,9 +1,15 @@
+import { Table } from '@tanstack/react-table';
 import { Input } from '@Components/common/FormUI';
 import { FlexRow } from '@Components/common/Layouts';
 import { Button } from '@Components/RadixComponents/Button';
+import type { ColumnData } from '@Components/common/DataTable';
 import { m } from '@/paraglide/messages';
 
-export default function DataTablePagination({ table }: any) {
+export default function DataTablePagination({
+  table,
+}: {
+  table: Table<ColumnData>;
+}) {
   return (
     <FlexRow className="naxatw-justify-between naxatw-py-2">
       <FlexRow className="naxatw-items-center naxatw-gap-2">

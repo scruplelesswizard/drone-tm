@@ -28,9 +28,7 @@ const contributionsDataColumns = [
   {
     header: m.contributions_table_orthophoto(),
     accessorKey: 'assets_url',
-    cell: function CellComponent({
-      row,
-    }: CellContext<ColumnData, unknown>) {
+    cell: function CellComponent({ row }: CellContext<ColumnData, unknown>) {
       const { original: rowDataRaw } = row;
       const rowData = rowDataRaw as unknown as {
         assets_url?: string;

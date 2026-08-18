@@ -185,7 +185,11 @@ const OtherDetails = () => {
             options={droneOperatorOptions}
             direction="column"
             onChangeData={val => {
-              dispatch(setCommonState({ isCertifiedDroneUser: val }));
+              dispatch(
+                setCommonState({
+                  isCertifiedDroneUser: val as 'yes' | 'no',
+                }),
+              );
               setValue('certified_drone_operator', val === 'yes');
             }}
             value={isCertifiedDroneOperator}

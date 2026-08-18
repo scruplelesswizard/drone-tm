@@ -142,8 +142,7 @@ export const UploadImageryDialog = ({
         onClose();
       } catch (error) {
         toast.error(
-          (error as Error)?.message ||
-            m.imagery_upload_failed_delete_batches(),
+          (error as Error)?.message || m.imagery_upload_failed_delete_batches(),
         );
       } finally {
         setIsDeletingBatches(false);

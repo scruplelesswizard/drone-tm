@@ -20,7 +20,7 @@ const HANKO_URL = getRuntimeConfig(
   'https://dev.login.hotosm.org',
 );
 const FRONTEND_URL =
-  (import.meta as any).env.VITE_FRONTEND_URL || window.location.origin;
+  import.meta.env.VITE_FRONTEND_URL || window.location.origin;
 
 if (AUTH_PROVIDER === 'hanko') {
   import('@hotosm/hanko-auth');

@@ -12,7 +12,7 @@ interface IPaginationProps {
   siblingCount?: number;
   currentPage: number;
   pageSize: number;
-  handlePaginationState: any;
+  handlePaginationState: (value: Record<string, number>) => void;
 }
 
 export default function Pagination({
@@ -49,7 +49,7 @@ export default function Pagination({
             options={rowsPerPageOptions}
             onChange={value =>
               handlePaginationState({
-                selectedNumberOfRows: value,
+                selectedNumberOfRows: Number(value),
                 activePage: 1,
               })
             }
@@ -101,7 +101,7 @@ export default function Pagination({
                 key={pageNumber}
                 className={`!naxatw-text-gray-500 naxatw-no-underline ${currentPage === pageNumber ? 'naxatw-rounded-b-none naxatw-border-b-2 naxatw-border-gray-800 !naxatw-text-gray-800' : ''}`}
                 onClick={() =>
-                  handlePaginationState({ activePage: pageNumber })
+                  handlePaginationState({ activePage: Number(pageNumber) })
                 }
               >
                 {pageNumber}

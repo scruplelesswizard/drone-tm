@@ -6,7 +6,7 @@ interface IProps {
   src: string;
   styleClass?: string;
   className?: string;
-  width?: any;
+  width?: string | number;
 }
 
 export default function Image({

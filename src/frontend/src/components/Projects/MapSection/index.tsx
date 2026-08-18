@@ -17,8 +17,9 @@ const ProjectsMapSection = ({
 }: {
   projectCentroidList: Record<string, unknown>[];
 }) => {
-  const [projectProperties, setProjectProperties] =
-    useState<GeoJsonProperties>({});
+  const [projectProperties, setProjectProperties] = useState<GeoJsonProperties>(
+    {},
+  );
   const navigate = useNavigate();
   const { map, isMapLoaded } = useMapLibreGLMap({
     containerId: 'dashboard-map',
@@ -109,9 +110,7 @@ const ProjectsMapSection = ({
       <AsyncPopup
         map={map as Map}
         title={projectProperties?.slug}
-        showPopup={feature =>
-          feature?.layer?.id === 'unclustered-point'
-        }
+        showPopup={feature => feature?.layer?.id === 'unclustered-point'}
         popupUI={getPopupUI}
         fetchPopupData={properties => {
           setProjectProperties(properties);

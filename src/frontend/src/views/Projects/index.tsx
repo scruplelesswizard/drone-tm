@@ -114,24 +114,22 @@ const Projects = () => {
               {!projectListData?.results?.length && (
                 <div>{m.projects_no_projects_available()}</div>
               )}
-              {projectListData?.results?.map(
-                project => (
-                  <ProjectCard
-                    key={project.id}
-                    // ProjectCard's id prop is typed number, but backend
-                    // project ids are UUID strings - pre-existing mismatch,
-                    // not introduced here.
-                    id={project.id as unknown as number}
-                    slug={project.slug}
-                    imageUrl={project?.image_url ?? null}
-                    title={project.name}
-                    description={project.description ?? ''}
-                    totalTasks={project?.total_task_count ?? 0}
-                    status={project?.status ?? ''}
-                    completedTask={project?.completed_task_count ?? 0}
-                  />
-                ),
-              )}
+              {projectListData?.results?.map(project => (
+                <ProjectCard
+                  key={project.id}
+                  // ProjectCard's id prop is typed number, but backend
+                  // project ids are UUID strings - pre-existing mismatch,
+                  // not introduced here.
+                  id={project.id as unknown as number}
+                  slug={project.slug}
+                  imageUrl={project?.image_url ?? null}
+                  title={project.name}
+                  description={project.description ?? ''}
+                  totalTasks={project?.total_task_count ?? 0}
+                  status={project?.status ?? ''}
+                  completedTask={project?.completed_task_count ?? 0}
+                />
+              ))}
             </>
           )}
         </div>

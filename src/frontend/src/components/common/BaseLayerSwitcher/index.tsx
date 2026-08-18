@@ -21,7 +21,7 @@ const BaseLayerSwitcherUI = () => {
   const { map, isMapLoaded } = useMap();
   const [selectedBaseLayer, setSelectedBaseLayer] = useState('osm');
 
-  const [_, toggle, handleToggle]: any = useOutsideClick('single');
+  const [_, toggle, handleToggle] = useOutsideClick('single');
   const baseLayerList = baseLayersData;
 
   const layerOptions = Object.keys(baseLayerList).map(key => ({

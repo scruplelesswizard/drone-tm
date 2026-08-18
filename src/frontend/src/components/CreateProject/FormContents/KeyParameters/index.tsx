@@ -12,9 +12,7 @@ import { getDroneAltitude } from '@Services/createproject';
 // import { terrainOptions } from '@Constants/createProject';
 import { FlexRow } from '@Components/common/Layouts';
 import Switch from '@Components/RadixComponents/Switch';
-import FileUpload, {
-  UploadedFilesType,
-} from '@Components/common/UploadArea';
+import FileUpload, { UploadedFilesType } from '@Components/common/UploadArea';
 import {
   demFileOptions,
   imageMergeTypeOptions,

@@ -16,16 +16,15 @@ export default function UserProfile() {
   const userProfile = getLocalStorageValue('userprofile');
   const role = localStorage.getItem('signedInAs');
 
-  const { data: userDetails, isFetching }: Record<string, any> =
-    useGetUserDetailsQuery({
-      enabled: !!(userProfile?.role && role),
-    });
+  const { data: userDetails, isFetching } = useGetUserDetailsQuery({
+    enabled: !!(userProfile?.role && role),
+  }) as { data?: Record<string, unknown>; isFetching: boolean };
 
   useEffect(() => {
     if (
       !userProfile ||
       userProfile?.role?.includes(role) ||
-      userDetails?.role?.includes(role) ||
+      (role && (userDetails?.role as string[] | undefined)?.includes(role)) ||
       isFetching
     )
       return;

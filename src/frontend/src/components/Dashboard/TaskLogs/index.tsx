@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useGetTaskListQuery } from '@Api/dashboard';
+import { UserTasksOut } from '@Services/dashboard';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import { taskStatusObj } from '@Constants/index';
 import TaskLogsTable from './TaskLogsTable';
@@ -18,11 +19,13 @@ const getStatusListByActiveTab = (activeTab?: string): string[] => {
 };
 
 const TaskLogs = ({ title, activeTab }: TaskLogsProps) => {
-  const { data: taskList }: any = useGetTaskListQuery();
+  const { data: taskList } = useGetTaskListQuery() as {
+    data?: UserTasksOut[];
+  };
 
   const filteredData = useMemo(
     () =>
-      taskList?.filter((task: Record<string, any>) =>
+      taskList?.filter(task =>
         getStatusListByActiveTab(activeTab)?.includes(task?.state),
       ),
     [activeTab, taskList],

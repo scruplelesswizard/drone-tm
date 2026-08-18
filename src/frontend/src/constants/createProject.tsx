@@ -1,3 +1,4 @@
+import type React from 'react';
 import lineOrientation from '@Assets/images/line_orientation.svg';
 import straightenFlightPlan from '@Assets/images/straigh-flight.svg';
 import generateAllPoints from '@Assets/images/generate-all-points.svg';
@@ -15,7 +16,7 @@ import DSMIcon from '@Assets/images/DSM-icon.svg';
 import { m } from '@/paraglide/messages';
 
 export type StepComponentMap = {
-  [key: number]: any;
+  [key: number]: React.ComponentType;
 };
 
 export const stepDescriptionComponents: StepComponentMap = {

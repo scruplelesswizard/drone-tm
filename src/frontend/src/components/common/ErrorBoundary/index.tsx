@@ -1,5 +1,5 @@
 import Icon from '@Components/common/Icon';
-import { Component, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { m } from '@/paraglide/messages';
 
 interface ErrorBoundaryProps {
@@ -9,7 +9,7 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   error: Error | null;
-  errorInfo: object | null;
+  errorInfo: ErrorInfo | null;
 }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -26,14 +26,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     }
   }
 
-  componentDidCatch(error: any, info: any) {
+  componentDidCatch(error: Error, info: ErrorInfo) {
     this.setState({ error, errorInfo: info });
   }
 
   render() {
     if (this.state.errorInfo) {
-      const componentStack =
-        (this.state.errorInfo as any)?.componentStack || '';
+      const componentStack = this.state.errorInfo?.componentStack || '';
       const stackLine = componentStack
         .split('\n')
         .map((line: string) => line.trim())

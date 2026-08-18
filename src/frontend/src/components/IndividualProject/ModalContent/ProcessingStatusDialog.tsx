@@ -570,8 +570,7 @@ const ProcessingStatusDialog = () => {
   }, [selectedTasks, processableTasks]);
 
   const processedCount = useMemo(
-    () =>
-      taskList.filter(t => t.state === 'IMAGE_PROCESSING_FINISHED').length,
+    () => taskList.filter(t => t.state === 'IMAGE_PROCESSING_FINISHED').length,
     [taskList],
   );
 
