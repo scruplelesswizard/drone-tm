@@ -97,7 +97,7 @@ function HankoAuth() {
     };
 
     loginRedirect();
-  }, [navigate, signedInAs]);
+  }, [navigate, signedInAs, queryClient]);
 
   return (
     <Flex className="naxatw-h-screen-nav naxatw-w-full naxatw-animate-pulse naxatw-items-center naxatw-justify-center">

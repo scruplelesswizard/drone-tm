@@ -84,6 +84,8 @@ const MapSection = ({ className }: { className?: string }) => {
   const droneModel = useTypedSelector(
     state => state.droneOperatorTask.droneModel,
   );
+  const droneModelRef = useRef(droneModel);
+  droneModelRef.current = droneModel;
   const gimbalAngle = useTypedSelector(
     state => state.droneOperatorTask.gimbalAngle,
   );
@@ -200,7 +202,7 @@ const MapSection = ({ className }: { className?: string }) => {
   useEffect(() => {
     if (taskWayPointsData?.battery_warning) {
       const friendlyModelName = droneModelOptions.find(
-        drone => drone.value === droneModel,
+        drone => drone.value === droneModelRef.current,
       )?.label;
 
       toast.warn(
@@ -458,8 +460,8 @@ const MapSection = ({ className }: { className?: string }) => {
       taskWayPointsData?.geojsonListOfPoints.features.length;
 
     if (numberOfFeatures > waypointUpperLimit) {
-      setModifiedWaypointModeOptions(
-        modifiedWaypointModeOptions.map(option => {
+      setModifiedWaypointModeOptions(prevOptions =>
+        prevOptions.map(option => {
           if (option.label === 'Waypoints') {
             return {
               icon: 'info',

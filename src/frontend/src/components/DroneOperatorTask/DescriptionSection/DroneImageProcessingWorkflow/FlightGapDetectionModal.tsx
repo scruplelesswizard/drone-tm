@@ -64,7 +64,7 @@ const FlightGapDetectionModal = ({
       setIsStyleReady(false);
       hasFitRef.current = false;
     }
-  }, [isOpen]);
+  }, [isOpen, map]);
 
   useEffect(() => {
     setCurrentGapData(gapAnalysisData);
