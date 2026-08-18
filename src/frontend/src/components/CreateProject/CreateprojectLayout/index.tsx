@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { AxiosError, AxiosResponse } from 'axios';
 import { useTypedSelector, useTypedDispatch } from '@Store/hooks';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { FieldValues, useForm } from 'react-hook-form';
@@ -170,9 +171,9 @@ const CreateprojectLayout = () => {
   });
 
   const { mutate: uploadTaskBoundary, isPending } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    Parameters<typeof postTaskBoundary>[0],
     unknown
   >({
     mutationFn: postTaskBoundary,
@@ -193,13 +194,13 @@ const CreateprojectLayout = () => {
   });
 
   const { mutate: createProject, isPending: isCreatingProject } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    FormData,
     unknown
   >({
     mutationFn: postCreateProject,
-    onSuccess: (res: any) => {
+    onSuccess: res => {
       dispatch(setCreateProjectState({ projectId: res.data.project_id }));
       if (!splitGeojson) return;
       const geojson = convertGeojsonToFile(splitGeojson);
@@ -209,7 +210,8 @@ const CreateprojectLayout = () => {
       dispatch(resetUploadedAndDrawnAreas());
     },
     onError: err => {
-      toast.error(err?.response?.data?.detail || err?.message || '');
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || err?.message || '');
     },
   });
 
@@ -257,7 +259,7 @@ const CreateprojectLayout = () => {
     }
   }, [useCase, dispatch]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: FieldValues) => {
     if (activeStep === 1) {
       if (!useCase.length) {
         toast.error(m.create_use_case_required());
@@ -271,9 +273,9 @@ const CreateprojectLayout = () => {
       if (trimmedName) {
         try {
           const response = await getProjectsList({ search: trimmedName });
-          const projects = response?.data?.results || [];
+          const projects: { name?: string }[] = response?.data?.results || [];
           const exactMatch = projects.some(
-            (p: any) => p.name?.toLowerCase() === trimmedName.toLowerCase(),
+            p => p.name?.toLowerCase() === trimmedName.toLowerCase(),
           );
           if (exactMatch) {
             setError('name', {
@@ -356,7 +358,7 @@ const CreateprojectLayout = () => {
         ? gsdToAltitude(data?.gsd_cm_px)
         : data?.altitude_from_ground;
 
-    const refactoredData = {
+    const refactoredData: FieldValues = {
       ...data,
       final_output: finalOutput,
       is_terrain_follow: isTerrainFollow,

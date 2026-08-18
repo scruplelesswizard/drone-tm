@@ -13,7 +13,7 @@ type FileType = File & {
   lastModifiedDate: Date;
 };
 
-type UploadedFilesType = {
+export type UploadedFilesType = {
   id: string;
   previewURL: string;
   file: FileType;
@@ -30,10 +30,10 @@ interface IFileUploadProps extends UseFormPropsType {
   data?: [];
   placeholder?: string;
   disabled?: boolean;
-  onChange?: any;
+  onChange?: (files: UploadedFilesType) => void;
   isValid?:
-    | ((value: any) => boolean | undefined)
-    | ((value: any) => Promise<boolean | undefined>);
+    | ((value: UploadedFilesType) => boolean | undefined)
+    | ((value: UploadedFilesType) => Promise<boolean | undefined>);
 }
 
 export default function FileUpload({
@@ -105,11 +105,13 @@ export default function FileUpload({
       ? [...uploadedFiles, ...uploaded]
       : uploaded;
 
+    // @ts-expect-error native File lacks lastModifiedDate, which FileType requires - same looseness as the setUploadedFiles call below
     const valid = await isValid?.(uploadedFilesState);
     if (!valid) return;
     // @ts-expect-error uploadedFilesState is built from data (typed as []), so its inferred element shape conflicts with UploadedFilesType
     setUploadedFiles(uploadedFilesState);
     setValue(name, uploadedFilesState, { shouldDirty: true });
+    // @ts-expect-error native File lacks lastModifiedDate, which FileType requires - same looseness as the setUploadedFiles call above
     onChange?.(uploadedFilesState);
   };
 

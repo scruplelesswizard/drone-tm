@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { AxiosError, AxiosResponse } from 'axios';
 import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
 import { Controller } from 'react-hook-form';
 import ErrorMessage from '@Components/common/FormUI/ErrorMessage';
 import { UseFormPropsType } from '@Components/common/FormUI/types';
 import { FormControl, Label } from '@Components/common/FormUI';
-import FileUpload from '@Components/common/UploadArea';
+import FileUpload, {
+  UploadedFilesType,
+} from '@Components/common/UploadArea';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import { m2ToKm2 } from '@Utils/index';
 import { setCreateProjectState } from '@Store/actions/createproject';
@@ -44,28 +47,30 @@ const DefineAOI = ({ formProps }: { formProps: UseFormPropsType }) => {
 
   const { setValue, control, errors } = formProps;
 
-  const { mutate: normalizeAoi, isPending: isNormalizingAoi } = useMutation({
+  const { mutate: normalizeAoi, isPending: isNormalizingAoi } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    FormData,
+    unknown
+  >({
     mutationFn: postNormalizeAoi,
     onSuccess: response => {
       dispatch(setCreateProjectState({ projectArea: response.data }));
       setValue('outline', response.data);
     },
-    onError: (err: any) => {
-      toast.error(
-        err?.response?.data?.detail ||
-          err?.message ||
-          m.create_aoi_normalize_failed(),
-      );
+    onError: err => {
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || err?.message || m.create_aoi_normalize_failed());
     },
   });
 
-  const handleProjectAreaFileChange = async (file: Record<string, any>[]) => {
+  const handleProjectAreaFileChange = async (file: UploadedFilesType) => {
     if (!file) return;
     const uploadedFile = file[0]?.file;
     if (!uploadedFile) return;
 
     try {
-      const geojson: any = await validateGeoJSON(uploadedFile);
+      const geojson = await validateGeoJSON(uploadedFile);
       if (isAllGeoJSON(geojson) && !Array.isArray(geojson)) {
         normalizeAoi(
           prepareFormData({
@@ -73,18 +78,18 @@ const DefineAOI = ({ formProps }: { formProps: UseFormPropsType }) => {
           }),
         );
       }
-    } catch (err: any) {
-      toast.error(err?.message || m.create_aoi_invalid_geojson());
+    } catch (err) {
+      toast.error((err as Error)?.message || m.create_aoi_invalid_geojson());
     }
   };
 
-  const validateAreaOfFileUpload = async (file: any) => {
+  const validateAreaOfFileUpload = async (file: UploadedFilesType) => {
     try {
       if (!file) return false;
-      const geojson: any = await validateGeoJSON(file[0]?.file);
+      const geojson = await validateGeoJSON(file[0]?.file);
       if (isAllGeoJSON(geojson) && !Array.isArray(geojson)) {
         const convertedGeojson = flatten(geojson);
-        const uploadedArea: any =
+        const uploadedArea =
           convertedGeojson && area(convertedGeojson as FeatureCollection);
         if (uploadedArea && uploadedArea > 100000000) {
           toast.error(m.create_aoi_drawn_area_exceed());
@@ -93,14 +98,14 @@ const DefineAOI = ({ formProps }: { formProps: UseFormPropsType }) => {
         return true;
       }
       return false;
-    } catch (err: any) {
+    } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
       return false;
     }
   };
 
-  const handleNoFlyZoneFileChange = (file: Record<string, any>[]) => {
+  const handleNoFlyZoneFileChange = (file: UploadedFilesType) => {
     if (!file) return;
     const geojson = validateGeoJSON(file[0]?.file);
     try {
@@ -111,7 +116,7 @@ const DefineAOI = ({ formProps }: { formProps: UseFormPropsType }) => {
           setValue('no_fly_zones', convertedGeojson);
         }
       });
-    } catch (err: any) {
+    } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
     }

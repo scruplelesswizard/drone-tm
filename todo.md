@@ -731,7 +731,31 @@ than as inline notes on the item that found them:
             use `UploadResult<Meta, Record<string, never>>` / `UppyFile<...>`
             from `@uppy/core` (the app doesn't customize Uppy's Meta/Body
             generics, so this matches the actual default instance type).
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~160 sites,
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 9 (22 of 160
+            sites) - `CreateProject/CreateprojectLayout/index.tsx` (9) and
+            `CreateProject/FormContents/DefineAOI/index.tsx` +
+            `common/UploadArea/index.tsx` (10 + 3, fixed together since
+            `DefineAOI`'s file-upload handlers are typed by
+            `UploadArea`'s `onChange`/`isValid` props) all fully cleared.
+            `CreateprojectLayout`'s two `useMutation<any,any,any,unknown>`
+            calls got the established `AxiosResponse`/`AxiosError` pattern;
+            `onSubmit`'s `data: any` became `FieldValues` (react-hook-form's
+            own type), which required explicitly annotating the
+            `refactoredData` object literal as `FieldValues` too - spreading
+            a `Record<string, any>`-based type into an object literal with
+            additional explicit keys drops the index signature in strict
+            mode, breaking the later `delete refactoredData[key]` loop
+            otherwise. Exported `UploadedFilesType` from `UploadArea` so
+            `DefineAOI` could type its `onChange`/`isValid` handlers against
+            it instead of `Record<string, any>[]`/`any` - surfaced a
+            pre-existing looseness (native `File` lacks the `lastModifiedDate`
+            field `FileType` declares) on two more lines inside `UploadArea`
+            itself, suppressed with the same `@ts-expect-error` convention
+            already used there for identical cases. Several `: any` locals
+            in both files turned out to be fully redundant (the values were
+            already implicitly `any` from untyped upstream calls like
+            `validateGeoJSON`) and were just deleted rather than retyped.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~138 sites,
             spread across ~40 files with no single large concentration left
             - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
