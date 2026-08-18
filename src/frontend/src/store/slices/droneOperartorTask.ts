@@ -1,5 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { createSlice } from '@reduxjs/toolkit';
+import { Feature, Point } from 'geojson';
+import { GeojsonType } from '@Components/common/MapLibreComponents/types';
 
 export interface IFilesExifData {
   file: File;
@@ -11,10 +13,13 @@ export interface IDroneOperatorTaskState {
   secondPageState: string;
   popOver: boolean;
   selectedTakeOffPointOption: string;
-  selectedTakeOffPoint: any[] | string | null;
+  selectedTakeOffPoint: Feature<Point> | string | null;
   uploadedImagesType: 'add' | 'replace';
   filesExifData: IFilesExifData[];
-  uploadProgress: Record<string, any>;
+  uploadProgress: Record<
+    string,
+    { totalFiles?: number; uploadedFiles?: number }
+  >;
   waypointMode: 'waylines' | 'waypoints';
   droneModel:
     | 'DJI_MINI_4_PRO'
@@ -25,10 +30,17 @@ export interface IDroneOperatorTaskState {
     | 'LITCHI'
     | 'QGROUNDCONTROL';
   gimbalAngle: '-80' | '-90' | '-45';
-  taskAssetsInformation: Record<string, any>;
-  rotatedFlightPlan: Record<string, any>;
+  taskAssetsInformation: {
+    total_image_uploaded: number;
+    assets_url: string;
+    state: string;
+  };
+  rotatedFlightPlan: {
+    geojsonListOfPoints: GeojsonType | Record<string, unknown>;
+    geojsonAsLineString: GeojsonType | Record<string, unknown>;
+  };
   rotationAngle: number;
-  taskAreaPolygon: Record<string, any>;
+  taskAreaPolygon: Record<string, unknown>;
 }
 
 const initialState: IDroneOperatorTaskState = {
@@ -49,7 +61,7 @@ const initialState: IDroneOperatorTaskState = {
     state: '',
   },
   rotatedFlightPlan: {
-    geojsonListOfPoint: {},
+    geojsonListOfPoints: {},
     geojsonAsLineString: {},
   },
   rotationAngle: 0,

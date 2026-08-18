@@ -17,6 +17,7 @@ import {
   resetUploadedAndDrawnAreas,
   setCreateProjectState,
 } from '@Store/actions/createproject';
+import { CreateProjectState } from '@Store/slices/createproject';
 import {
   getProjectsList,
   postCreateProject,
@@ -70,13 +71,10 @@ const getActiveStepForm = (activeStep: number, formProps: UseFormPropsType) => {
   }
 };
 
-const defaultWizardState = {
+const defaultWizardState: Partial<CreateProjectState> = {
   activeStep: 1,
   useCase: [],
   splitGeojson: null,
-  uploadedProjectArea: null,
-  uploadedNoFlyZone: null,
-  projectCountry: null,
   capturedProjectMap: true,
   projectMapImage: null,
   isTerrainFollow: false,
@@ -185,8 +183,6 @@ const CreateprojectLayout = () => {
         setCreateProjectState({
           activeStep: 1,
           splitGeojson: null,
-          uploadedProjectArea: null,
-          uploadedNoFlyZone: null,
         }),
       );
       navigate('/projects');
@@ -397,7 +393,9 @@ const CreateprojectLayout = () => {
     // make form data with value JSON stringify to combine value on single json / form data with only 2 keys (backend didn't found project_info on non-stringified data)
     const formData = new FormData();
     formData.append('project_info', JSON.stringify({ ...refactoredData }));
-    formData.append('image', projectImage.projectMapImage);
+    if (projectImage) {
+      formData.append('image', projectImage);
+    }
 
     if (isTerrainFollow && demType === 'manual') {
       formData.append('dem', data?.dem?.[0]?.file);

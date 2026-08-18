@@ -27,7 +27,7 @@ const RegulatorsApprovalPage = () => {
   }, [token]);
 
   const { mutate: userToken, isPending } = useMutation({
-    mutationFn: (payload: Record<string, any>) => regulatorUser(payload),
+    mutationFn: (payload: { token: string }) => regulatorUser(payload),
     onSuccess(response) {
       const { data } = response;
       // save tokens and role on localstorage

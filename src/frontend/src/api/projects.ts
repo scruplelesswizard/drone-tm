@@ -4,6 +4,7 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
+import { AxiosResponse } from 'axios';
 import {
   getProjectsList,
   getProjectDetail,
@@ -33,7 +34,7 @@ export const useGetProjectsListQuery = (
       getProjectsList(
         queryOptions?.queryKey ? { ...queryOptions.queryKey } : {},
       ),
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     ...queryOptions,
     queryKey: queryOptions?.queryKey
       ? ['projects-list', ...Object.values(queryOptions?.queryKey || {})]
@@ -48,7 +49,7 @@ export const useGetProjectsDetailQuery = (
   return useQuery({
     queryKey: ['project-detail', id],
     queryFn: () => getProjectDetail(id),
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     enabled: !!id,
     ...queryOptions,
   });
@@ -61,7 +62,7 @@ export const useGetTaskStatesQuery = (
   return useQuery({
     queryKey: ['project-task-states', projectId],
     queryFn: () => getTaskStates(projectId),
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     enabled: !!projectId,
     ...queryOptions,
   });
@@ -73,8 +74,8 @@ export const useGetUserDetailsQuery = (
   return useQuery({
     queryKey: ['user-profile'],
     queryFn: getUserProfileInfo,
-    select: (res: any) => {
-      const userDetails = res.data;
+    select: (res: unknown) => {
+      const userDetails = (res as AxiosResponse).data;
       const userDetailsString = JSON.stringify(userDetails);
       localStorage.setItem('userprofile', userDetailsString as string);
       return userDetails;
@@ -105,7 +106,7 @@ export const useGetProjectCentroidQuery = (
       getProjectCentroid(
         queryOptions?.queryKey ? { ...queryOptions.queryKey } : {},
       ),
-    select: (data: any) => data.data,
+    select: (data: unknown) => (data as AxiosResponse).data,
     ...queryOptions,
     queryKey: queryOptions?.queryKey
       ? [

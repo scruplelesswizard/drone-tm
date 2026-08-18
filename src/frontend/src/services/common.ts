@@ -4,7 +4,11 @@ import { api, authenticated } from '.';
 
 const OSM_NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
 
-export const signInUser = (data: any) => api.post('/users/login', data);
+export const signInUser = (data: {
+  username: string;
+  password: string;
+  role?: string;
+}) => api.post('/users/login', data);
 
 export const signInGoogle = () => api.get('/users/google-login');
 
@@ -12,7 +16,7 @@ export const signInCallBackUrl = () => api.get('/users/callback');
 
 export const logoutUser = () => api.post('/user/logout/');
 
-export const forgotPassword = (data: any) =>
+export const forgotPassword = (data: { email: string }) =>
   api.post('/users/forgot-password', data);
 
 export const postUserProfile = ({
@@ -31,7 +35,13 @@ export const getUserProfileInfo = () =>
 
 export const getUsers = () => authenticated(api).get('/users');
 
-export const patchUserProfile = ({ userId, data }: Record<string, any>) =>
+export const patchUserProfile = ({
+  userId,
+  data,
+}: {
+  userId: number | string;
+  data: Record<string, unknown>;
+}) =>
   authenticated(api).patch(`/users/${userId}/profile`, data, {
     headers: { 'Content-Type': 'application/json' },
   });

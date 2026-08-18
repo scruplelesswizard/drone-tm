@@ -925,9 +925,11 @@ const MapSection = ({ className }: { className?: string }) => {
                     0,
                     0,
                     Number(
-                      // eslint-disable-next-line no-unsafe-optional-chaining
-                      rotatedFlightPlanData?.geojsonListOfPoints?.features
-                        ?.length - 1,
+                      ((
+                        rotatedFlightPlanData?.geojsonListOfPoints as
+                          | FeatureCollection
+                          | undefined
+                      )?.features?.length ?? 0) - 1,
                     ),
                     0,
                     1,

@@ -23,7 +23,7 @@ import gjv from 'geojson-validation';
 //   });
 // }
 
-export function convertGeojsonToFile(geojson: Record<string, any> | null) {
+export function convertGeojsonToFile(geojson: unknown) {
   const dataExtractBlob = new Blob([JSON.stringify(geojson)], {
     type: 'application/json',
   });

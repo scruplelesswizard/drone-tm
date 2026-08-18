@@ -477,6 +477,40 @@ than as inline notes on the item that found them:
             `boxOverlayRef.current` once at effect-setup time. One
             genuinely-unnecessary dep pair (`queryClient`, `projectId` on
             a `useCallback` that never referenced either) removed outright.
+      - [x] `@typescript-eslint/no-explicit-any` batch 1 (49 of 448 sites) —
+            services/API/Redux data layer: `src/services/*.ts`,
+            `src/api/*.ts`, `src/store/slices/{project,createproject,
+            droneOperartorTask}.ts`, plus the components those slices
+            broke when tightened. Typed React Query `select` callbacks as
+            `(res: unknown) => (res as AxiosResponse).data` rather than
+            `(res: AxiosResponse) => ...` - the latter type-checks in
+            isolation but fails TanStack Query's overload resolution when
+            `queryOptions` has no generics. Reconstructed real payload
+            shapes from each mutation's actual call site instead of
+            guessing (`FormData` for the multipart endpoints,
+            `{ event, comment }` for task-status posts, etc.); used
+            `Record<string, unknown>` only for genuinely-arbitrary
+            passthrough (query filters); left 3 sites in
+            `RegulatorsApprovalPage/index.tsx` and ~20 in `MapSection.tsx`
+            alone pending a shared `ProjectDetail`/`TaskData` interface -
+            not a quick per-site fix.
+            Found two real bugs by tightening these types: (1)
+            `CreateprojectLayout` was calling
+            `formData.append('image', projectImage.projectMapImage)` where
+            `projectImage` was already the `File` itself (not a wrapper
+            object) - every project creation silently uploaded the string
+            `"undefined"` as the project image instead of the real
+            screenshot; (2) the `droneOperatorTask` slice's initial state
+            had `geojsonListOfPoint` (singular) while every real dispatch
+            used `geojsonListOfPoints` (plural), masked entirely by `any`.
+            Also deleted two write-only, never-read state fields
+            (`uploadedProjectArea`, `uploadedNoFlyZone`) that had drifted
+            out of the `CreateProjectState` interface.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~399 sites -
+            continue in file/directory batches. `MapSection.tsx` (both the
+            IndividualProject and DroneOperatorTask ones),
+            `ImageReview.tsx`, and `common/MapLibreComponents/types/index.ts`
+            are the largest remaining concentrations.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
