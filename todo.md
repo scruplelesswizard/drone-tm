@@ -681,10 +681,44 @@ than as inline notes on the item that found them:
             shapes - `AsyncPopup` widened to `LngLatLike | null` since
             `popupCoordinate` is a loose `number[]`, not a `[number,number]`
             tuple, so it can't satisfy `LngLat` directly).
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~209 sites -
-            `common/DataTable/index.tsx` (12) and
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 7 (38 of 209
+            sites) - `common/DataTable/index.tsx` (the shared generic table
+            component, 12 sites) fully cleared: `select`/`getErrorMsg` use
+            the established `AxiosResponse`/`AxiosError` pattern,
+            `useQueryOptions` is `Partial<UseQueryOptions>`, and `ColumnData.
+            cell` is typed with TanStack's own `ColumnDefTemplate<CellContext
+            <ColumnData, unknown>>` rather than a fabricated row shape (this
+            component genuinely reuses `ColumnData` as both the column-def
+            schema and the table's row generic - a pre-existing, if
+            confusing, design not touched here). Fixing `data`/
+            `handleTableRowClick` from `Record<string, any>` to
+            `Record<string, unknown>` cascaded into all 4 real callers
+            (`IndividualProject/Tasks(/TableSection)`, `Contributions/
+            (TableSection)`, and their `views/IndividualProject/index.tsx` /
+            `RegulatorsApprovalPage/index.tsx` callers) needing the same
+            fix, which in turn required properly typing Redux's `tasksData`
+            (previously `Record<string, any>[]`, now `TaskData[]` - `TaskOut`
+            with `outline` widened to `Record<string, unknown> | null` since
+            the reshape in both dispatch sites only ever sets `properties`,
+            never a full `type`/`geometry` Feature) and `taskClickedOnTable`
+            (now a proper `TaskClickedOnTable` interface, not a backend
+            shape - just the fields the map popup needs on row click). That
+            retyping had further fallout across `IndividualProject/
+            MapSection/index.tsx` and `ExportSection/MapSection.tsx` (both
+            already `tasksData` consumers), fixed in the same commit;
+            `ExportSection/MapSection.tsx`'s and `ExportSection/index.tsx`'s
+            own `projectData: Record<string, any>` props were tightened to
+            `ProjectInfo` while in there. Also fixed `Dashboard/RequestLogs/
+            index.tsx` (not a `DataTable` consumer, but same `any`-riddled
+            task-list shape): added `UserTasksOut` (`services/dashboard.ts`,
+            matching backend `task_schemas.UserTasksOut` exactly - the
+            `GET /tasks` list endpoint, distinct from every other
+            Task-shaped interface already in the frontend) and used the
+            established `select: (res: unknown) => (res as AxiosResponse
+            <...>).data` pattern.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~171 sites -
             `DroneOperatorTask/DescriptionSection/UppyFileUploader/index.tsx`
-            (11) are the largest remaining concentrations.
+            (11) is the largest remaining single-file concentration.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the

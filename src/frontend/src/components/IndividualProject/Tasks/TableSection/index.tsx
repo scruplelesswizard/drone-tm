@@ -25,7 +25,7 @@ const tasksDataColumns = [
 interface ITableSectionProps {
   isFetching: boolean;
 
-  handleTableRowClick: (rowData: any) => void;
+  handleTableRowClick: (rowData: Record<string, unknown>) => void;
 }
 
 export default function TableSection({
@@ -36,13 +36,17 @@ export default function TableSection({
 
   const taskDataForTable = useMemo(() => {
     if (!tasksData) return [];
-    return tasksData?.reduce((acc: any, curr: any) => {
+    return tasksData?.reduce<Record<string, unknown>[]>((acc, curr) => {
       if (!(!curr?.state || curr?.state === 'UNLOCKED')) return acc;
       return [
         ...acc,
         {
           id: `Task# ${curr?.project_task_index}`,
-          flight_time: curr?.flight_time || '-',
+          // flight_time isn't a TaskData field - not part of the backend's
+          // TaskOut response, kept as a defensive fallback (always '-'
+          // before this was typed, same as now).
+          flight_time:
+            (curr as unknown as Record<string, unknown>)?.flight_time || '-',
           task_area: Number(curr?.total_area_sqkm)?.toFixed(3),
           flight_time_minutes: Number(curr?.flight_time_minutes)?.toFixed(3),
           flight_distance_km: Number(curr?.flight_distance_km)?.toFixed(3),
@@ -59,7 +63,7 @@ export default function TableSection({
       wrapperStyle={{
         height: '100%',
       }}
-      data={taskDataForTable as Record<string, any>[]}
+      data={taskDataForTable}
       withPagination={false}
       loading={isFetching}
       handleTableRowClick={handleTableRowClick}

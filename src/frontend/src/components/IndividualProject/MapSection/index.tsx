@@ -117,9 +117,9 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
               task.id === taskId
                 ? {
                     ...task,
-                    user_id: userDetails?.id,
-                    name: userDetails?.name,
-                    comment: commentText || undefined,
+                    user_id: (userDetails?.id as string) ?? null,
+                    name: (userDetails?.name as string) ?? null,
+                    comment: commentText || null,
                     outline: {
                       ...(task.outline as Record<string, unknown>),
                       properties: {
@@ -212,8 +212,10 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
     return new Set(
       tasksData
         .filter(task => {
-          const comment =
-            task?.comment || task?.outline?.properties?.lock_comment;
+          const outline = task?.outline as
+            | { properties?: { lock_comment?: string } }
+            | null;
+          const comment = task?.comment || outline?.properties?.lock_comment;
           return commentMentionsUserId(comment, userDetails.id as string);
         })
         .map(task => task.id),
@@ -223,11 +225,14 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
   // zoom to layer in the project area
   const bbox = useMemo(() => {
     if (tasksData && tasksData.length > 0) {
-      const tasksCollectiveGeojson = tasksData.reduce(
+      const tasksCollectiveGeojson = tasksData.reduce<{
+        type: 'FeatureCollection';
+        features: (Record<string, unknown> | null)[];
+      }>(
         (acc, curr) => ({ ...acc, features: [...acc.features, curr.outline] }),
         { type: 'FeatureCollection', features: [] },
       );
-      return getBbox(tasksCollectiveGeojson as FeatureCollection);
+      return getBbox(tasksCollectiveGeojson as unknown as FeatureCollection);
     }
     // No tasks yet - fall back to the project outline bbox
     return (
@@ -513,14 +518,17 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
                 key={task?.id}
                 map={map as Map}
                 id={`tasks-layer-${task?.id}-${taskStatusObj?.[task?.id]}`}
-                visibleOnMap={task?.id && taskStatusObj}
-                geojson={{
-                  ...task.outline,
-                  properties: {
-                    ...task.outline.properties,
-                    project_task_index: task?.project_task_index,
-                  },
-                }}
+                visibleOnMap={!!(task?.id && taskStatusObj)}
+                geojson={
+                  {
+                    ...(task.outline as Record<string, unknown>),
+                    properties: {
+                      ...(task.outline as { properties?: Record<string, unknown> })
+                        ?.properties,
+                      project_task_index: task?.project_task_index,
+                    },
+                  } as unknown as GeojsonType
+                }
                 interactions={['feature']}
                 layerOptions={getLayerOptionsByStatus(
                   taskStatusObj?.[`${task?.id}`],
@@ -545,13 +553,16 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
                 map={map as Map}
                 id={`mention-highlight-${task?.id}`}
                 visibleOnMap
-                geojson={{
-                  ...task.outline,
-                  properties: {
-                    ...task.outline.properties,
-                    project_task_index: task?.project_task_index,
-                  },
-                }}
+                geojson={
+                  {
+                    ...(task.outline as Record<string, unknown>),
+                    properties: {
+                      ...(task.outline as { properties?: Record<string, unknown> })
+                        ?.properties,
+                      project_task_index: task?.project_task_index,
+                    },
+                  } as unknown as GeojsonType
+                }
                 layerOptions={{
                   type: 'line',
                   paint: {

@@ -211,7 +211,8 @@ const IndividualProject = () => {
       locked_user_id: clickedTask?.user_id,
       locked_user_name: clickedTask?.name,
       lock_comment: clickedTask?.comment,
-      centroidCoordinates: centroid(clickedTask?.outline).geometry.coordinates,
+      centroidCoordinates: centroid(clickedTask?.outline as unknown as Feature)
+        .geometry.coordinates,
     };
 
     dispatch(

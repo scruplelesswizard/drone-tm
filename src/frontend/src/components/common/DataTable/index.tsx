@@ -2,7 +2,7 @@
 /* eslint-disable no-nested-ternary */
 
 import React, { useState, useMemo, useEffect, CSSProperties } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 import {
   flexRender,
   getCoreRowModel,
@@ -12,9 +12,11 @@ import {
   PaginationState,
   ColumnSort,
   ColumnDef,
+  ColumnDefTemplate,
+  CellContext,
   TableOptions,
 } from '@tanstack/react-table';
-import { AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import prepareQueryParam from '@Utils/prepareQueryParam';
 import {
   Table,
@@ -34,24 +36,26 @@ import Pagination from './DataTablePagination';
 export interface ColumnData {
   header: string;
   accessorKey: string;
-  cell?: any;
+  cell?: ColumnDefTemplate<CellContext<ColumnData, unknown>>;
 }
 
 interface DataTableProps {
   columns: ColumnDef<ColumnData>[];
   queryKey?: string;
-  queryFn?: (params: any) => Promise<AxiosResponse<any, any>>;
-  queryFnParams?: Record<string, any>;
-  initialState?: any;
+  queryFn?: (
+    params: Record<string, unknown>,
+  ) => Promise<AxiosResponse<unknown>>;
+  queryFnParams?: Record<string, unknown>;
+  initialState?: { paginationState?: PaginationState };
   searchInput?: string;
   wrapperStyle?: CSSProperties;
-  sortingKeyMap?: Record<string, any>;
+  sortingKeyMap?: Record<string, string>;
   withPagination?: boolean;
   tableOptions?: Partial<TableOptions<ColumnData>>;
-  useQueryOptions?: Record<string, any>;
-  data?: Record<string, any>[];
+  useQueryOptions?: Partial<UseQueryOptions>;
+  data?: Record<string, unknown>[];
   loading?: boolean;
-  handleTableRowClick?: any;
+  handleTableRowClick?: (rowData: Record<string, unknown>) => void;
 }
 
 const defaultPaginationState = {
@@ -120,7 +124,7 @@ export default function DataTable({
           })
           .join(', '),
       }) || null,
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     enabled: !data, // do not fetch data when there props data
     ...useQueryOptions,
   });
@@ -159,11 +163,11 @@ export default function DataTable({
     ...tableOptions,
   });
 
-  function getErrorMsg(err: any): string {
-    if (err && err.response && err.response.data && err.response.data.message) {
-      return err.response.data.message;
-    }
-    return m.common_unexpected_error();
+  function getErrorMsg(err: unknown): string {
+    const message = (err as AxiosError)?.response?.data as
+      | { message?: string }
+      | undefined;
+    return message?.message || m.common_unexpected_error();
   }
 
   if (isError) {
@@ -236,7 +240,9 @@ export default function DataTable({
                 key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
                 onClick={() => {
-                  handleTableRowClick?.(row?.original);
+                  handleTableRowClick?.(
+                    row?.original as unknown as Record<string, unknown>,
+                  );
                 }}
                 className={`${handleTableRowClick ? 'naxatw-cursor-pointer' : ''} `}
               >

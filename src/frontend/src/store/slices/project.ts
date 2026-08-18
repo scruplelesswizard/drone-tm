@@ -2,17 +2,34 @@ import { createSlice } from '@reduxjs/toolkit';
 import type { CaseReducer, PayloadAction } from '@reduxjs/toolkit';
 import { RasterSourceSpecification } from 'maplibre-gl';
 import { GeojsonType } from '@Components/common/MapLibreComponents/types';
+import { TaskOut } from '@Services/createproject';
 import persist from '@Store/persist';
+
+// tasksData is projectData.tasks (TaskOut[]) with each task's outline
+// reshaped into a loose GeoJSON-feature-like bag whose properties carry
+// the current lock info (see views/IndividualProject/index.tsx and
+// RegulatorsApprovalPage/index.tsx) - not a strict Feature since the
+// reshape only ever sets `properties`, not `type`/`geometry`.
+export interface TaskData extends Omit<TaskOut, 'outline'> {
+  outline: Record<string, unknown> | null;
+}
+
+// Set on row click in Tasks/TableSection - not a backend shape, just the
+// fields IndividualProject/MapSection needs to open a popup for that task.
+export interface TaskClickedOnTable {
+  id?: string;
+  locked_user_id?: string | null;
+  locked_user_name?: string | null;
+  lock_comment?: string | null;
+  centroidCoordinates?: number[];
+}
 
 export interface ProjectState {
   individualProjectActiveTab: string;
-  // Task records are a large, backend-defined shape; consumers already
-  // re-type individual items at each call site (e.g. `(task: Record<string,
-  // any>) => ...`), so keep the array itself loose to match.
-  tasksData: Record<string, any>[] | null;
+  tasksData: TaskData[] | null;
   projectArea: GeojsonType | null;
   selectedTaskId: string;
-  taskClickedOnTable: Record<string, any> | null;
+  taskClickedOnTable: TaskClickedOnTable | null;
   showGcpEditor: boolean;
   gcpData: unknown;
   visibleOrthophotoList: {
