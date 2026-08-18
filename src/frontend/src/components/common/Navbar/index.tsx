@@ -98,7 +98,6 @@ export default function Navbar() {
           <FlexRow className="naxatw-items-center naxatw-gap-6">
             <a
               className="naxatw-flex naxatw-cursor-pointer naxatw-items-center naxatw-gap-2 hover:naxatw-no-underline"
-              role="presentation"
               aria-label={m.nav_home_aria_label()}
               href="/"
             >

@@ -25,4 +25,6 @@ const MapContainer = forwardRef<HTMLDivElement, IMapContainer>(
   },
 );
 
+MapContainer.displayName = 'MapContainer';
+
 export default MapContainer;

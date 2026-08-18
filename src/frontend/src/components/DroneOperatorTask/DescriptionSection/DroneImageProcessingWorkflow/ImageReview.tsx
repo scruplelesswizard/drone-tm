@@ -85,6 +85,7 @@ const runWithConcurrency = async <T,>(
       while (cursor < items.length) {
         const idx = cursor++;
         try {
+          // eslint-disable-next-line no-await-in-loop -- this loop body IS the bounded-concurrency worker; parallelism comes from running `limit` of these loops concurrently, not from awaiting items in parallel here
           await worker(items[idx]);
           successCount++;
         } catch {
@@ -269,6 +270,7 @@ const TaskAccordionContent = ({
                       role="button"
                       tabIndex={0}
                       ref={el => {
+                        // eslint-disable-next-line no-param-reassign -- populating a ref map via callback ref is the standard React pattern
                         imageRefs.current[image.id] = el;
                       }}
                       className={`naxatw-group naxatw-relative naxatw-aspect-square naxatw-cursor-pointer naxatw-overflow-hidden naxatw-rounded naxatw-border-2 naxatw-transition-all hover:naxatw-shadow-md ${getImageTileBorderClass(

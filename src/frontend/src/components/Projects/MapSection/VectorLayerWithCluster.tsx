@@ -1,6 +1,3 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable consistent-return */
-
 import { useEffect } from 'react';
 
 export default function VectorLayerWithCluster({
@@ -11,7 +8,7 @@ export default function VectorLayerWithCluster({
   geojson,
 }: any) {
   useEffect(() => {
-    if (!map || !mapLoaded || !visibleOnMap || !sourceId) return;
+    if (!map || !mapLoaded || !visibleOnMap || !sourceId) return undefined;
 
     // Ensure a basic OSM raster basemap is present so the map is never blank
     // when failing to load vector tiles
@@ -31,7 +28,7 @@ export default function VectorLayerWithCluster({
       });
     }
 
-    !map.getSource(sourceId) &&
+    if (!map.getSource(sourceId)) {
       map.addSource(sourceId, {
         type: 'geojson',
         data: geojson,
@@ -39,8 +36,9 @@ export default function VectorLayerWithCluster({
         clusterMaxZoom: 14,
         clusterRadius: 40,
       });
+    }
 
-    !map.getLayer('clusters') &&
+    if (!map.getLayer('clusters')) {
       map.addLayer({
         id: 'clusters',
         type: 'circle',
@@ -51,12 +49,13 @@ export default function VectorLayerWithCluster({
           'circle-radius': 15,
         },
       });
+    }
 
     map.setGlyphs(
       'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
     );
 
-    !map.getLayer('cluster-count') &&
+    if (!map.getLayer('cluster-count')) {
       map.addLayer({
         id: 'cluster-count',
         type: 'symbol',
@@ -70,6 +69,7 @@ export default function VectorLayerWithCluster({
           'text-color': '#fff',
         },
       });
+    }
 
     map.addLayer({
       id: 'unclustered-point',
@@ -101,16 +101,20 @@ export default function VectorLayerWithCluster({
     });
 
     map.on('mouseenter', 'clusters', () => {
+      // eslint-disable-next-line no-param-reassign -- mutating the MapLibre canvas cursor style is the standard pattern (see e.g. TaskVerificationModal); only flagged here because `map` happens to be a destructured prop
       map.getCanvas().style.cursor = 'pointer';
     });
     map.on('mouseleave', 'clusters', () => {
+      // eslint-disable-next-line no-param-reassign
       map.getCanvas().style.cursor = '';
     });
 
     map.on('mouseenter', 'unclustered-point', () => {
+      // eslint-disable-next-line no-param-reassign
       map.getCanvas().style.cursor = 'pointer';
     });
     map.on('mouseleave', 'unclustered-point', () => {
+      // eslint-disable-next-line no-param-reassign
       map.getCanvas().style.cursor = '';
     });
 

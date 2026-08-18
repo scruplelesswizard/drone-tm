@@ -2,7 +2,7 @@ import { getRuntimeConfig } from '../runtimeConfig';
 
 const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
 
-export async function getPublicPresignedUrl(
+export default async function getPublicPresignedUrl(
   key: string,
   expiresHours = 2,
 ): Promise<string> {

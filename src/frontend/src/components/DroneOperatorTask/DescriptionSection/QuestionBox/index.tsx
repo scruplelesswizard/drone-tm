@@ -32,9 +32,9 @@ const QuestionBox = ({
     open: { opacity: 1, y: 0 },
     closed: { opacity: 0, y: '-100%' },
   };
-  function handleFlyableChange(value: string) {
+  const handleFlyableChange = (value: string) => {
     setFlyable(value);
-  }
+  };
 
   const { mutate: mutateComment, isPending: commentIsUpdating } = useMutation({
     mutationFn: (data: any) =>

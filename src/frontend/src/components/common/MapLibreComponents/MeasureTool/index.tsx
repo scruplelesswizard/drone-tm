@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { useEffect, useMemo, useRef } from 'react';
-import { DrawMode, Map, Popup } from 'maplibre-gl';
+import { Map, Popup } from 'maplibre-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import StaticMode from '@mapbox/mapbox-gl-draw-static-mode';
 import length from '@turf/length';
@@ -12,8 +12,6 @@ export interface IMeasureToolProps {
   map?: Map | null;
   isMapLoaded?: boolean;
   enable: boolean;
-  drawMode?: DrawMode | null | undefined;
-  styles?: Record<string, any>[];
   measureType: 'length' | 'area' | null;
   onDrawChange?: (props: { measurement: number; unit: string }) => void;
   onDrawComplete?: (data: Record<string, any>) => void;

@@ -434,6 +434,28 @@ than as inline notes on the item that found them:
             returns where a named function wasn't warranted, matching the
             IIFE pattern already used elsewhere in
             `views/IndividualProject/index.tsx`.
+      - [x] Remaining small-count rules (~21 sites total):
+            `@typescript-eslint/no-unused-expressions` (3),
+            `import/prefer-default-export` (3), `no-undef` (2),
+            `react/no-danger` (2), `no-await-in-loop` (2),
+            `react/no-unused-prop-types` (2),
+            `@typescript-eslint/no-unsafe-function-type` (2),
+            `no-param-reassign` (1), `react/jsx-no-bind` (1),
+            `react/display-name` (1),
+            `jsx-a11y/no-interactive-element-to-noninteractive-role` (1),
+            `no-return-await` (1). Found a real a11y bug fixing the last
+            one: `Navbar`'s home link had `role="presentation"` on an
+            `<a href="/">`, which strips its link semantics from
+            assistive tech despite a real `aria-label` - removed the
+            role rather than suppressing the lint. `MeasureTool`'s two
+            unused-prop-types turned out to be an entirely unused,
+            unimported component - deleted the two dead props rather
+            than silencing the rule. `no-await-in-loop` and one
+            `react/no-danger`/`no-param-reassign` site were legitimate
+            (bounded-concurrency worker pool, sequential stream reads,
+            MapLibre cursor-style mutation, locally-generated QR SVG) -
+            left as scoped `eslint-disable`s with reasons rather than
+            restructured.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
