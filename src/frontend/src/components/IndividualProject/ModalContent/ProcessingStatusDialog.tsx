@@ -733,12 +733,13 @@ const ProcessingStatusDialog = () => {
                           className="naxatw-inline-flex naxatw-items-center naxatw-gap-1 naxatw-rounded-full naxatw-px-2 naxatw-py-0.5 naxatw-text-xs naxatw-font-medium"
                           style={{
                             backgroundColor: `${stateColor}33`,
-                            color:
-                              displayState === 'IMAGE_PROCESSING_FINISHED'
-                                ? '#166534'
-                                : displayState === 'IMAGE_PROCESSING_FAILED'
-                                  ? '#991b1b'
-                                  : '#374151',
+                            color: (() => {
+                              if (displayState === 'IMAGE_PROCESSING_FINISHED')
+                                return '#166534';
+                              if (displayState === 'IMAGE_PROCESSING_FAILED')
+                                return '#991b1b';
+                              return '#374151';
+                            })(),
                           }}
                         >
                           {isTaskProcessing && (
@@ -1036,11 +1037,11 @@ const ProcessingStatusDialog = () => {
                 onClick={() => gcpFileInputRef.current?.click()}
                 disabled={isUploadingGcp}
               >
-                {isUploadingGcp
-                  ? m.common_uploading()
-                  : hasSavedGcp
-                    ? m.processing_dialog_replace_gcp_txt()
-                    : m.processing_dialog_upload_gcp_txt()}
+                {(() => {
+                  if (isUploadingGcp) return m.common_uploading();
+                  if (hasSavedGcp) return m.processing_dialog_replace_gcp_txt();
+                  return m.processing_dialog_upload_gcp_txt();
+                })()}
               </Button>
               <input
                 ref={gcpFileInputRef}
@@ -1156,11 +1157,13 @@ const ProcessingStatusDialog = () => {
               isCoverageFetching
             }
           >
-            {isFinalProcessingRunning
-              ? m.common_processing_ellipsis()
-              : isTaskSummaryFetching || isCoverageFetching
-                ? m.common_refreshing()
-                : m.processing_dialog_start_final_processing()}
+            {(() => {
+              if (isFinalProcessingRunning)
+                return m.common_processing_ellipsis();
+              if (isTaskSummaryFetching || isCoverageFetching)
+                return m.common_refreshing();
+              return m.processing_dialog_start_final_processing();
+            })()}
           </Button>
         </div>
 

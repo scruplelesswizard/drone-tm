@@ -75,7 +75,7 @@ const FlightGapDetectionModal = ({
 
   // Initialize map after data is loaded and DOM is ready
   useEffect(() => {
-    if (!isOpen || !currentGapData || map) return;
+    if (!isOpen || !currentGapData || map) return undefined;
 
     // Use a small delay to ensure DOM is rendered after loading state changes
     const timer = setTimeout(() => {

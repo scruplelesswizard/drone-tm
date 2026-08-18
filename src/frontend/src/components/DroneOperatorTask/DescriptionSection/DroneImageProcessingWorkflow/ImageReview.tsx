@@ -47,6 +47,27 @@ const canOverrideImageRejection = (status?: string) =>
   status === 'rejected' || status === 'invalid_exif';
 const canRejectImage = (status?: string) => status === 'assigned';
 
+function getImageTileBorderClass(
+  isAnchor: boolean,
+  isSelected: boolean,
+  isHighlighted: boolean,
+  status?: string,
+): string {
+  if (isAnchor)
+    return 'naxatw-border-amber-600 naxatw-ring-2 naxatw-ring-amber-400';
+  if (isSelected)
+    return 'naxatw-border-violet-600 naxatw-ring-2 naxatw-ring-violet-300';
+  if (isHighlighted)
+    return 'naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-300';
+  if (status === 'rejected' || status === 'invalid_exif')
+    return 'naxatw-border-red-300 hover:naxatw-border-red-500';
+  if (status === 'unmatched')
+    return 'naxatw-border-yellow-300 hover:naxatw-border-yellow-500';
+  if (status === 'duplicate')
+    return 'naxatw-border-gray-400 naxatw-opacity-60 hover:naxatw-border-gray-600';
+  return 'naxatw-border-gray-200 hover:naxatw-border-blue-500';
+}
+
 // Run async `worker` over `items` with at most `limit` in-flight at a time.
 // Each worker rejection is counted, never thrown - caller gets success/fail tallies.
 const BULK_CONCURRENCY = 8;
@@ -250,22 +271,12 @@ const TaskAccordionContent = ({
                       ref={el => {
                         imageRefs.current[image.id] = el;
                       }}
-                      className={`naxatw-group naxatw-relative naxatw-aspect-square naxatw-cursor-pointer naxatw-overflow-hidden naxatw-rounded naxatw-border-2 naxatw-transition-all hover:naxatw-shadow-md ${
-                        isAnchor
-                          ? 'naxatw-border-amber-600 naxatw-ring-2 naxatw-ring-amber-400'
-                          : isSelected
-                            ? 'naxatw-border-violet-600 naxatw-ring-2 naxatw-ring-violet-300'
-                            : highlightedImageId === image.id
-                              ? 'naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-300'
-                              : image.status === 'rejected' ||
-                                  image.status === 'invalid_exif'
-                                ? 'naxatw-border-red-300 hover:naxatw-border-red-500'
-                                : image.status === 'unmatched'
-                                  ? 'naxatw-border-yellow-300 hover:naxatw-border-yellow-500'
-                                  : image.status === 'duplicate'
-                                    ? 'naxatw-border-gray-400 naxatw-opacity-60 hover:naxatw-border-gray-600'
-                                    : 'naxatw-border-gray-200 hover:naxatw-border-blue-500'
-                      }`}
+                      className={`naxatw-group naxatw-relative naxatw-aspect-square naxatw-cursor-pointer naxatw-overflow-hidden naxatw-rounded naxatw-border-2 naxatw-transition-all hover:naxatw-shadow-md ${getImageTileBorderClass(
+                        isAnchor,
+                        isSelected,
+                        highlightedImageId === image.id,
+                        image.status,
+                      )}`}
                       onClick={e =>
                         onImageClick(
                           image,
@@ -285,27 +296,33 @@ const TaskAccordionContent = ({
                       }
                       title={`${image.filename}${image.rejection_reason ? ` - ${image.rejection_reason}` : ''}`}
                     >
-                      {thumbSrc ? (
-                        <img
-                          src={thumbSrc}
-                          alt={image.filename}
-                          className="naxatw-h-full naxatw-w-full naxatw-object-cover"
-                          loading="lazy"
-                        />
-                      ) : image.status === 'duplicate' ? (
-                        <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-center naxatw-bg-gray-100 naxatw-text-gray-400">
-                          <span className="material-icons naxatw-text-2xl">
-                            content_copy
-                          </span>
-                          <span className="naxatw-mt-0.5 naxatw-text-[9px]">
-                            {m.common_duplicate()}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-items-center naxatw-justify-center naxatw-bg-gray-100">
-                          <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-500" />
-                        </div>
-                      )}
+                      {(() => {
+                        if (thumbSrc)
+                          return (
+                            <img
+                              src={thumbSrc}
+                              alt={image.filename}
+                              className="naxatw-h-full naxatw-w-full naxatw-object-cover"
+                              loading="lazy"
+                            />
+                          );
+                        if (image.status === 'duplicate')
+                          return (
+                            <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-center naxatw-bg-gray-100 naxatw-text-gray-400">
+                              <span className="material-icons naxatw-text-2xl">
+                                content_copy
+                              </span>
+                              <span className="naxatw-mt-0.5 naxatw-text-[9px]">
+                                {m.common_duplicate()}
+                              </span>
+                            </div>
+                          );
+                        return (
+                          <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-items-center naxatw-justify-center naxatw-bg-gray-100">
+                            <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-500" />
+                          </div>
+                        );
+                      })()}
                       {(image.status === 'rejected' ||
                         image.status === 'invalid_exif') && (
                         <div className="naxatw-bg-red-500 naxatw-absolute naxatw-bottom-0 naxatw-left-0 naxatw-right-0 naxatw-truncate naxatw-bg-opacity-75 naxatw-px-1 naxatw-py-0.5 naxatw-text-center naxatw-text-[10px] naxatw-text-white">
@@ -565,11 +582,12 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
   // Gate the spinner on map data only - the sidebar paints in a second pass
   // once the review summary arrives, so users see the map immediately.
   const isLoading = isMapDataLoading;
-  const error = isMapDataError
-    ? mapDataError
-    : isReviewError
-      ? reviewError
-      : null;
+  let error = null;
+  if (isMapDataError) {
+    error = mapDataError;
+  } else if (isReviewError) {
+    error = reviewError;
+  }
 
   // Reset fit bounds when data source changes
   useEffect(() => {
@@ -677,7 +695,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
   // Initialize map when container is ready
   useEffect(() => {
     if (!container || map) {
-      return;
+      return undefined;
     }
 
     const mapInstance = new MapLibreMap({
@@ -718,7 +736,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
 
   // Observe container resize events
   useEffect(() => {
-    if (!map || !container) return;
+    if (!map || !container) return undefined;
 
     const observer = new ResizeObserver(() => {
       if (map) {
@@ -771,7 +789,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
 
   // Pointer cursor on image point hover
   useEffect(() => {
-    if (!map || !isMapLoaded) return;
+    if (!map || !isMapLoaded) return undefined;
 
     const layerId = 'review-image-points-layer';
 
@@ -911,7 +929,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
 
   // Custom popup on map click (replaces AsyncPopup for reliable close behavior)
   useEffect(() => {
-    if (!map || !isMapLoaded) return;
+    if (!map || !isMapLoaded) return undefined;
 
     const layerId = 'review-image-points-layer';
 
@@ -1052,7 +1070,7 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
 
   // Task picker mode: highlight tasks on hover and handle click to select
   useEffect(() => {
-    if (!map || !isMapLoaded) return;
+    if (!map || !isMapLoaded) return undefined;
 
     const fillLayerId = 'review-task-polygons-layer';
     const isPickerActive = () =>
@@ -1138,11 +1156,11 @@ ${safeReason && ['rejected', 'unmatched', 'invalid_exif', 'duplicate'].includes(
 
   // Box-select: disable drag-pan, capture rubber-band rect, query features on mouseup
   useEffect(() => {
-    if (!map || !isMapLoaded) return;
+    if (!map || !isMapLoaded) return undefined;
 
     if (!boxSelectMode) {
       map.dragPan.enable();
-      return;
+      return undefined;
     }
 
     map.dragPan.disable();

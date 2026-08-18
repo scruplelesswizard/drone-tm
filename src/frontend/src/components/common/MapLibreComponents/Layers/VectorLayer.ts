@@ -53,7 +53,7 @@ export default function VectorLayer({
     if (visibleOnMap && !map.getLayer(layerId)) {
       // Check if source exists before adding layer to prevent error
       if (!map.getSource(sourceId)) {
-        return;
+        return () => {};
       }
       map.addLayer({
         id: layerId,
