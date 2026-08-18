@@ -801,8 +801,31 @@ than as inline notes on the item that found them:
             - `useTaskParams()`'s `taskData` is already `TaskDetailsOut`.
             `DescriptionSection/index.tsx`'s other site: the 409-response
             `payload: any` typed as `{detail?: {code?: string}} | null`.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~106 sites,
-            spread across ~30 files with no single large concentration left
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 12 (13 of 106
+            sites) - rest of `IndividualProject/**` (excl. `MapSection`,
+            already done) fully cleared. `ProcessingStatusDialog.tsx` (6):
+            `projectId = (projectDetail as any)?.id` was pure redundancy -
+            its local `ProcessingDialogProjectDetail` type just hadn't
+            declared `id` even though the real backend response
+            (`ProjectInfo`) has it; the `taskList` builder's `any`s replaced
+            with `Record<string, unknown>` plus per-field casts, keeping the
+            already-documented "these fields may not exist on `AssetsInfo`"
+            uncertainty visible rather than asserting a shape. `GcpEditor/
+            index.tsx` (2): its 3 props typed from their one real caller
+            (`views/IndividualProject/index.tsx`); the custom-event handler
+            typed `Event` with a `CustomEvent<string>` cast for `.detail`.
+            `TaskOrthoCogViewer.tsx` (3): OpenLayers' own `ViewOptions` type
+            for the GeoTIFF view config, and `BaseEvent` (`ol/events/Event`)
+            for the `'error'` listener - OL's `.on()` overloads are keyed by
+            event name, and only accept callbacks typed for one of its
+            declared event-type unions, so a bespoke inline shape didn't
+            type-check; the GeoTIFF-specific `.error` property beyond
+            `BaseEvent` needed one more inline cast at the access site.
+            `Instructions/index.tsx` (1) and `QFieldExport/index.tsx` (1)
+            were mechanical - `ProjectInfo` and an `AxiosError` cast
+            respectively.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~93 sites,
+            spread across ~28 files with no single large concentration left
             - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into

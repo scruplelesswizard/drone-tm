@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AxiosError } from 'axios';
 import { toast } from 'react-toastify';
 import qrcode from 'qrcode-generator';
 import Modal from '@Components/common/Modal';
@@ -83,10 +84,11 @@ function QFieldExportDialog({
           return prev;
         });
       }, 300000);
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.detail || m.qfield_generation_start_failed(),
-      );
+    } catch (err) {
+      const detail = (err as AxiosError)?.response?.data as
+        | { detail?: string }
+        | undefined;
+      setError(detail?.detail || m.qfield_generation_start_failed());
       setStatus('idle');
       toast.error(m.qfield_generation_failed());
     }
