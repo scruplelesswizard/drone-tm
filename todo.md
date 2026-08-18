@@ -716,9 +716,24 @@ than as inline notes on the item that found them:
             Task-shaped interface already in the frontend) and used the
             established `select: (res: unknown) => (res as AxiosResponse
             <...>).data` pattern.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~171 sites -
-            `DroneOperatorTask/DescriptionSection/UppyFileUploader/index.tsx`
-            (11) is the largest remaining single-file concentration.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 8 (11 of 171
+            sites) - `DroneOperatorTask/DescriptionSection/UppyFileUploader/
+            index.tsx` fully cleared. `@uppy/aws-s3` and `@uppy/core` ship
+            their own full type declarations, so the plugin-option
+            callbacks (`createMultipartUpload`, `signPart`, etc.) were
+            already correctly inferring `file`/`data`/`partData` param
+            types - only the manually-added `: any` annotations
+            (`requestData`, `requestBody`, 5x `catch (error: any)`) were
+            actual `any` sites, replaced with real inline object types or
+            plain `catch (error)` (none of the catch bodies do member access
+            on `error`, so no cast needed). `uppy.on('complete'/
+            'upload-error', ...)` handlers and the `onUploadComplete` prop
+            use `UploadResult<Meta, Record<string, never>>` / `UppyFile<...>`
+            from `@uppy/core` (the app doesn't customize Uppy's Meta/Body
+            generics, so this matches the actual default instance type).
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~160 sites,
+            spread across ~40 files with no single large concentration left
+            - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
