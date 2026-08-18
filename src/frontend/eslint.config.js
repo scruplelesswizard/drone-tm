@@ -8,6 +8,7 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import prettierPlugin from 'eslint-plugin-prettier';
 import globals from 'globals';
 
+// eslint-disable-next-line no-underscore-dangle -- ESM's replacement for Node's __dirname global, not a private-property access
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // eslint-config-airbnb (and plugin:react/recommended, plugin:prettier/recommended)
@@ -68,6 +69,9 @@ const legacyRuleOverrides = {
   'no-param-reassign': 'warn',
   'jsx-a11y/label-has-associated-control': 'off',
   'jsx-a11y/control-has-associated-label': 'off',
+  // window.__RUNTIME_CONFIG__ is the established naming convention for the
+  // docker-entrypoint.sh-injected runtime config global (see runtimeConfig.ts).
+  'no-underscore-dangle': ['error', { allow: ['__RUNTIME_CONFIG__'] }],
 };
 
 export default [
@@ -104,6 +108,14 @@ export default [
       ...legacyRuleOverrides,
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
+  {
+    // Runtime config stub, overwritten at container start - not part of the
+    // `src/**` glob above, so it needs its own __RUNTIME_CONFIG__ allowance.
+    files: ['public/config.js'],
+    rules: {
+      'no-underscore-dangle': ['error', { allow: ['__RUNTIME_CONFIG__'] }],
     },
   },
   {

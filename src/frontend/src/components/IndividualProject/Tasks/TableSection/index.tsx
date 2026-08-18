@@ -25,7 +25,7 @@ const tasksDataColumns = [
 interface ITableSectionProps {
   isFetching: boolean;
 
-  handleTableRowClick: (rowData: any) => {};
+  handleTableRowClick: (rowData: any) => void;
 }
 
 export default function TableSection({

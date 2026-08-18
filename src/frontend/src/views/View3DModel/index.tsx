@@ -384,21 +384,23 @@ const View3DModel = () => {
         // a georeferencing issue in Obj2Tiles input and must be fixed there.
         localTransform = buildLocalTransform(lng, lat, alt);
 
-        let m: number[] = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+        let tilesetTransform: number[] = [
+          1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+        ];
         const rootRecord = root as Record<string, any> | null;
         if (rootRecord && Array.isArray(rootRecord.transform)) {
-          m = rootRecord.transform as number[];
+          tilesetTransform = rootRecord.transform as number[];
         }
         const rotMat3 = new THREE.Matrix3().set(
-          m[0],
-          m[1],
-          m[2],
-          m[8],
-          m[9],
-          m[10],
-          -m[4],
-          -m[5],
-          -m[6],
+          tilesetTransform[0],
+          tilesetTransform[1],
+          tilesetTransform[2],
+          tilesetTransform[8],
+          tilesetTransform[9],
+          tilesetTransform[10],
+          -tilesetTransform[4],
+          -tilesetTransform[5],
+          -tilesetTransform[6],
         );
         const finalMatrix = new THREE.Matrix4()
           .setFromMatrix3(rotMat3)

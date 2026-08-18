@@ -12,7 +12,7 @@ export type MapOptionsType = {
   disableRotation?: boolean;
 };
 
-export interface IMapOptionsProps extends Partial<MapOptionsType> {}
+export type IMapOptionsProps = Partial<MapOptionsType>;
 
 export interface IMapContainer {
   // children?: ReactNode;

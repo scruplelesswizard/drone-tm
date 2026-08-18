@@ -143,11 +143,17 @@ const TaskOrthoCogViewer = ({
   }, [signedUrl, onClose]);
 
   return createPortal(
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- click-to-dismiss backdrop + Escape is standard modal semantics; role="dialog" is correct despite the click/keydown handlers
     <div
       className="naxatw-fixed naxatw-inset-0 naxatw-z-[11113] naxatw-flex naxatw-items-center naxatw-justify-center naxatw-bg-black/60"
       onClick={e => {
         // Click on the backdrop (not on the panel) dismisses.
         if (e.target === e.currentTarget) onClose();
+      }}
+      // Escape is already handled globally above; this mirrors it on the
+      // element itself so the dialog satisfies its own keyboard contract.
+      onKeyDown={e => {
+        if (e.key === 'Escape') onClose();
       }}
       role="dialog"
       aria-modal="true"

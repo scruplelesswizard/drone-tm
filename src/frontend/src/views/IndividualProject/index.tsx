@@ -51,7 +51,7 @@ const getActiveTabContent = (
   data: Record<string, any>,
   isProjectDataLoading: boolean,
 
-  handleTableRowClick: (rowData: any) => {},
+  handleTableRowClick: (rowData: any) => void,
 
   onOpenUpload?: () => void,
 
