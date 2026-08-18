@@ -132,9 +132,9 @@ const ProcessingStatusDialog = () => {
   const readinessMap = useMemo(() => {
     const map = new Map<string, boolean>();
     if (taskSummary) {
-      for (const t of taskSummary) {
+      taskSummary.forEach(t => {
         map.set(t.task_id, t.has_ready_imagery);
-      }
+      });
     }
     return map;
   }, [taskSummary]);
@@ -146,9 +146,9 @@ const ProcessingStatusDialog = () => {
   const pendingTransferMap = useMemo(() => {
     const map = new Map<string, boolean>();
     if (taskSummary) {
-      for (const t of taskSummary) {
+      taskSummary.forEach(t => {
         map.set(t.task_id, t.imagery_transfer_pending === true);
-      }
+      });
     }
     return map;
   }, [taskSummary]);
@@ -845,6 +845,7 @@ const ProcessingStatusDialog = () => {
                               onClick={e => {
                                 if (
                                   isReprocess &&
+                                  // eslint-disable-next-line no-alert -- deliberate blocking confirm before a costly reprocess; no async confirm-modal exists in this codebase yet
                                   !window.confirm(
                                     m.processing_dialog_reprocess_confirm(),
                                   )
@@ -852,6 +853,7 @@ const ProcessingStatusDialog = () => {
                                   return;
                                 }
                                 if (e.ctrlKey || e.metaKey) {
+                                  // eslint-disable-next-line no-alert -- deliberate synchronous prompt for an engineering-only ctrl/cmd-click override; no UI form exists for this
                                   const odmUrl = window.prompt(
                                     m.processing_dialog_scaleodm_prompt(),
                                   );
@@ -909,6 +911,7 @@ const ProcessingStatusDialog = () => {
               leftIcon="play_arrow"
               onClick={() => {
                 if (
+                  // eslint-disable-next-line no-alert -- deliberate blocking confirm before batch-processing a possibly-large task selection
                   !window.confirm(
                     m.processing_dialog_process_selected_confirm({
                       count: selectedTasks.size,
@@ -1139,6 +1142,7 @@ const ProcessingStatusDialog = () => {
 
               confirmMessage += m.processing_dialog_final_confirm_proceed();
 
+              // eslint-disable-next-line no-alert -- deliberate blocking confirm before irreversible final processing
               if (!window.confirm(confirmMessage)) return;
               handleStartFinalProcessing(
                 false,

@@ -458,12 +458,19 @@ const FlightGapDetectionModal = ({
                   return (
                     <div
                       key={imageId}
+                      role="button"
+                      tabIndex={0}
                       className={`naxatw-relative naxatw-aspect-square naxatw-cursor-pointer naxatw-overflow-hidden naxatw-rounded naxatw-border naxatw-transition-all hover:naxatw-shadow-md ${
                         selectedImageId === imageId
                           ? 'naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-200'
                           : 'naxatw-border-gray-200'
                       }`}
                       onClick={() => setSelectedImageId(imageId)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          setSelectedImageId(imageId);
+                        }
+                      }}
                     >
                       <img
                         src={String(

@@ -394,6 +394,31 @@ than as inline notes on the item that found them:
             between type and every call site in `UploadArea` and
             `FormUI/FileUpload` (both), and `FormUI/Select`'s `onChange`
             prop invoked without `?.()` despite being optional.
+      - [x] `no-alert` (6), `no-shadow` (6), `no-use-before-define` (6),
+            `jsx-a11y/click-events-have-key-events` (6),
+            `jsx-a11y/no-static-element-interactions` (5),
+            `no-underscore-dangle` (8), `no-restricted-syntax` (7),
+            `@typescript-eslint/no-empty-object-type` (7) — grouped as one
+            batch since each individually was small/mechanical. Notable
+            fixes: renamed `adb.ts`'s underscore-prefixed helpers and
+            reordered them above their call sites (fixed
+            `no-underscore-dangle` + `no-use-before-define` together, since
+            both fired on the same convention); swapped its `alert()`
+            calls for `toast.error` (consistent with the rest of the app);
+            added an `__RUNTIME_CONFIG__` allowlist entry for
+            `no-underscore-dangle` (shared global-injection convention,
+            `runtimeConfig.ts` + `public/config.js`); converted `for...of`
+            loops to `.forEach()` (airbnb style, no behaviour change);
+            added real keyboard handlers (Enter/Space, Escape-to-close on
+            modals) to clickable `<div>` image tiles and dialog backdrops
+            rather than the no-op `onKeyDown={() => {}}` pattern already
+            used elsewhere in this codebase, except where the existing
+            mouse-only ctrl/meta-click multi-select semantics have no
+            reasonable keyboard equivalent yet (documented inline);
+            left the 4 `window.confirm`/`window.prompt` `no-alert` sites in
+            `ProcessingStatusDialog.tsx` as scoped `eslint-disable`s —
+            deliberate blocking confirmations before costly/irreversible
+            processing actions, not a suppress-and-move-on.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the

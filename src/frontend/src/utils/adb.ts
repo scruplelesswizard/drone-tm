@@ -9,19 +9,80 @@ import {
   AdbDaemonWebUsbDevice,
   AdbDaemonWebUsbDeviceManager,
 } from '@yume-chan/adb-daemon-webusb';
+import { toast } from 'react-toastify';
+
+async function readShellOutput(
+  process: AdbShellProtocolProcess,
+): Promise<string> {
+  const decoder = new TextDecoder();
+  const reader = process.stdout.getReader();
+  let output = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    output += decoder.decode(value);
+  }
+  return output;
+}
+
+async function encodeDataAsBase64String(data: Blob): Promise<string> {
+  return await new Promise<string>(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const arrayBuffer = reader.result as ArrayBuffer;
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      resolve(btoa(binary));
+    };
+    reader.readAsArrayBuffer(data);
+  });
+}
+
+async function getAdbConnection(): Promise<Adb | undefined> {
+  const Manager: AdbDaemonWebUsbDeviceManager | undefined =
+    AdbDaemonWebUsbDeviceManager.BROWSER;
+
+  if (!Manager) {
+    toast.error('WebUSB is not supported in this browser');
+    return;
+  }
+
+  const CredentialStore = new AdbWebCredentialStore();
+
+  const device: AdbDaemonWebUsbDevice | undefined =
+    await Manager.requestDevice();
+  if (!device) {
+    toast.error('No device selected');
+    return;
+  }
+
+  const connection = await device.connect();
+  const adb = new Adb(
+    await AdbDaemonTransport.authenticate({
+      serial: device.serial,
+      connection,
+      credentialStore: CredentialStore,
+    }),
+  );
+
+  return adb;
+}
 
 async function sendDjiGoFileViaAdb(data: Blob) {
-  const adb = await _getAdbConnection();
+  const adb = await getAdbConnection();
   if (!adb) return;
 
-  const base64String = await _encodeDataAsBase64String(data);
+  const base64String = await encodeDataAsBase64String(data);
 
   // Find an existing waypoint UUID directory to replace
   const waypointBase = `/sdcard/Android/data/dji.go.v5/files/waypoint`;
   const listDirs = await adb.subprocess.shellProtocol!.spawn(
     `ls -1t ${waypointBase}`,
   );
-  const dirOutput = await _readShellOutput(listDirs);
+  const dirOutput = await readShellOutput(listDirs);
   const dirs = dirOutput.split('\n').filter(Boolean);
   if (dirs.length === 0) {
     throw new Error(
@@ -46,10 +107,10 @@ async function sendDjiGoFileViaAdb(data: Blob) {
 }
 
 async function sendPotensicProFileViaAdb(data: Blob) {
-  const adb = await _getAdbConnection();
+  const adb = await getAdbConnection();
   if (!adb) return;
 
-  const base64String = await _encodeDataAsBase64String(data);
+  const base64String = await encodeDataAsBase64String(data);
 
   // Cleanup old journal files
   await adb.subprocess.shellProtocol!.spawn(
@@ -67,66 +128,6 @@ async function sendPotensicProFileViaAdb(data: Blob) {
   await writer.write(encodeUtf8(base64String));
   // eslint-disable-next-line no-console -- see sendDjiGoFileViaAdb above
   console.log('Copied flightplan to databases/map.db');
-}
-
-async function _readShellOutput(
-  process: AdbShellProtocolProcess,
-): Promise<string> {
-  const decoder = new TextDecoder();
-  const reader = process.stdout.getReader();
-  let output = '';
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    output += decoder.decode(value);
-  }
-  return output;
-}
-
-async function _encodeDataAsBase64String(data: Blob): Promise<string> {
-  return await new Promise<string>(resolve => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const arrayBuffer = reader.result as ArrayBuffer;
-      const bytes = new Uint8Array(arrayBuffer);
-      let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      resolve(btoa(binary));
-    };
-    reader.readAsArrayBuffer(data);
-  });
-}
-
-async function _getAdbConnection(): Promise<Adb | undefined> {
-  const Manager: AdbDaemonWebUsbDeviceManager | undefined =
-    AdbDaemonWebUsbDeviceManager.BROWSER;
-
-  if (!Manager) {
-    alert('WebUSB is not supported in this browser');
-    return;
-  }
-
-  const CredentialStore = new AdbWebCredentialStore();
-
-  const device: AdbDaemonWebUsbDevice | undefined =
-    await Manager.requestDevice();
-  if (!device) {
-    alert('No device selected');
-    return;
-  }
-
-  const connection = await device.connect();
-  const adb = new Adb(
-    await AdbDaemonTransport.authenticate({
-      serial: device.serial,
-      connection,
-      credentialStore: CredentialStore,
-    }),
-  );
-
-  return adb;
 }
 
 export { sendDjiGoFileViaAdb, sendPotensicProFileViaAdb };

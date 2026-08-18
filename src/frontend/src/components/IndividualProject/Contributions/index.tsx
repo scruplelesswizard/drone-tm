@@ -3,7 +3,7 @@ import TableSection from './TableSection';
 interface IContributionsProps {
   isFetching: boolean;
 
-  handleTableRowClick: (rowData: any) => {};
+  handleTableRowClick: (rowData: any) => void;
 }
 
 export default function Contributions({

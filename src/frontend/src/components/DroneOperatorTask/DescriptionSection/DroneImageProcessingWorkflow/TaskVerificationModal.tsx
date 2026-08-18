@@ -87,13 +87,13 @@ const TaskVerificationModal = ({
 
   // Build URL lookup map
   const imageUrlMap = useMemo(() => {
-    const map: Record<string, ImageUrls> = {};
+    const urlMap: Record<string, ImageUrls> = {};
     if (imageUrlsData?.images) {
-      for (const img of imageUrlsData.images) {
-        map[img.id] = img;
-      }
+      imageUrlsData.images.forEach(img => {
+        urlMap[img.id] = img;
+      });
     }
-    return map;
+    return urlMap;
   }, [imageUrlsData?.images]);
 
   // Virtualized sidebar grid (2 columns)
@@ -751,6 +751,8 @@ const TaskVerificationModal = ({
                             return (
                               <div
                                 key={image.id}
+                                role="button"
+                                tabIndex={0}
                                 ref={el => {
                                   imageRefs.current[image.id] = el;
                                 }}
@@ -762,6 +764,11 @@ const TaskVerificationModal = ({
                                 onClick={() =>
                                   handleSidebarImageClick(image.id)
                                 }
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    handleSidebarImageClick(image.id);
+                                  }
+                                }}
                               >
                                 {thumbSrc ? (
                                   <img
