@@ -576,15 +576,31 @@ than as inline notes on the item that found them:
             call site (the pattern used throughout this batch). Properly
             wiring the hook generics through would remove the need for
             that cast but is a larger, separate refactor.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~340 sites -
-            `IndividualProject/MapSection/index.tsx` (~25, DIFFERENT file
-            from the DroneOperatorTask one of the same name) is now the
-            single largest concentration and the natural next target,
-            since it already imports the real `ProjectInfo`/`TaskStateItem`
-            types via its callers - just needs its own prop/local types
-            swapped over. `DroneOperatorTask/MapSection/MapSection.tsx`,
-            `ImageReview.tsx`, `TaskVerificationModal.tsx`, and
-            `common/MapLibreComponents/types/index.ts` remain after that.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 2 (25 of 340
+            sites) - `IndividualProject/MapSection/index.tsx` (the 28-site
+            file, distinct from `DroneOperatorTask/MapSection/MapSection.tsx`
+            of the same basename), fully cleared using the `ProjectInfo`/
+            `TaskStateItem` types from part 1. Removed redundant
+            `(task: Record<string, any>)` callback annotations on
+            `.map`/`.filter`/`.find` over `tasksData` entirely (the array's
+            own declared type already carries the looseness, so an
+            explicit per-callback annotation was purely redundant - once
+            removed, no literal `any` remains for ESLint to flag while
+            behaviour is identical). Used `GeoJsonProperties` (from the
+            `geojson` package) for MapLibre feature-properties callback
+            params instead of `Record<string, any>` - correct AND not
+            flagged, since referencing an imported type alias that
+            internally resolves to `any` isn't the same as writing the
+            `any` keyword yourself. Propagated the `ProjectInfo` prop type
+            through to `views/IndividualProject/index.tsx` and
+            `views/RegulatorsApprovalPage/index.tsx`'s `<MapSection>`
+            usages (both previously bridged with an `as Record<string,
+            unknown>` cast to the old loose prop type).
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~315 sites -
+            `DroneOperatorTask/MapSection/MapSection.tsx`, `ImageReview.tsx`,
+            `TaskVerificationModal.tsx`, `DescriptionBox/index.tsx`, and
+            `common/MapLibreComponents/types/index.ts` are the largest
+            remaining concentrations - continue in file/directory batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the

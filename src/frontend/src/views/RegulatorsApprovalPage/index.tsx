@@ -112,9 +112,7 @@ const RegulatorsApprovalPage = () => {
           {isProjectDataFetching ? (
             <Skeleton className="naxatw-h-full naxatw-w-full" />
           ) : (
-            <MapSection
-              projectData={projectData as unknown as Record<string, unknown>}
-            />
+            <MapSection projectData={projectData as ProjectInfo} />
           )}
         </div>
       </div>

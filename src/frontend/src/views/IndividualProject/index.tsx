@@ -748,11 +748,7 @@ const IndividualProject = () => {
               {isProjectDataFetching ? (
                 <Skeleton className="naxatw-h-full naxatw-w-full" />
               ) : (
-                <MapSection
-                  projectData={
-                    projectData as unknown as Record<string, unknown>
-                  }
-                />
+                <MapSection projectData={projectData as ProjectInfo} />
               )}
             </div>
           </div>
@@ -765,9 +761,7 @@ const IndividualProject = () => {
           className="naxatw-flex naxatw-w-full naxatw-max-w-[600px] naxatw-justify-center"
           ref={exportRef}
         >
-          <ExportSection
-            projectData={projectData as unknown as Record<string, unknown>}
-          />
+          <ExportSection projectData={projectData as ProjectInfo} />
         </div>
       </div>
 

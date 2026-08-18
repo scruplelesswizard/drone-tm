@@ -2,9 +2,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LngLatBoundsLike, Map } from 'maplibre-gl';
-import { FeatureCollection } from 'geojson';
+import { AxiosError, AxiosResponse } from 'axios';
+import { FeatureCollection, GeoJsonProperties } from 'geojson';
 import { toast } from 'react-toastify';
 import { useGetTaskStatesQuery, useGetUserDetailsQuery } from '@Api/projects';
+import { ProjectInfo } from '@Services/createproject';
 import lock from '@Assets/images/lock.png';
 import areaIcon from '@Assets/images/area-icon.png';
 import BaseLayerSwitcherUI from '@Components/common/BaseLayerSwitcher';
@@ -32,7 +34,7 @@ import UnlockTaskPromptDialog from '../ModalContent/UnlockTaskPromptDialog';
 import LockTaskDialog from '../ModalContent/LockTaskDialog';
 import { m } from '@/paraglide/messages';
 
-const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
+const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
   const { id: urlId } = useParams();
   const navigate = useNavigate();
   const dispatch = useTypedDispatch();
@@ -41,11 +43,12 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   const projectUuid = projectData?.id || urlId;
   const [taskStatusObj, setTaskStatusObj] = useState<Record<
     string,
-    any
+    string
   > | null>(null);
-  const [lockedUser, setLockedUser] = useState<Record<string, any> | null>(
-    null,
-  );
+  const [lockedUser, setLockedUser] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
   const [showLockDialog, setShowLockDialog] = useState(false);
   const pendingLockCommentRef = useRef<string>('');
@@ -54,7 +57,8 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
     null,
   );
 
-  const { data: userDetails }: Record<string, any> = useGetUserDetailsQuery();
+  const { data: userDetails }: { data?: Record<string, unknown> } =
+    useGetUserDetailsQuery();
 
   const { map, isMapLoaded } = useMapLibreGLMap({
     mapOptions: {
@@ -82,9 +86,18 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   });
   const signedInAs = localStorage.getItem('signedInAs');
 
-  const { mutate: lockTask } = useMutation<any, any, any, unknown>({
+  const { mutate: lockTask } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    {
+      projectId: string;
+      taskId: string;
+      data: { event: string; updated_at?: string; comment?: string };
+    },
+    unknown
+  >({
     mutationFn: postTaskStatus,
-    onSuccess: (res: any) => {
+    onSuccess: res => {
       const taskId = res.data.task_id;
       const newState =
         projectData?.requires_approval_from_manager_for_locking &&
@@ -100,7 +113,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
         const commentText = pendingLockCommentRef.current;
         dispatch(
           setProjectState({
-            tasksData: tasksData.map((task: Record<string, any>) =>
+            tasksData: tasksData.map(task =>
               task.id === taskId
                 ? {
                     ...task,
@@ -108,9 +121,13 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
                     name: userDetails?.name,
                     comment: commentText || undefined,
                     outline: {
-                      ...task.outline,
+                      ...(task.outline as Record<string, unknown>),
                       properties: {
-                        ...task.outline.properties,
+                        ...(
+                          task.outline as {
+                            properties?: Record<string, unknown>;
+                          }
+                        )?.properties,
                         locked_user_id: userDetails?.id,
                         locked_user_name: userDetails?.name,
                         lock_comment: commentText || undefined,
@@ -129,17 +146,30 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
         toast.success(m.map_lock_approval_requested());
       } else {
         toast.success(m.map_task_locked_for_flight());
-        setLockedUser({ name: userDetails?.name, id: userDetails?.id });
+        setLockedUser({
+          name: (userDetails?.name as string) || '',
+          id: (userDetails?.id as string) || '',
+        });
       }
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.detail || err?.message || '');
+    onError: err => {
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || err?.message || '');
     },
   });
 
-  const { mutate: unLockTask } = useMutation<any, any, any, unknown>({
+  const { mutate: unLockTask } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    {
+      projectId: string;
+      taskId: string;
+      data: { event: string; updated_at?: string; comment?: string };
+    },
+    unknown
+  >({
     mutationFn: postTaskStatus,
-    onSuccess: (res: any) => {
+    onSuccess: res => {
       // The backend returns the resolved state - UNLOCKED for a pilot
       // releasing their LOCKED task, or the prior distinct state for an
       // admin revert (which preserves the original pilot as locker). We
@@ -159,8 +189,9 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
           : m.map_task_reverted_success(),
       );
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.detail || err?.message || '');
+    onError: err => {
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || err?.message || '');
     },
   });
 
@@ -180,12 +211,12 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
     if (!tasksData || !userDetails?.id) return new Set<string>();
     return new Set(
       tasksData
-        .filter((task: Record<string, any>) => {
+        .filter(task => {
           const comment =
             task?.comment || task?.outline?.properties?.lock_comment;
-          return commentMentionsUserId(comment, userDetails.id);
+          return commentMentionsUserId(comment, userDetails.id as string);
         })
-        .map((task: Record<string, any>) => task.id),
+        .map(task => task.id),
     );
   }, [tasksData, userDetails?.id]);
 
@@ -199,7 +230,10 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
       return getBbox(tasksCollectiveGeojson as FeatureCollection);
     }
     // No tasks yet - fall back to the project outline bbox
-    return projectData?.outline?.properties?.bbox ?? null;
+    return (
+      (projectData?.outline as { properties?: { bbox?: unknown } })?.properties
+        ?.bbox ?? null
+    );
   }, [tasksData, projectData?.outline]);
 
   useEffect(() => {
@@ -213,19 +247,13 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
       setSelectedTaskIndex(null);
       return;
     }
-    const task = tasksData.find(
-      (t: Record<string, any>) => t.id === selectedTaskId,
-    );
+    const task = tasksData.find(t => t.id === selectedTaskId);
     setSelectedTaskIndex(task?.project_task_index || null);
   }, [selectedTaskId, tasksData]);
 
   const selectedTask = useMemo(() => {
     if (!selectedTaskId || !tasksData) return null;
-    return (
-      tasksData.find(
-        (task: Record<string, any>) => task.id === selectedTaskId,
-      ) || null
-    );
+    return tasksData.find(task => task.id === selectedTaskId) || null;
   }, [selectedTaskId, tasksData]);
 
   const selectedTaskStatus = taskStatusObj?.[selectedTaskId];
@@ -247,13 +275,13 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   // end zoom to layer
 
   const getPopupUI = useCallback(
-    (properties: Record<string, any>) => {
-      const status = taskStatusObj?.[properties?.id];
+    (properties: GeoJsonProperties) => {
+      const status = taskStatusObj?.[properties?.id] || '';
       const lockerName =
         userDetails?.id === properties?.locked_user_id
           ? m.map_popup_locker_you()
           : properties?.locked_user_name;
-      const byLocker = properties.locked_user_name
+      const byLocker = properties?.locked_user_name
         ? ` ${m.map_popup_by_locker({ locker: lockerName })}`
         : '';
       const lockComment = properties?.lock_comment;
@@ -373,7 +401,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   const handleTaskLockClick = () => {
     pendingLockCommentRef.current = '';
     lockTask({
-      projectId: projectUuid,
+      projectId: projectUuid as string,
       taskId: selectedTaskId,
       data: { event: 'request', updated_at: new Date().toISOString() },
     });
@@ -386,7 +414,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
   const handleLockTaskWithComment = (comment: string) => {
     pendingLockCommentRef.current = comment;
     lockTask({
-      projectId: projectUuid,
+      projectId: projectUuid as string,
       taskId: selectedTaskId,
       data: {
         event: 'request',
@@ -398,7 +426,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
 
   const handleTaskUnLockClick = () => {
     unLockTask({
-      projectId: projectUuid,
+      projectId: projectUuid as string,
       taskId: selectedTaskId,
       data: { event: 'unlock', updated_at: new Date().toISOString() },
     });
@@ -479,7 +507,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
         )}
         {taskStatusObj &&
           tasksData &&
-          tasksData?.map((task: Record<string, any>) => {
+          tasksData?.map(task => {
             return (
               <VectorLayer
                 key={task?.id}
@@ -510,10 +538,8 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
         {taskStatusObj &&
           tasksData &&
           tasksData
-            ?.filter((task: Record<string, any>) =>
-              mentionedTaskIds.has(task?.id),
-            )
-            .map((task: Record<string, any>) => (
+            ?.filter(task => mentionedTaskIds.has(task?.id))
+            .map(task => (
               <VectorLayer
                 key={`mention-${task?.id}`}
                 map={map as Map}
@@ -587,27 +613,28 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
               ? m.map_popup_task_title({ index: selectedTaskIndex })
               : m.map_popup_task_title({ index: selectedTaskId })
           }
-          showPopup={(feature: Record<string, any>) => {
+          showPopup={(feature: Record<string, unknown>) => {
             if (!userDetails) return false;
 
+            const source = feature?.source as string | undefined;
+            const role = userDetails?.role as string[] | undefined;
             return (
-              feature?.source?.includes('tasks-layer') &&
+              !!source?.includes('tasks-layer') &&
               !(
                 (
-                  (userDetails?.role?.length === 1 &&
-                    userDetails?.role?.includes('REGULATOR')) ||
+                  (role?.length === 1 && role?.includes('REGULATOR')) ||
                   signedInAs === 'REGULATOR'
                 ) // Don't show popup if user role is regulator any and no other roles
               )
             );
           }}
-          fetchPopupData={(properties: Record<string, any>) => {
+          fetchPopupData={(properties: GeoJsonProperties) => {
             dispatch(
               setProjectState({
                 taskClickedOnTable: null,
               }),
             );
-            dispatch(setProjectState({ selectedTaskId: properties.id }));
+            dispatch(setProjectState({ selectedTaskId: properties?.id }));
             setSelectedTaskIndex(properties?.project_task_index || null);
             setLockedUser({
               id: properties?.locked_user_id || '',
