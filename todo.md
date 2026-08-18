@@ -625,11 +625,27 @@ than as inline notes on the item that found them:
             `SwitchTabOption` interface instead of widening to
             `Record<string, unknown>`, which would have broken `key={...}`
             and other direct property reads at render time.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~286 sites -
-            `ImageReview.tsx`, `TaskVerificationModal.tsx`,
-            `DescriptionBox/index.tsx`, and `common/MapLibreComponents/types/
-            index.ts` are the largest remaining concentrations - continue
-            in file/directory batches.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 4 (16 of 286
+            sites) - `DescriptionBox/index.tsx` and its sibling
+            `ManualOverrideSection.tsx`, plus `DescriptionComponent/index.tsx`.
+            Found two more real fields the frontend reads that aren't on
+            the backend `TaskDetailsOut` schema (`altitude`,
+            `starting_point_altitude`) - same drift pattern as the
+            `no_fly_zones_geojson` bug and the `ProcessingStatusDialog`
+            fields flagged earlier, but lower stakes here (both are already
+            behind `|| null` fallbacks that were already always firing, so
+            no behavior change - just made the "this is dead/unconfirmed"
+            fact visible in the type instead of hidden inside `any`).
+            `DescriptionBoxComponent`'s `data[].value` prop was typed
+            `string` but real callers were already passing raw numbers
+            (`taskWayPoints?.length`) - only worked before because `any`
+            masked the mismatch; widened to `string | number | null |
+            undefined` to match actual usage instead of coercing values to
+            match the type.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~270 sites -
+            `ImageReview.tsx`, `TaskVerificationModal.tsx`, and
+            `common/MapLibreComponents/types/index.ts` are the largest
+            remaining concentrations - continue in file/directory batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the

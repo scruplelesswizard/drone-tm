@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { AxiosError, AxiosResponse } from 'axios';
 
 import {
   useGetProjectsDetailQuery,
@@ -10,6 +11,7 @@ import { Button } from '@Components/RadixComponents/Button';
 import Modal from '@Components/common/Modal';
 import Select from '@Components/common/FormUI/Select';
 import { manualOverrideTaskState } from '@Services/project';
+import { ProjectInfo } from '@Services/createproject';
 import getTaskStateLabel from '@Utils/taskStateLabel';
 import { m } from '@/paraglide/messages';
 
@@ -33,7 +35,7 @@ interface IManualOverrideSectionProps {
   projectSlug: string;
   projectId: string;
   taskId: string;
-  currentState?: string;
+  currentState?: string | null;
 }
 
 const ManualOverrideSection = ({
@@ -43,8 +45,12 @@ const ManualOverrideSection = ({
   currentState,
 }: IManualOverrideSectionProps) => {
   const queryClient = useQueryClient();
-  const { data: projectData }: any = useGetProjectsDetailQuery(projectSlug);
-  const { data: userDetails }: any = useGetUserDetailsQuery();
+  const { data: projectData } = useGetProjectsDetailQuery(projectSlug) as {
+    data?: ProjectInfo;
+  };
+  const { data: userDetails } = useGetUserDetailsQuery() as {
+    data?: Record<string, unknown>;
+  };
 
   const isAuthor =
     !!projectData?.author_id &&
@@ -63,7 +69,12 @@ const ManualOverrideSection = ({
     [currentState],
   );
 
-  const { mutate: applyOverride, isPending } = useMutation({
+  const { mutate: applyOverride, isPending } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    { projectId: string; taskId: string; state: string },
+    unknown
+  >({
     mutationFn: manualOverrideTaskState,
     onSuccess: () => {
       toast.success(m.drone_task_manual_override_success());
@@ -73,11 +84,10 @@ const ManualOverrideSection = ({
       setSelectedState(null);
       setShowConfirm(false);
     },
-    onError: (err: any) => {
+    onError: err => {
+      const detail = (err.response?.data as { detail?: string })?.detail;
       toast.error(
-        err?.response?.data?.detail ||
-          err?.message ||
-          m.drone_task_manual_override_error(),
+        detail || err?.message || m.drone_task_manual_override_error(),
       );
     },
   });

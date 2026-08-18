@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { AxiosError, AxiosResponse } from 'axios';
+import { Feature } from 'geojson';
 import { useGetTaskAssetsInfo, useGetTaskWaypointQuery } from '@Api/tasks';
+import { AssetsInfo } from '@Services/tasks';
 import { postTaskStatus } from '@Services/project';
 import { buildDownloadUrl } from '@Utils/index';
 import getTaskStateLabel from '@Utils/taskStateLabel';
@@ -35,7 +38,7 @@ const DescriptionBox = () => {
     state => state.droneOperatorTask.gimbalAngle,
   );
 
-  const { data: taskWayPoints }: any = useGetTaskWaypointQuery(
+  const { data: taskWayPoints } = useGetTaskWaypointQuery(
     projectId as string,
     taskId as string,
     waypointMode as string,
@@ -43,21 +46,33 @@ const DescriptionBox = () => {
     0,
     gimbalAngle as string,
     {
-      select: (data: any) => {
-        return data.data.results.features;
+      select: (res: unknown) => {
+        const { data } = res as AxiosResponse<{
+          results: { features: Feature[] };
+        }>;
+        return data.results.features;
       },
     },
-  );
+  ) as { data?: Feature[] };
 
-  const { data: taskAssetsInformation }: Record<string, any> =
-    useGetTaskAssetsInfo(projectId as string, taskId as string);
+  const { data: taskAssetsInformation } = useGetTaskAssetsInfo(
+    projectId as string,
+    taskId as string,
+  ) as { data?: AssetsInfo };
 
   useEffect(() => {
     dispatch(resetFilesExifData());
   }, [dispatch]);
 
   const taskQueryData = useMemo(() => {
-    const resolvedTaskData = taskData as any;
+    const resolvedTaskData = taskData;
+    // altitude/starting_point_altitude aren't part of the backend's
+    // TaskDetailsOut response - kept as a defensive fallback in case a
+    // future response shape adds them, same as before this was typed.
+    const extraTaskData = taskData as unknown as {
+      altitude?: number;
+      starting_point_altitude?: number;
+    };
 
     const state = taskAssetsInformation?.state;
     const hasImageryUploaded = (taskAssetsInformation?.image_count ?? 0) > 0;
@@ -124,7 +139,7 @@ const DescriptionBox = () => {
         data: [
           {
             name: m.drone_task_altitude_label(),
-            value: resolvedTaskData?.altitude || null,
+            value: extraTaskData?.altitude || null,
           },
           {
             name: m.drone_task_gimbal_angle_label(),
@@ -160,8 +175,8 @@ const DescriptionBox = () => {
           },
           {
             name: m.drone_task_starting_point_altitude_label(),
-            value: resolvedTaskData?.starting_point_altitude
-              ? `${resolvedTaskData?.starting_point_altitude}`
+            value: extraTaskData?.starting_point_altitude
+              ? `${extraTaskData?.starting_point_altitude}`
               : null,
           },
         ],
@@ -198,16 +213,20 @@ const DescriptionBox = () => {
     [taskId, uploadProgress],
   );
 
-  const hasImages = taskAssetsInformation?.image_count > 0;
+  const hasImages = (taskAssetsInformation?.image_count ?? 0) > 0;
   const isLocked = taskAssetsInformation?.state === 'LOCKED';
   const isHasImagery = taskAssetsInformation?.state === 'HAS_IMAGERY';
   const isFullyFlown = taskAssetsInformation?.state === 'FULLY_FLOWN';
   const hasAssets = !!taskAssetsInformation?.assets_url;
 
   const { mutate: markFlown, isPending: isMarkingFlown } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    {
+      projectId: string;
+      taskId: string;
+      data: { event: string; updated_at?: string; comment?: string };
+    },
     unknown
   >({
     mutationFn: postTaskStatus,
@@ -215,19 +234,22 @@ const DescriptionBox = () => {
       toast.success(m.drone_task_marked_fully_flown_success());
       queryClient.invalidateQueries({ queryKey: ['task-assets-info'] });
     },
-    onError: (err: any) => {
+    onError: err => {
+      const detail = (err.response?.data as { detail?: string })?.detail;
       toast.error(
-        err?.response?.data?.detail ||
-          err?.message ||
-          m.drone_task_mark_fully_flown_error(),
+        detail || err?.message || m.drone_task_mark_fully_flown_error(),
       );
     },
   });
 
   const { mutate: unmarkFlown, isPending: isUnmarkingFlown } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    {
+      projectId: string;
+      taskId: string;
+      data: { event: string; updated_at?: string; comment?: string };
+    },
     unknown
   >({
     mutationFn: postTaskStatus,
@@ -235,12 +257,9 @@ const DescriptionBox = () => {
       toast.success(m.drone_task_reverted_to_locked_success());
       queryClient.invalidateQueries({ queryKey: ['task-assets-info'] });
     },
-    onError: (err: any) => {
-      toast.error(
-        err?.response?.data?.detail ||
-          err?.message ||
-          m.drone_task_revert_task_error(),
-      );
+    onError: err => {
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || err?.message || m.drone_task_revert_task_error());
     },
   });
 
@@ -263,7 +282,7 @@ const DescriptionBox = () => {
   return (
     <>
       <div className="naxatw-flex naxatw-flex-col naxatw-gap-5">
-        {taskDescription?.map((description: Record<string, any>) => (
+        {taskDescription?.map(description => (
           <DescriptionBoxComponent
             key={description.id}
             title={description.title}
