@@ -778,8 +778,31 @@ than as inline notes on the item that found them:
             `noFlyZone`'s `.features` access is itself only valid under the
             file's existing `@ts-expect-error`, so a real Feature type
             wasn't obtainable there without a larger refactor).
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~121 sites,
-            spread across ~35 files with no single large concentration left
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 11 (15 of 121
+            sites) - rest of `DroneOperatorTask/**` fully cleared:
+            `DroneImageProcessingWorkflow/index.tsx` (6) + `ImageUpload.tsx`
+            (1) share the `UploadResult<Meta, Record<string, never>>` /
+            `Meta` pattern from `@uppy/core` established in batch 3/8; the
+            three classification-mutation `onError` handlers just needed
+            their redundant `: any` annotations removed since
+            `useStartProjectClassificationMutation` etc. (`api/projects.ts`)
+            already declare `Error` as their `TError` generic.
+            `QuestionBox/index.tsx` (3): `setFlyable`'s `any` generic
+            narrowed to `string` (matches the real `useState('yes')` in its
+            only caller, `DescriptionBox/index.tsx`), and the comment
+            mutation typed against `postUnflyableComment`'s own param type
+            via `Parameters<typeof postUnflyableComment>[0]['data']`.
+            `UploadsInformation/index.tsx` (1): typed `data` as
+            `{name: string; value: string | number | null | undefined}[]`
+            - the `DescriptionBoxComponent` `value` pattern from batch 3/4,
+            since its only caller passes both string and numeric values.
+            `Header/index.tsx` (2) and `DescriptionSection/index.tsx`'s
+            `project_task_index` cast (part of its 2) were pure redundancy
+            - `useTaskParams()`'s `taskData` is already `TaskDetailsOut`.
+            `DescriptionSection/index.tsx`'s other site: the 409-response
+            `payload: any` typed as `{detail?: {code?: string}} | null`.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~106 sites,
+            spread across ~30 files with no single large concentration left
             - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into

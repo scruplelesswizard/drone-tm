@@ -14,7 +14,7 @@ import { m } from '@/paraglide/messages';
 
 interface IQuestionBoxProps {
   flyable: string;
-  setFlyable: React.Dispatch<React.SetStateAction<any>>;
+  setFlyable: React.Dispatch<React.SetStateAction<string>>;
   haveNoImages: boolean;
 }
 
@@ -37,14 +37,14 @@ const QuestionBox = ({
   };
 
   const { mutate: mutateComment, isPending: commentIsUpdating } = useMutation({
-    mutationFn: (data: any) =>
+    mutationFn: (data: Parameters<typeof postUnflyableComment>[0]['data']) =>
       postUnflyableComment({ projectId, taskId, data }),
     onSuccess: () => {
       // Optionally, refetch queries or show a success message
       toast.success(m.drone_task_comment_added_success());
       navigate(`/projects/${projectSlug}`);
     },
-    onError: (error: Record<string, any>) => {
+    onError: error => {
       // Handle error
       toast.error(error?.message);
     },

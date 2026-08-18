@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import type { Meta, UploadResult } from '@uppy/core';
 import { toast } from 'react-toastify';
 import Modal from '@Components/common/Modal';
 import { Button } from '@Components/RadixComponents/Button';
@@ -46,7 +47,7 @@ export const UploadImageryDialog = ({
       setIngestTriggered(true);
       setHasUploaded(true);
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error(
         m.imagery_upload_ingest_failed({
           message: error?.message || m.common_unknown_error(),
@@ -85,7 +86,10 @@ export const UploadImageryDialog = ({
   }, []);
 
   const handleUploadComplete = useCallback(
-    (_result: any, uploadedBatchId?: string) => {
+    (
+      _result: UploadResult<Meta, Record<string, never>>,
+      uploadedBatchId?: string,
+    ) => {
       if (uploadedBatchId) {
         setBatchIds(prev =>
           prev.includes(uploadedBatchId) ? prev : [...prev, uploadedBatchId],
@@ -136,8 +140,11 @@ export const UploadImageryDialog = ({
         setBatchIds([]);
         setHasUploaded(false);
         onClose();
-      } catch (error: any) {
-        toast.error(error?.message || m.imagery_upload_failed_delete_batches());
+      } catch (error) {
+        toast.error(
+          (error as Error)?.message ||
+            m.imagery_upload_failed_delete_batches(),
+        );
       } finally {
         setIsDeletingBatches(false);
       }
@@ -325,7 +332,7 @@ export const ClassifyImageryDialog = ({
       setIsPolling(true);
       toast.info(m.classify_imagery_started());
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error(
         m.classify_imagery_start_failed({
           message: error?.message || m.common_unknown_error(),
@@ -350,7 +357,7 @@ export const ClassifyImageryDialog = ({
         queryKey: ['project-imagery-status', projectId],
       });
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error(
         m.classify_imagery_reset_failed({
           message: error?.message || m.common_unknown_error(),
@@ -374,7 +381,7 @@ export const ClassifyImageryDialog = ({
         queryKey: ['project-task-states', projectId],
       });
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error(
         m.classify_imagery_scan_failed({
           message: error?.message || m.common_unknown_error(),

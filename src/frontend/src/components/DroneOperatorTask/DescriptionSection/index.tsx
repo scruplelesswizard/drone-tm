@@ -71,7 +71,7 @@ const DroneOperatorDescriptionBox = () => {
     });
 
     if (response.status === 409) {
-      let payload: any = null;
+      let payload: { detail?: { code?: string } } | null = null;
       try {
         payload = await response.json();
       } catch {
@@ -271,7 +271,7 @@ const DroneOperatorDescriptionBox = () => {
         <div className="naxatw-flex naxatw-w-full naxatw-items-center naxatw-justify-between naxatw-self-stretch">
           <p className="naxatw-text-[0.875rem] naxatw-font-normal naxatw-leading-normal naxatw-text-[#484848]">
             {m.common_task_number({
-              index: (taskDescription as any)?.project_task_index,
+              index: taskDescription?.project_task_index ?? '',
             })}
           </p>
 
