@@ -318,7 +318,11 @@ export const demFileOptions = () => [
   },
 ];
 
-export const uploadOrDrawAreaOptions = (): Record<string, any>[] => [
+export const uploadOrDrawAreaOptions = (): {
+  name: string;
+  value: string;
+  label: string;
+}[] => [
   { name: 'project', value: 'project', label: m.create_aoi_option_project() },
   {
     name: 'no_fly_zone',

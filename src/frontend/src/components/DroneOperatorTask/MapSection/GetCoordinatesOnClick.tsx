@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
+import { LngLat, MapMouseEvent } from 'maplibre-gl';
 import { useMap } from '../../common/MapLibreComponents/MapContext';
 
 interface IGetCoordinatesOnClick {
-  getCoordinates: any;
+  getCoordinates: (lngLat: LngLat) => void;
 }
 
 const GetCoordinatesOnClick = ({ getCoordinates }: IGetCoordinatesOnClick) => {
@@ -11,7 +12,7 @@ const GetCoordinatesOnClick = ({ getCoordinates }: IGetCoordinatesOnClick) => {
     if (!map || !isMapLoaded) return () => {};
     map.getCanvas().style.cursor = 'crosshair';
 
-    const handleClick = (e: any) => {
+    const handleClick = (e: MapMouseEvent) => {
       const latLng = e.lngLat;
       getCoordinates(latLng);
     };

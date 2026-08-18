@@ -596,11 +596,40 @@ than as inline notes on the item that found them:
             `views/RegulatorsApprovalPage/index.tsx`'s `<MapSection>`
             usages (both previously bridged with an `as Record<string,
             unknown>` cast to the old loose prop type).
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~315 sites -
-            `DroneOperatorTask/MapSection/MapSection.tsx`, `ImageReview.tsx`,
-            `TaskVerificationModal.tsx`, `DescriptionBox/index.tsx`, and
-            `common/MapLibreComponents/types/index.ts` are the largest
-            remaining concentrations - continue in file/directory batches.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 3 (29 of 315
+            sites) - `DroneOperatorTask/MapSection/MapSection.tsx` (its own
+            ~24 sites) plus `useTaskParams.ts`, `GetCoordinatesOnClick.tsx`,
+            `common/SwitchTab/index.tsx`, and two call sites in
+            `DefineAOI/index.tsx`/`constants/createProject.tsx` that broke
+            once `SwitchTab` got a real prop type. Added the 4th and 5th
+            backend response shapes from the batch-3-part-1 research to
+            `services/tasks.ts`: `TaskDetailsOut` (single-task detail,
+            `GET /tasks/{id}` and `/tasks/project/{id}/{index}` - used via
+            `useTaskParams()`) and `AssetsInfo` (task summary bulk
+            endpoint). `useTaskParams()` itself had 2 explicit-anys
+            (`(projectData as any)?.id`, `taskData = ... as any`) feeding
+            directly into every consumer of `taskData`/`taskId`/`projectId`
+            across the DroneOperatorTask tree - fixing it at the source
+            here is why this batch was smaller-but-higher-leverage than
+            its raw MapSection.tsx count suggests.
+            Reconfirmed the TanStack Query overload-resolution issue from
+            part 1: a `select` callback typed with a concrete param
+            (`res: AxiosResponse<...>`) fails to satisfy
+            `Partial<UseQueryOptions>`'s bare-generic overload even though
+            it's more specific, not less - the fix is always `select: (res:
+            unknown) => { const data = res as AxiosResponse<T>; ... }`,
+            never a directly-typed parameter.
+            `SwitchTab`'s `onChange: any` prop turned out to flow real
+            option objects (`{label, value, icon?, message?}`) matching
+            every actual call site once traced - gave it a proper
+            `SwitchTabOption` interface instead of widening to
+            `Record<string, unknown>`, which would have broken `key={...}`
+            and other direct property reads at render time.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~286 sites -
+            `ImageReview.tsx`, `TaskVerificationModal.tsx`,
+            `DescriptionBox/index.tsx`, and `common/MapLibreComponents/types/
+            index.ts` are the largest remaining concentrations - continue
+            in file/directory batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the

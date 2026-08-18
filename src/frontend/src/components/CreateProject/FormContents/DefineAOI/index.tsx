@@ -156,7 +156,7 @@ const DefineAOI = ({ formProps }: { formProps: UseFormPropsType }) => {
               valueKey="value"
               selectedValue={selectedTab}
               activeClassName="naxatw-bg-red naxatw-text-white"
-              onChange={(selected: any) => {
+              onChange={selected => {
                 setSelectedTab(selected.value);
               }}
             />

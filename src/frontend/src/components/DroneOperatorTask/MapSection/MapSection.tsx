@@ -2,10 +2,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import useTaskParams from '@Hooks/useTaskParams';
-import { FeatureCollection } from 'geojson';
+import { Feature, FeatureCollection, GeoJsonProperties, Point } from 'geojson';
 import { toast } from 'react-toastify';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GeoJSONSource, LngLatBoundsLike, Map } from 'maplibre-gl';
+import { AxiosError, AxiosResponse } from 'axios';
 import getBbox from '@turf/bbox';
 import { point } from '@turf/helpers';
 import { coordAll } from '@turf/meta';
@@ -55,11 +56,18 @@ import GetCoordinatesOnClick from './GetCoordinatesOnClick';
 import ShowInfo from './ShowInfo';
 import { m } from '@/paraglide/messages';
 
+interface ModifiedTaskWayPointsData {
+  geojsonListOfPoints: GeojsonType;
+  geojsonAsLineString: FeatureCollection;
+  battery_warning?: boolean;
+  estimated_flight_time_minutes?: number;
+}
+
 const MapSection = ({ className }: { className?: string }) => {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const { projectId, taskId, taskData } = useTaskParams();
-  const [popupData, setPopupData] = useState<Record<string, any>>({});
+  const [popupData, setPopupData] = useState<GeoJsonProperties>({});
   const [showFlightPlan, setShowFlightPlan] = useState(true);
   const [showTaskArea, setShowTaskArea] = useState(true);
   const [dragging, setDragging] = useState(false);
@@ -68,10 +76,8 @@ const MapSection = ({ className }: { className?: string }) => {
   const [allowMissingDem, setAllowMissingDem] = useState(false);
   const [demWarningShown, setDemWarningShown] = useState(false);
   const [showMissingDemModal, setShowMissingDemModal] = useState(false);
-  const [initialWaypointData, setInitialWaypointData] = useState<Record<
-    string,
-    any
-  > | null>();
+  const [initialWaypointData, setInitialWaypointData] =
+    useState<ModifiedTaskWayPointsData | null>();
   const [modifiedWaypointModeOptions, setModifiedWaypointModeOptions] =
     useState(getWaypointModeOptions());
 
@@ -102,7 +108,7 @@ const MapSection = ({ className }: { className?: string }) => {
     state => state.droneOperatorTask.rotationAngle,
   );
 
-  const { map, isMapLoaded }: any = useMapLibreGLMap({
+  const { map, isMapLoaded } = useMapLibreGLMap({
     containerId: 'dashboard-map',
     mapOptions: {
       zoom: 5,
@@ -117,17 +123,14 @@ const MapSection = ({ className }: { className?: string }) => {
     // though the returned data isn't read directly in this component.
     data: _taskAssetsInformation,
     // isFetching: taskAssetsInfoLoading,
-  }: Record<string, any> = useGetTaskAssetsInfo(
-    projectId as string,
-    taskId as string,
-  );
+  } = useGetTaskAssetsInfo(projectId as string, taskId as string);
 
   // Don't regenerate the flightplan once processing has started - the
   // flight is done and the backend call is a waste of resources.
   // IMAGE_UPLOADED is intentionally excluded: partial uploads may still
   // need new flights. If a user needs to re-add photos to a processed
   // task, they must first reset the processing status.
-  const taskState = (taskData as any)?.state;
+  const taskState = taskData?.state;
   const isPostFlightState =
     taskState === 'IMAGE_PROCESSING_STARTED' ||
     taskState === 'IMAGE_PROCESSING_FINISHED' ||
@@ -138,7 +141,7 @@ const MapSection = ({ className }: { className?: string }) => {
     isLoading: taskWayPointsLoading,
     isError: isTaskWaypointsError,
     error: taskWaypointsError,
-  }: any = useGetTaskWaypointQuery(
+  } = useGetTaskWaypointQuery(
     projectId as string,
     taskId as string,
     waypointMode as string,
@@ -147,7 +150,12 @@ const MapSection = ({ className }: { className?: string }) => {
     gimbalAngle as string,
     {
       enabled: !!(projectId && taskId) && !isPostFlightState,
-      select: ({ data }: any) => {
+      select: (res: unknown) => {
+        const { data } = res as AxiosResponse<{
+          results: GeojsonType;
+          battery_warning?: boolean;
+          estimated_flight_time_minutes?: number;
+        }>;
         const modifiedTaskWayPointsData = {
           geojsonListOfPoints: data.results,
           geojsonAsLineString: {
@@ -159,7 +167,7 @@ const MapSection = ({ className }: { className?: string }) => {
                 geometry: {
                   type: 'LineString',
                   // get all coordinates
-                  coordinates: coordAll(data.results),
+                  coordinates: coordAll(data.results as FeatureCollection),
                 },
               },
             ],
@@ -168,13 +176,23 @@ const MapSection = ({ className }: { className?: string }) => {
           estimated_flight_time_minutes: data.estimated_flight_time_minutes,
         };
 
-        takeOffPointRef.current =
-          modifiedTaskWayPointsData?.geojsonListOfPoints?.features[0]?.geometry?.coordinates;
+        const firstPointGeometry = (
+          modifiedTaskWayPointsData?.geojsonListOfPoints as FeatureCollection
+        )?.features[0]?.geometry as { coordinates?: [number, number] };
+        takeOffPointRef.current = firstPointGeometry?.coordinates as [
+          number,
+          number,
+        ];
         return modifiedTaskWayPointsData;
       },
     },
     allowMissingDem,
-  );
+  ) as {
+    data?: ModifiedTaskWayPointsData;
+    isLoading: boolean;
+    isError: boolean;
+    error: AxiosError | null;
+  };
 
   useEffect(() => {
     if (!isTaskWaypointsError) {
@@ -186,8 +204,14 @@ const MapSection = ({ className }: { className?: string }) => {
       return;
     }
 
-    const detail = taskWaypointsError?.response?.data?.detail;
-    const code = detail?.code;
+    const detail = (
+      taskWaypointsError?.response?.data as
+        | {
+            detail?: string | { code?: string; message?: string };
+          }
+        | undefined
+    )?.detail;
+    const code = typeof detail === 'object' ? detail?.code : undefined;
 
     if (code === 'MISSING_TERRAIN_DEM') {
       setDemWarningShown(true);
@@ -195,7 +219,9 @@ const MapSection = ({ className }: { className?: string }) => {
       return;
     }
 
-    const message = detail?.message || detail || taskWaypointsError?.message;
+    const message =
+      (typeof detail === 'object' ? detail?.message : detail) ||
+      taskWaypointsError?.message;
     toast.error(message || 'Failed to generate task waypoints.');
   }, [isTaskWaypointsError, taskWaypointsError, demWarningShown]);
 
@@ -213,21 +239,38 @@ const MapSection = ({ className }: { className?: string }) => {
   }, [taskWayPointsData]);
 
   const { mutate: postWaypoint, isPending: isUpdatingTakeOffPoint } =
-    useMutation<any, any, any, unknown>({
+    useMutation<
+      AxiosResponse,
+      AxiosError,
+      {
+        taskId: string;
+        projectId: string;
+        mode: string;
+        rotationAngle: number;
+        droneModel: string;
+        takeOffPoint: { longitude: number; latitude: number };
+        gimbalAngle: string;
+        allowMissingDem?: boolean;
+      },
+      unknown
+    >({
       mutationFn: postTaskWaypoint,
       onSuccess: async () => {
         queryClient.invalidateQueries({ queryKey: ['task-waypoints'] });
         dispatch(setSelectedTakeOffPoint(null));
         dispatch(setSelectedTakeOffPointOption('current_location'));
       },
-      onError: (err: any) => {
-        toast.error(err?.response?.data?.detail || err.message);
+      onError: err => {
+        const detail = (err.response?.data as { detail?: string })?.detail;
+        toast.error(detail || err.message);
         dispatch(setSelectedTakeOffPoint(null));
       },
     });
 
   const taskDataPolygon = useMemo(() => {
-    const geometry = (taskData as any)?.outline?.geometry;
+    const geometry = (
+      taskData?.outline as { geometry?: { coordinates: unknown } }
+    )?.geometry;
     if (!geometry) return null;
 
     return {
@@ -306,7 +349,7 @@ const MapSection = ({ className }: { className?: string }) => {
         const baseGeoData = source._data;
         if (!baseGeoData) return;
         const [firstFeature, ...restFeatures] = (
-          baseGeoData as Record<string, any>
+          baseGeoData as FeatureCollection
         ).features;
         if (firstFeature.geometry.type === 'Point') {
           const pointRotatedGeoJson = rotateGeoJSON(
@@ -355,7 +398,7 @@ const MapSection = ({ className }: { className?: string }) => {
   };
 
   function updateLayerCoordinates(
-    layerIds: Record<string, any>[],
+    layerIds: { id: string; type: string }[],
     coordinate: [number, number],
   ) {
     // Iterate over the array of layer IDs
@@ -457,7 +500,8 @@ const MapSection = ({ className }: { className?: string }) => {
     }
 
     const numberOfFeatures =
-      taskWayPointsData?.geojsonListOfPoints.features.length;
+      (taskWayPointsData?.geojsonListOfPoints as FeatureCollection | undefined)
+        ?.features.length ?? 0;
 
     if (numberOfFeatures > waypointUpperLimit) {
       setModifiedWaypointModeOptions(prevOptions =>
@@ -701,10 +745,8 @@ const MapSection = ({ className }: { className?: string }) => {
   };
 
   const handleSaveStartingPoint = () => {
-    const { geometry: startingPonyGeometry } = newTakeOffPoint as Record<
-      string,
-      any
-    >;
+    const { geometry: startingPonyGeometry } =
+      newTakeOffPoint as Feature<Point>;
     const [lng, lat] = startingPonyGeometry.coordinates;
     postWaypoint({
       projectId,
@@ -850,9 +892,11 @@ const MapSection = ({ className }: { className?: string }) => {
                     0,
                     0,
                     Number(
-                      // eslint-disable-next-line no-unsafe-optional-chaining
-                      taskWayPointsData?.geojsonListOfPoints?.features?.length -
-                        1,
+                      ((
+                        taskWayPointsData?.geojsonListOfPoints as
+                          | FeatureCollection
+                          | undefined
+                      )?.features?.length ?? 0) - 1,
                     ),
                     0,
                     1,
@@ -976,10 +1020,10 @@ const MapSection = ({ className }: { className?: string }) => {
 
         {newTakeOffPoint === 'place_on_map' && (
           <GetCoordinatesOnClick
-            getCoordinates={(coordinates: Record<string, any>) =>
+            getCoordinates={coordinates =>
               dispatch(
                 setSelectedTakeOffPoint(
-                  point([coordinates.lng, coordinates?.lat]),
+                  point([coordinates.lng, coordinates.lat]),
                 ),
               )
             }
@@ -1026,12 +1070,12 @@ const MapSection = ({ className }: { className?: string }) => {
 
         <AsyncPopup
           map={map as Map}
-          showPopup={(feature: Record<string, any>) =>
+          showPopup={(feature: GeoJsonProperties) =>
             feature?.source === 'waypoint-points' ||
             feature?.source === 'waypoint-points-image'
           }
           popupUI={getPopupUI}
-          fetchPopupData={(properties: Record<string, any>) => {
+          fetchPopupData={(properties: GeoJsonProperties) => {
             setPopupData(properties);
           }}
           hideButton
@@ -1057,7 +1101,7 @@ const MapSection = ({ className }: { className?: string }) => {
             labelKey="label"
             valueKey="value"
             selectedValue={gimbalAngle}
-            onChange={(value: Record<string, any>) => {
+            onChange={value => {
               dispatch(setGimbalAngle(value.value));
             }}
           />
@@ -1068,7 +1112,7 @@ const MapSection = ({ className }: { className?: string }) => {
             labelKey="label"
             valueKey="value"
             selectedValue={waypointMode}
-            onChange={(value: Record<string, any>) => {
+            onChange={value => {
               dispatch(setWaypointMode(value.value));
             }}
           />
