@@ -15,7 +15,7 @@ type FileType = File & {
 
 type UploadedFilesType = {
   id: string;
-  previewUrl: string;
+  previewURL: string;
   file: FileType;
 }[];
 
@@ -56,7 +56,7 @@ export default function FileUpload({
   // {id, previewURL, file} objects already in form state).
   useEffect(() => {
     if (!data || !Array.isArray(data) || data.length === 0) return;
-    // @ts-ignore - `data` prop is loosely typed as `[]` in this component
+    // @ts-expect-error - `data` prop is loosely typed as `[]` in this component
     if (typeof data[0] === 'string') {
       if (!multiple) return;
       const uploaded = data.map((url: string) => {
@@ -67,7 +67,7 @@ export default function FileUpload({
           file: { name: urlArray?.[urlArray.length - 1] || null },
         };
       });
-      // @ts-ignore
+      // @ts-expect-error uploaded is built from data (typed as []), so its inferred element shape conflicts with UploadedFilesType
       setUploadedFiles(uploaded);
       return;
     }
@@ -81,14 +81,13 @@ export default function FileUpload({
     if (!data) {
       setValue(name, []);
     } else if (typeof data === 'string' && !multiple) {
-      // @ts-ignore
+      // @ts-expect-error data prop is typed as [], not narrowed to string even though this branch already checked typeof data === 'string'
       const urlArray = data.split('/');
       setUploadedFiles([
         {
-          // @ts-ignore
           id: uuidv4(),
           previewURL: data,
-          // @ts-ignore
+          // @ts-expect-error file is a partial placeholder ({ name }) here, not a full FileType
           file: { name: urlArray?.[urlArray.length - 1] || null },
         },
       ]);
@@ -108,7 +107,7 @@ export default function FileUpload({
 
     const valid = await isValid?.(uploadedFilesState);
     if (!valid) return;
-    //   @ts-ignore
+    // @ts-expect-error uploadedFilesState is built from data (typed as []), so its inferred element shape conflicts with UploadedFilesType
     setUploadedFiles(uploadedFilesState);
     setValue(name, uploadedFilesState, { shouldDirty: true });
     onChange?.(uploadedFilesState);
@@ -137,7 +136,7 @@ export default function FileUpload({
             ? 'naxatw-cursor-not-allowed naxatw-opacity-60'
             : 'naxatw-cursor-pointer'
         }`}
-        //   @ts-ignore
+        // @ts-expect-error useCustomUpload returns a handler typed for a narrower element/event than FlexColumn onClick expects
         onClick={disabled ? undefined : onFileUpload}
       >
         <Icon name="backup" className="naxatw-text-3xl naxatw-text-red" />
@@ -160,7 +159,6 @@ export default function FileUpload({
       >
         {uploadedFiles &&
           Array.isArray(uploadedFiles) &&
-          // @ts-ignore
           uploadedFiles?.map(({ file, id, previewURL }) => (
             <FlexRow
               key={id}

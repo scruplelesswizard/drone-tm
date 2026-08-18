@@ -127,6 +127,17 @@ export default [
     },
   },
   {
+    // @ts-nocheck here is a deliberate, documented exception (see the
+    // in-file comment): @react-spring/web isn't compatible with React 19's
+    // types yet, and the incompatibility cascades across the whole file,
+    // not a few isolatable lines. Revisit once that dependency updates -
+    // not an eslint-config problem to fix around otherwise.
+    files: ['src/views/Tutorial/index.tsx'],
+    rules: {
+      '@typescript-eslint/ban-ts-comment': 'off',
+    },
+  },
+  {
     // Root-level tooling config files: not part of the app's own tsconfig
     // (so no type-aware `project`), and legitimately import devDependencies.
     files: ['*.config.{js,ts,cjs,mjs}'],

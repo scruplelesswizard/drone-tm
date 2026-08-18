@@ -55,7 +55,7 @@ export default function useMapLibreGLMap({
     if (enable3D) {
       map.setTerrain({ source: 'terrainSource', exaggeration: 0.6 });
     } else {
-      // @ts-ignore
+      // @ts-expect-error setTerrain requires an argument (or null) in its types; calling with none to clear terrain is valid at runtime but untyped
       map.setTerrain();
     }
   }, [map, isMapLoaded, enable3D]);

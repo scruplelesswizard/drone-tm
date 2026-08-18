@@ -379,6 +379,21 @@ than as inline notes on the item that found them:
             now-stale `eslint-disable no-unused-vars` comments left over
             from before the swap. Fixed the ~26 real findings the
             correct rule then surfaced.
+      - [x] `@typescript-eslint/ban-ts-comment` (78 sites) — added real
+            per-site descriptions to `@ts-expect-error` (most: MapboxDraw
+            types written for mapbox-gl not maplibre-gl, TanStack Table's
+            generic `ColumnDef` missing `accessorKey`, loosely-typed
+            `data?: []` props, stubbed `register` no-ops); removed 2
+            unnecessary `@ts-ignore`/`@ts-nocheck` (`DefineAOI`,
+            `LandingPage`, `common/Modal`) after confirming via `tsc
+            --noEmit` they weren't suppressing anything real; kept
+            `views/Tutorial`'s `@ts-nocheck` (genuine
+            @react-spring/web + React 19 incompatibility) but scoped the
+            rule off for just that file instead. Found and fixed two real
+            bugs along the way: `previewUrl`/`previewURL` casing mismatch
+            between type and every call site in `UploadArea` and
+            `FormUI/FileUpload` (both), and `FormUI/Select`'s `onChange`
+            prop invoked without `?.()` despite being optional.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the

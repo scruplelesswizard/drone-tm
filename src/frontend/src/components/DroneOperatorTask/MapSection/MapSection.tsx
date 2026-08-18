@@ -308,7 +308,7 @@ const MapSection = ({ className }: { className?: string }) => {
         ).features;
         if (firstFeature.geometry.type === 'Point') {
           const pointRotatedGeoJson = rotateGeoJSON(
-            // @ts-ignore
+            // @ts-expect-error spread baseGeoData object does not satisfy rotateGeoJSON's expected GeoJSON input type exactly
             {
               ...(baseGeoData as object),
               features: excludeFirstFeature
@@ -319,7 +319,6 @@ const MapSection = ({ className }: { className?: string }) => {
             centroidRef.current,
           );
           if (sourceToRotate && sourceToRotate instanceof GeoJSONSource) {
-            // @ts-ignore
             sourceToRotate.setData(pointRotatedGeoJson);
           }
         }
@@ -329,7 +328,7 @@ const MapSection = ({ className }: { className?: string }) => {
           const rotatedGeoJson = rotateGeoJSON(
             {
               features: [
-                // @ts-ignore
+                // @ts-expect-error inline Feature object literal does not satisfy the full GeoJSON Feature type here
                 {
                   type: 'Feature',
                   geometry: {
@@ -346,7 +345,6 @@ const MapSection = ({ className }: { className?: string }) => {
             centroidRef.current,
           );
           if (sourceToRotate && sourceToRotate instanceof GeoJSONSource) {
-            // @ts-ignore
             sourceToRotate.setData(rotatedGeoJson);
           }
         }
@@ -368,7 +366,7 @@ const MapSection = ({ className }: { className?: string }) => {
 
       if (source && source instanceof GeoJSONSource) {
         const geoJsonData = source._data;
-        // @ts-ignore
+        // @ts-expect-error source._data is maplibre-gl's internal/undocumented field, untyped beyond unknown
         const { features, ...restGeoData } = geoJsonData;
         // eslint-disable-next-line prefer-destructuring
         const coordinates = features[0].geometry.coordinates;
@@ -850,7 +848,6 @@ const MapSection = ({ className }: { className?: string }) => {
                     0,
                     0,
                     Number(
-                      // @ts-ignore
                       // eslint-disable-next-line no-unsafe-optional-chaining
                       taskWayPointsData?.geojsonListOfPoints?.features?.length -
                         1,
@@ -926,7 +923,6 @@ const MapSection = ({ className }: { className?: string }) => {
                     0,
                     0,
                     Number(
-                      // @ts-ignore
                       // eslint-disable-next-line no-unsafe-optional-chaining
                       rotatedFlightPlanData?.geojsonListOfPoints?.features
                         ?.length - 1,

@@ -24,7 +24,7 @@ export default function useScrollActiveListener({
   const handleScroll = useCallback(
     debounce(() => {
       Object.entries(sectionRefs.current).forEach(([key, section]) => {
-        // @ts-ignore
+        // @ts-expect-error section is a ref object; getBoundingClientRect needs .current, not guaranteed non-null in this type
         const elementPosition = section.getBoundingClientRect().top;
         if (elementPosition < 200) {
           onChange(key);

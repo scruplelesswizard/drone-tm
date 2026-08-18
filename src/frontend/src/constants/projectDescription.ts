@@ -84,7 +84,7 @@ export const getLayerOptionsByStatus = (status: string) => {
     },
   };
 
-  // @ts-ignore
+  // @ts-expect-error status is typed more broadly than layerOptions's specific key union
   return layerOptions?.[status] || layerOptions.default;
 };
 

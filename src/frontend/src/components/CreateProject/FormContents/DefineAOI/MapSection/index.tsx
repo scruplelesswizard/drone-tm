@@ -115,12 +115,12 @@ const MapSection = ({
     if (!selectedFeatureIds.length) return;
     let finalFeatureList = [];
     if (selectedTab === 'project') {
-      // @ts-ignore
+      // @ts-expect-error finalFeatureList is declared as [] above, which TS infers as never[] until reassigned
       finalFeatureList = projectArea?.features?.filter(
         (feature: any) => !selectedFeatureIds.includes(feature?.id),
       );
     } else {
-      // @ts-ignore
+      // @ts-expect-error finalFeatureList is declared as [] above, which TS infers as never[] until reassigned
       finalFeatureList = noFlyZone?.features?.filter(
         (feature: any) => !selectedFeatureIds.includes(feature?.id),
       );

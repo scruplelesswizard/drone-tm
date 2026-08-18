@@ -192,7 +192,7 @@ export default function DataTable({
                         header.column.columnDef.header,
                         header.getContext(),
                       )}
-                      {/* @ts-ignore */}
+                      {/* @ts-expect-error accessorKey is not on TanStack Table's generic ColumnDef union type (only accessor-style columns have it) */}
                       {header.column.columnDef.accessorKey.startsWith(
                         'icon',
                       ) ? null : (

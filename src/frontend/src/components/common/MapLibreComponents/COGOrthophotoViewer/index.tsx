@@ -22,7 +22,7 @@ const COGOrthophotoViewer = ({
 
     const handleZoomToGeoTiff = () => {
       if (map?.getSource(id))
-        // @ts-ignore
+        // @ts-expect-error getSource returns the base Source type; .bounds only exists on certain source types (e.g. raster/image), not in the union
         map?.fitBounds(map?.getSource(id)?.bounds, {
           padding: 50,
           duration: 1000,
