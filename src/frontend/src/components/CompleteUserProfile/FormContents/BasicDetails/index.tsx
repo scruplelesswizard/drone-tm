@@ -1,12 +1,19 @@
 import { Flex, FlexColumn } from '@Components/common/Layouts';
 import { FormControl, Select, Input, Label } from '@Components/common/FormUI';
 import ErrorMessage from '@Components/common/ErrorMessage';
-import { Controller } from 'react-hook-form';
+import { Controller, FieldValues, UseFormReturn } from 'react-hook-form';
 import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
 import { countries } from 'countries-list';
 import { m } from '@/paraglide/messages';
 
-export default function BasicDetails({ formProps }: { formProps: any }) {
+export default function BasicDetails({
+  formProps,
+}: {
+  formProps: Pick<
+    UseFormReturn<FieldValues>,
+    'register' | 'setValue' | 'formState' | 'control' | 'watch'
+  >;
+}) {
   const { register, formState, control } = formProps;
 
   const userProfile = getLocalStorageValue('userprofile');
@@ -40,7 +47,7 @@ export default function BasicDetails({ formProps }: { formProps: any }) {
             })}
             readOnly
           />
-          <ErrorMessage message={formState.errors?.name?.message} />
+          <ErrorMessage message={formState.errors?.name?.message as string} />
         </FormControl>
         <FormControl>
           <Label>{m.profile_country_label()}</Label>
@@ -60,7 +67,9 @@ export default function BasicDetails({ formProps }: { formProps: any }) {
               />
             )}
           />
-          <ErrorMessage message={formState.errors?.country?.message} />
+          <ErrorMessage
+            message={formState.errors?.country?.message as string}
+          />
         </FormControl>
         <FormControl>
           <Label>{m.profile_city_label()}</Label>
@@ -71,7 +80,7 @@ export default function BasicDetails({ formProps }: { formProps: any }) {
               setValueAs: (value: string) => value?.trim(),
             })}
           />
-          <ErrorMessage message={formState.errors?.city?.message} />
+          <ErrorMessage message={formState.errors?.city?.message as string} />
         </FormControl>
         <FormControl>
           <Label>{m.profile_phone_number_label()}</Label>
@@ -95,7 +104,9 @@ export default function BasicDetails({ formProps }: { formProps: any }) {
               })}
             />
           </div>
-          <ErrorMessage message={formState.errors?.phone_number?.message} />
+          <ErrorMessage
+            message={formState.errors?.phone_number?.message as string}
+          />
         </FormControl>
       </FlexColumn>
     </section>

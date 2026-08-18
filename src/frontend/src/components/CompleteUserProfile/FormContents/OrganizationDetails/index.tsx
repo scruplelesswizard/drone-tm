@@ -1,9 +1,17 @@
+import { FieldValues, UseFormReturn } from 'react-hook-form';
 import ErrorMessage from '@Components/common/ErrorMessage';
 import { FormControl, Input, Label } from '@Components/common/FormUI';
 import { Flex, FlexColumn } from '@Components/common/Layouts';
 import { m } from '@/paraglide/messages';
 
-export default function OrganizationDetails({ formProps }: { formProps: any }) {
+export default function OrganizationDetails({
+  formProps,
+}: {
+  formProps: Pick<
+    UseFormReturn<FieldValues>,
+    'register' | 'setValue' | 'formState' | 'control' | 'watch'
+  >;
+}) {
   const { register } = formProps;
 
   return (
@@ -24,7 +32,9 @@ export default function OrganizationDetails({ formProps }: { formProps: any }) {
             })}
           />
           <ErrorMessage
-            message={formProps.formState.errors?.organization_name?.message}
+            message={
+              formProps.formState.errors?.organization_name?.message as string
+            }
           />
         </FormControl>
         <FormControl>
@@ -37,7 +47,10 @@ export default function OrganizationDetails({ formProps }: { formProps: any }) {
             })}
           />
           <ErrorMessage
-            message={formProps.formState.errors?.organization_address?.message}
+            message={
+              formProps.formState.errors?.organization_address
+                ?.message as string
+            }
           />
         </FormControl>
         <FormControl>
@@ -50,7 +63,7 @@ export default function OrganizationDetails({ formProps }: { formProps: any }) {
             })}
           />
           <ErrorMessage
-            message={formProps.formState.errors?.job_title?.message}
+            message={formProps.formState.errors?.job_title?.message as string}
           />
         </FormControl>
       </FlexColumn>

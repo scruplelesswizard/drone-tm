@@ -1,4 +1,3 @@
-import { UserProfileDetailsType } from '@Components/GoogleAuth/types';
 import axios from 'axios';
 import { api, authenticated } from '.';
 
@@ -24,7 +23,7 @@ export const postUserProfile = ({
   data,
 }: {
   userId: number;
-  data: UserProfileDetailsType;
+  data: Record<string, unknown>;
 }) =>
   authenticated(api).post(`/users/${userId}/profile`, data, {
     headers: { 'Content-Type': 'application/json' },

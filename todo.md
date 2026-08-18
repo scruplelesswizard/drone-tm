@@ -506,11 +506,41 @@ than as inline notes on the item that found them:
             Also deleted two write-only, never-read state fields
             (`uploadedProjectArea`, `uploadedNoFlyZone`) that had drifted
             out of the `CreateProjectState` interface.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~399 sites -
+      - [x] `@typescript-eslint/no-explicit-any` batch 2 (36 of 399 sites) -
+            the user-profile form family: `UpdateUserDetails/*` (4 files),
+            `CompleteUserProfile/*` (view + 4 FormContents siblings, which
+            share the exact same `formProps` object so got the same fix
+            together), `RegulatorsApprovalPage/Description/ApprovalSection.tsx`,
+            `utils/callApiSimultaneously.ts`. Also fixed `postUserProfile`'s
+            `data` param in `services/common.ts` - it was typed as
+            `UserProfileDetailsType` (id/email/profile_img/has_user_profile,
+            an unrelated Google-auth shape), but its one real caller always
+            passed the full profile-edit form payload; the mismatch was
+            silently invisible because the caller side was `any` too.
+            Established two reusable patterns for this cluster: (1)
+            `useMutation<AxiosResponse, AxiosError, TVariables, unknown>`
+            with `err.response?.data as { detail?: string }` in `onError`,
+            replacing `useMutation<any, any, any, unknown>` +
+            `err?.response?.data?.detail`; (2) a `type` alias (not
+            `interface`) for form-data shapes passed into
+            `patchUserProfile`/`postUserProfile`, since TS only structurally
+            matches `Record<string, unknown>` params against object-literal
+            `type` aliases, not `interface` declarations without an index
+            signature - the latter fails assignment with a real compiler
+            error, not just a lint warning.
+            Skipped `RegulatorsApprovalPage/Description/DescriptionSection.tsx`
+            (4 sites) - its `projectData: Record<string, any>` prop is the
+            same shared shape flagged in batch 1 as needing a dedicated
+            `ProjectDetail` interface; fixing it here in isolation would
+            just be guessing at a type other files already depend on.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~363 sites -
             continue in file/directory batches. `MapSection.tsx` (both the
             IndividualProject and DroneOperatorTask ones),
             `ImageReview.tsx`, and `common/MapLibreComponents/types/index.ts`
-            are the largest remaining concentrations.
+            are the largest remaining concentrations; all of them, plus
+            `DescriptionSection.tsx` above, funnel through the same
+            undefined `ProjectDetail`/`TaskData` shape - worth defining
+            that interface once, in its own PR, before continuing further.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the

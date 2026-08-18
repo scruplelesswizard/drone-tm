@@ -1,9 +1,17 @@
+import { FieldValues, UseFormReturn } from 'react-hook-form';
 import ErrorMessage from '@Components/common/ErrorMessage';
 import { FormControl, Input, Label } from '@Components/common/FormUI';
 import { Flex, FlexColumn } from '@Components/common/Layouts';
 import { m } from '@/paraglide/messages';
 
-export default function PasswordSection({ formProps }: { formProps: any }) {
+export default function PasswordSection({
+  formProps,
+}: {
+  formProps: Pick<
+    UseFormReturn<FieldValues>,
+    'register' | 'setValue' | 'formState' | 'control' | 'watch'
+  >;
+}) {
   const { register, formState, watch } = formProps;
 
   const password = watch('password');
@@ -29,7 +37,9 @@ export default function PasswordSection({ formProps }: { formProps: any }) {
               },
             })}
           />
-          <ErrorMessage message={formState.errors?.password?.message} />
+          <ErrorMessage
+            message={formState.errors?.password?.message as string}
+          />
         </FormControl>
         <FormControl>
           <Label required>{m.profile_confirm_password_label()}</Label>
@@ -43,7 +53,9 @@ export default function PasswordSection({ formProps }: { formProps: any }) {
               // required: 'Confirm Password is Required',
             })}
           />
-          <ErrorMessage message={formState.errors?.confirm_password?.message} />
+          <ErrorMessage
+            message={formState.errors?.confirm_password?.message as string}
+          />
         </FormControl>
       </FlexColumn>
     </section>

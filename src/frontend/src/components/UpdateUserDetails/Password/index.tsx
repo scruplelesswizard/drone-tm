@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
+import { AxiosError, AxiosResponse } from 'axios';
 import ErrorMessage from '@Components/common/ErrorMessage';
 import { FormControl, Input, Label } from '@Components/common/FormUI';
 import { Flex, FlexColumn } from '@Components/common/Layouts';
@@ -10,9 +11,15 @@ import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
 import { useNavigate } from 'react-router-dom';
 import { m } from '@/paraglide/messages';
 
+type PasswordFormData = {
+  old_password: string;
+  password: string;
+  confirm_password: string;
+};
+
 const Password = () => {
   const navigate = useNavigate();
-  const initialState = {
+  const initialState: PasswordFormData = {
     old_password: '',
     password: '',
     confirm_password: '',
@@ -25,9 +32,9 @@ const Password = () => {
   const password = watch('password');
 
   const { mutate: updatePassword, isPending } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    { userId: number | string; data: PasswordFormData },
     unknown
   >({
     mutationFn: payloadDataObject => patchUserProfile(payloadDataObject),
@@ -38,13 +45,12 @@ const Password = () => {
     onError: err => {
       // eslint-disable-next-line no-console
       console.log(err);
-      toast.error(
-        err?.response?.data?.detail || m.profile_something_went_wrong(),
-      );
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || m.profile_something_went_wrong());
     },
   });
 
-  const onSubmit = (formData: Record<string, any>) => {
+  const onSubmit = (formData: PasswordFormData) => {
     updatePassword({ userId: userProfile?.id, data: formData });
   };
 
