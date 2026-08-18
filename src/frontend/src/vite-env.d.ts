@@ -2,6 +2,10 @@
 
 import type React from "react";
 
+interface ImportMetaEnv {
+  readonly VITE_FRONTEND_URL?: string;
+}
+
 // JSX IntrinsicElements for hotosm-auth custom web component
 declare module "react" {
   namespace JSX {

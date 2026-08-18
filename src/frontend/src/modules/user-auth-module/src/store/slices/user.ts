@@ -3,8 +3,8 @@ import type { CaseReducer, PayloadAction } from '@reduxjs/toolkit';
 import persist from '../persist';
 
 export interface UserState {
-  user: Record<string, any> | null;
-  userProfile: Record<string, any> | null;
+  user: Record<string, unknown> | null;
+  userProfile: Record<string, unknown> | null;
   permissions: string[];
 }
 

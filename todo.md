@@ -862,8 +862,28 @@ than as inline notes on the item that found them:
             `sectionRefs` prop are dead code (no callers found anywhere in
             the codebase) but typed properly anyway rather than deleted,
             same call made for `changeLayerOrder.ts` in batch 3/13.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~63 sites,
-            spread across ~19 files with no single large concentration left
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 15 (12 of 63
+            sites) - `modules/user-auth-module/**` fully cleared.
+            `store/slices/user.ts` (2): `Record<string, unknown>` for
+            `user`/`userProfile`, matching the `Record<string, any>`
+            convention used for other loosely-shaped Redux state this
+            session. `ForgotPassword/index.tsx` (4) and `Login/index.tsx`'s
+            login mutation (3 of its 6): `useMutation<any,any,any,unknown>`
+            -> `AxiosResponse`/`AxiosError` + the real service param type
+            (`forgotPassword`'s `{email:string}`, `Parameters<typeof
+            signInUser>[0]`), same pattern as every other mutation fixed
+            this session. `Login/index.tsx`'s other 3: the Google-login
+            query's `select` uses the established `(res: unknown) => (res
+            as AxiosResponse).data` cast, and `(import.meta as any).env.
+            VITE_FRONTEND_URL` was a real gap - `vite-env.d.ts` had no
+            `ImportMetaEnv` augmentation for it (every other `VITE_*` var
+            in this codebase goes through the `getRuntimeConfig` docker-
+            injectable-config helper, but `VITE_FRONTEND_URL` is build-time
+            only, so extending that helper's key union would have been
+            misleading; added a minimal `ImportMetaEnv` augmentation
+            instead).
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~51 sites,
+            spread across ~17 files with no single large concentration left
             - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
