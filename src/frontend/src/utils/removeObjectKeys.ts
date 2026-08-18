@@ -1,5 +1,5 @@
 export default function removeObjectKeys(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   keyArr: string[],
 ) {
   return Object.keys(data).reduce(

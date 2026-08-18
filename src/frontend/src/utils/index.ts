@@ -20,8 +20,8 @@ export function cn(...inputs: ClassValue[]) {
  * // result is { a: 1, c: 3 }
  */
 export function removeKeysFromObject(
-  obj: Record<string, any>,
-  keysToRemove: any[],
+  obj: Record<string, unknown>,
+  keysToRemove: string[],
 ) {
   return Object.fromEntries(
     Object.entries(obj).filter(([key]) => !keysToRemove.includes(key)),
@@ -184,7 +184,9 @@ export function calculateCentroid(bbox: number[]) {
   return { lng: centroidLon, lat: centroidLat };
 }
 
-export function calculateCentroidFromCoordinates(coordinates: any[]) {
+export function calculateCentroidFromCoordinates(
+  coordinates: [number, number][],
+) {
   let x = 0;
   let y = 0;
   let z = 0;

@@ -4,8 +4,15 @@ interface EXIFTags {
   DateTime?: { description: string };
   Coordinates?: { description: string };
   GPSLatitude?: { description: number };
+  GPSLatitudeRef?: { value: string[] };
   GPSLongitude?: { description: number };
-  [key: string]: any;
+  GPSLongitudeRef?: { value: string[] };
+}
+
+interface ExifResult {
+  file: File;
+  dateTime: string;
+  coordinates: { longitude: number | null; latitude: number | null };
 }
 
 const normalizeDatetime = (datetime: string): string => {
@@ -15,7 +22,7 @@ const normalizeDatetime = (datetime: string): string => {
   return `${normalizedDate}T${time}`;
 };
 
-const getExifData = (file: File): Promise<any> => {
+const getExifData = (file: File): Promise<ExifResult> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -30,10 +37,10 @@ const getExifData = (file: File): Promise<any> => {
         let gpsLongitude = tags.GPSLongitude?.description;
         const gpsLongitudeRef = tags.GPSLongitudeRef?.value;
 
-        if (gpsLatitudeRef[0] === 'S' && gpsLatitude) {
+        if (gpsLatitudeRef?.[0] === 'S' && gpsLatitude) {
           gpsLatitude = -gpsLatitude;
         }
-        if (gpsLongitudeRef[0] === 'W' && gpsLongitude) {
+        if (gpsLongitudeRef?.[0] === 'W' && gpsLongitude) {
           gpsLongitude = -gpsLongitude;
         }
 

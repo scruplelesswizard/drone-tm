@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-export default function prepareFormData(data: Record<string, any>) {
+export default function prepareFormData(data: Record<string, unknown>) {
   const formData = Object.entries(data).reduce(
     (obj, [key, value]) => ({
       ...obj,

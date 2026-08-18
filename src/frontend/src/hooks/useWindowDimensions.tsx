@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 
-function debounce(func: (...args: any[]) => void, timeout = 300) {
-  let timer: any;
-  return (arg: any) => {
+function debounce<Args extends unknown[]>(
+  func: (...args: Args) => void,
+  timeout = 300,
+) {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: Args) => {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      func(arg);
+      func(...args);
     }, timeout);
   };
 }

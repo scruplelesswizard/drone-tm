@@ -1,6 +1,8 @@
-export default function sortByDatetime(
-  arr: Record<string, any>[],
-): Record<string, any>[] {
+interface HasDateTime {
+  dateTime: string | number | Date;
+}
+
+export default function sortByDatetime<T extends HasDateTime>(arr: T[]): T[] {
   // Create a shallow copy of the array to avoid modifying the original
   const arrCopy = [...arr];
 

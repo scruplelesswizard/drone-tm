@@ -4,7 +4,7 @@ export default function checkIfLoading(
   store: RootState,
   actionsToCheck: string[],
 ) {
-  return store.loader.actions.some((action: any) =>
+  return store.loader.actions.some(action =>
     actionsToCheck.includes(action),
   );
 }

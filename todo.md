@@ -844,8 +844,26 @@ than as inline notes on the item that found them:
             into a few narrowing casts already implied by this file's
             existing `@ts-expect-error` comments (`geometry as LineString`,
             `id as string` for `draw.delete`).
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~81 sites,
-            spread across ~27 files with no single large concentration left
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 14 (18 of 81
+            sites) - all of `utils/**` and `hooks/**` fully cleared.
+            `checkIfLoading.ts` and `sortArrayUsingDate.ts`/`getExifData.ts`
+            picked up real types from their actual callers/libraries
+            (`RootState`'s `loader.actions: string[]`, a generic
+            `HasDateTime` constraint, `exifreader`'s tag shapes plus a new
+            `GPSLatitudeRef`/`GPSLongitudeRef` field instead of relying on
+            an `any` index signature). `removeObjectKeys.ts`, `utils/
+            index.ts`'s `removeKeysFromObject`, `prepareFormData.ts`, and
+            `prepareQueryParam.ts` all went to `Record<string, unknown>` -
+            genuinely arbitrary object shredders with no fixed schema.
+            `useScrollActiveListener.ts` and `useWindowDimensions.tsx`
+            share an identical `debounce` helper - both fixed the same way,
+            generic over `Args extends unknown[]` instead of `any[]`/`any`.
+            `sortArrayUsingDate.ts` and `useScrollActiveListener.ts`'s
+            `sectionRefs` prop are dead code (no callers found anywhere in
+            the codebase) but typed properly anyway rather than deleted,
+            same call made for `changeLayerOrder.ts` in batch 3/13.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~63 sites,
+            spread across ~19 files with no single large concentration left
             - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
