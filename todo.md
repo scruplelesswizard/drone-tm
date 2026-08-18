@@ -642,10 +642,29 @@ than as inline notes on the item that found them:
             masked the mismatch; widened to `string | number | null |
             undefined` to match actual usage instead of coercing values to
             match the type.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~270 sites -
-            `ImageReview.tsx`, `TaskVerificationModal.tsx`, and
-            `common/MapLibreComponents/types/index.ts` are the largest
-            remaining concentrations - continue in file/directory batches.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 5 (27 of 270
+            sites) - `ImageReview.tsx` and `TaskVerificationModal.tsx`
+            fully cleared. Both files' MapLibre click handlers were typed
+            `(e: any)`; used maplibre-gl's own `MapMouseEvent`. Several
+            `GeoJSON.Feature<any>` callback annotations turned out to be
+            pure redundancy - once removed, the array's own already-correct
+            element type (from `ProjectMapData`/`TaskVerificationData` in
+            `services/classification.ts`, which were already properly
+            typed) flowed through with no further changes needed.
+            `TaskVerificationModal.tsx`'s `queryClient.setQueryData`/
+            `setQueriesData` cache updaters were the trickiest part: they
+            defensively handle two different possible cache shapes
+            (`TaskStateItem[]` directly, or wrapped in `{ data: [...] }`)
+            because the cache key can be populated by either a raw
+            queryFn result or an already-`select`-transformed one
+            depending on call site - preserved that exact dual-branch
+            defensive logic with `unknown` + `Array.isArray` narrowing
+            instead of collapsing it to a single assumed shape.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~243 sites -
+            `common/MapLibreComponents/types/index.ts` (14),
+            `common/DataTable/index.tsx` (12), and
+            `DroneOperatorTask/DescriptionSection/UppyFileUploader/index.tsx`
+            (11) are the largest remaining concentrations.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
