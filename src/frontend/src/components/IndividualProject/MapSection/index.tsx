@@ -166,7 +166,6 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
 
   useEffect(() => {
     if (!map || !taskStates) return;
-    // @ts-expect-error taskStates element type does not match the (Record<string, any>) param types declared in this reduce callback
     const taskStatus: Record<string, any> = taskStates?.reduce(
       (acc: Record<string, any>, task: Record<string, any>) => {
         acc[task.task_id] = task.state;

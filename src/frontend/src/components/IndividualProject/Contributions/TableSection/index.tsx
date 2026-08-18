@@ -1,5 +1,6 @@
 import DataTable from '@Components/common/DataTable';
 import Icon from '@Components/common/Icon';
+import { RasterSourceSpecification } from 'maplibre-gl';
 import { setProjectState } from '@Store/actions/project';
 import { useTypedSelector } from '@Store/hooks';
 import { formatString, buildDownloadUrl } from '@Utils/index';
@@ -73,7 +74,10 @@ const contributionsDataColumns = [
 
       const handleViewResult = () => {
         if (!rowData?.orthophoto_url) return;
-        let newVisibleList: Record<string, any>[] = [];
+        let newVisibleList: {
+          taskId: string;
+          source: RasterSourceSpecification;
+        }[] = [];
         if (currentOrthophoto) {
           newVisibleList = visibleOrthophotoList.filter(
             (orthophoto: Record<string, any>) =>

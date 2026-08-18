@@ -6,6 +6,7 @@ import {
   getTaskWaypoint,
 } from '@Services/tasks';
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { AxiosResponse } from 'axios';
 
 export const useGetTaskWaypointQuery = (
   projectId: string,
@@ -39,7 +40,7 @@ export const useGetTaskWaypointQuery = (
         gimbalAngle,
         allowMissingDem,
       ),
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     ...queryOptions,
   });
 };
@@ -52,7 +53,7 @@ export const useGetIndividualTaskQuery = (
     queryKey: ['task-description'],
     enabled: !!taskId,
     queryFn: () => getIndividualTask(taskId),
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     ...queryOptions,
   });
 };
@@ -66,7 +67,7 @@ export const useGetTaskByIndexQuery = (
     queryKey: ['task-by-index', projectId, taskIndex],
     enabled: !!(projectId && taskIndex),
     queryFn: () => getTaskByProjectAndIndex(projectId, taskIndex),
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     ...queryOptions,
   });
 };
@@ -80,7 +81,7 @@ export const useGetTaskAssetsInfo = (
     queryKey: ['task-assets-info', projectId, taskId],
     enabled: !!taskId,
     queryFn: () => getTaskAssetsInfo(projectId, taskId),
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     ...queryOptions,
   });
 };
@@ -93,7 +94,7 @@ export const useGetAllTaskAssetsInfo = (
     queryKey: ['all-task-assets-info', projectId],
     enabled: !!projectId,
     queryFn: () => getAllTaskAssetsInfo(projectId),
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     staleTime: 15_000,
     ...queryOptions,
   });

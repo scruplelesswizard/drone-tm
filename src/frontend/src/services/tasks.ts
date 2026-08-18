@@ -23,7 +23,16 @@ export const getTaskByProjectAndIndex = (
 
 // TODO refactor this out and replace with getTaskWaypoint?
 // This is used to update the take off point
-export const postTaskWaypoint = (payload: Record<string, any>) => {
+export const postTaskWaypoint = (payload: {
+  taskId: string;
+  projectId: string;
+  mode: string;
+  rotationAngle: number;
+  droneModel: string;
+  takeOffPoint: { longitude: number; latitude: number };
+  gimbalAngle: string;
+  allowMissingDem?: boolean;
+}) => {
   const {
     taskId,
     projectId,
@@ -64,7 +73,10 @@ export const postReconcileProcessing = (projectId: string) =>
 export const postRetryTransfer = (projectId: string, taskId: string) =>
   authenticated(api).post(`/projects/retry_transfer/${projectId}/${taskId}`);
 
-export const postRotatedTaskWayPoint = (payload: Record<string, any>) => {
+export const postRotatedTaskWayPoint = (payload: {
+  taskId: string;
+  data: Record<string, unknown>;
+}) => {
   const { taskId, data } = payload;
   return authenticated(api).post(`/waypoint/${taskId}/generate-kmz`, data, {
     headers: { 'Content-Type': 'application/json' },

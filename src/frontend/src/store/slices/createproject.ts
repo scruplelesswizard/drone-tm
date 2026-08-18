@@ -23,11 +23,11 @@ export interface CreateProjectState {
   drawNoFlyZoneEnable: boolean;
   drawnProjectArea: GeojsonType | null;
   drawnNoFlyZone: GeojsonType | null;
-  splitGeojson: Record<string, any> | null;
+  splitGeojson: GeojsonType | null;
   isTerrainFollow: boolean;
   requireApprovalFromManagerForLocking: string;
   capturedProjectMap: boolean;
-  projectMapImage: any;
+  projectMapImage: File | null;
   imageMergeType: string;
   ProjectsFilterByOwner: 'yes' | 'no';
   requiresApprovalFromRegulator: 'required' | 'not_required';
@@ -70,7 +70,7 @@ const initialState: CreateProjectState = {
 
 const setCreateProjectState: CaseReducer<
   CreateProjectState,
-  PayloadAction<Record<string, any>>
+  PayloadAction<Partial<CreateProjectState>>
 > = (state, action) => ({
   ...state,
   ...action.payload,
@@ -78,10 +78,10 @@ const setCreateProjectState: CaseReducer<
 
 const saveProjectImageFile: CaseReducer<
   CreateProjectState,
-  PayloadAction<Record<string, any>>
+  PayloadAction<{ projectMapImage: File }>
 > = (state, action) => ({
   ...state,
-  projectMapImage: action.payload,
+  projectMapImage: action.payload.projectMapImage,
 });
 
 const setDemType: CaseReducer<CreateProjectState, PayloadAction<string>> = (

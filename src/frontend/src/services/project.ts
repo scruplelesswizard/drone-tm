@@ -3,7 +3,11 @@ import { authenticated, api } from '.';
 export const getTaskStates = (projectId: string) =>
   api.get(`/tasks/states/${projectId}`);
 
-export const postTaskStatus = (payload: Record<string, any>) => {
+export const postTaskStatus = (payload: {
+  projectId: string;
+  taskId: string;
+  data: { event: string; updated_at?: string; comment?: string };
+}) => {
   const { projectId, taskId, data } = payload;
   return authenticated(api).post(`/tasks/event/${projectId}/${taskId}`, data, {
     headers: { 'Content-Type': 'application/json' },
@@ -26,7 +30,10 @@ export const manualOverrideTaskState = (payload: {
 export const getRequestedTasks = () =>
   authenticated(api).get('/tasks/requested_tasks/pending');
 
-export const processAllImagery = (data: Record<string, any>) => {
+export const processAllImagery = (data: {
+  projectId: string;
+  capacityType?: string;
+}) => {
   const { projectId, capacityType } = data;
   return authenticated(api).post(
     `/projects/process_all_imagery/${projectId}`,
@@ -44,7 +51,7 @@ export const saveGcpFile = (data: { projectId: string; gcp_file: File }) => {
 export const deleteProject = (projectId: string) =>
   authenticated(api).delete(`/projects/${projectId}`);
 
-export const uploadToOAM = (payload: Record<string, any>) => {
+export const uploadToOAM = (payload: { projectId: string; tags: string[] }) => {
   const { projectId, tags } = payload;
   return authenticated(api).post(
     `/projects/${projectId}/upload-to-oam`,

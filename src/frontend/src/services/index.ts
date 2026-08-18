@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'react-toastify';
 
 import { getRuntimeConfig } from '@/runtimeConfig';
@@ -16,7 +16,9 @@ export const api = axios.create({
 });
 
 // This interceptor is required to set token on request
-function requestInterceptorFunction(config: any): any {
+function requestInterceptorFunction(
+  config: InternalAxiosRequestConfig,
+): InternalAxiosRequestConfig {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers['Access-Token'] = token;
