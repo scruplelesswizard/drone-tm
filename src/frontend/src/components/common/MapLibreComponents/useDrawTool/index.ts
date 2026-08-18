@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Popup } from 'maplibre-gl';
+import { Popup, MapSourceDataEvent } from 'maplibre-gl';
+import type { FeatureCollection, LineString } from 'geojson';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import StaticMode from '@mapbox/mapbox-gl-draw-static-mode';
 import CutLineMode from 'mapbox-gl-draw-cut-line-mode';
@@ -34,8 +35,8 @@ export default function useDrawTool({
 }: IUseDrawToolProps) {
   const [isFeatureSelected, setIsFeatureSelected] = useState(false);
   const [isDrawLayerAdded, setIsDrawLayerAdded] = useState(false);
-  const [drawStates, setDrawStates] = useState<any[]>([]);
-  const [redoStates, setRedoStates] = useState<any[]>([]);
+  const [drawStates, setDrawStates] = useState<FeatureCollection[]>([]);
+  const [redoStates, setRedoStates] = useState<FeatureCollection[]>([]);
 
   // create draw instance
   const draw = useMemo(
@@ -54,7 +55,7 @@ export default function useDrawTool({
   // check if draw layer is added to map
   useEffect(() => {
     if (!map) return () => {};
-    function handleSourceDataAdd(e: any) {
+    function handleSourceDataAdd(e: MapSourceDataEvent) {
       if (e.sourceId !== 'mapbox-gl-draw-cold') return;
       setIsDrawLayerAdded(true);
     }
@@ -305,16 +306,17 @@ export default function useDrawTool({
     if (drawStates.length <= 1) {
       const lastLine = drawStates[drawStates.length - 1];
       if (lastLine) {
-        const { coordinates } = lastLine.features[0].geometry;
+        const lineGeometry = lastLine.features[0].geometry as LineString;
+        const { coordinates } = lineGeometry;
         if (coordinates.length > 1) {
           const updatedCoordinates = coordinates.slice(0, -1); // Remove the last coordinate
-          const updatedLine = {
+          const updatedLine: FeatureCollection = {
             ...lastLine,
             features: [
               {
                 ...lastLine.features[0],
                 geometry: {
-                  ...lastLine.features[0].geometry,
+                  ...lineGeometry,
                   coordinates: updatedCoordinates,
                 },
               },
@@ -322,13 +324,13 @@ export default function useDrawTool({
           };
           setRedoStates([...redoStates, lastLine]); // Track the undone state for redo
           setDrawStates(prev => [...prev.slice(0, -1), updatedLine]); // Update the line history with the modified line
-          draw.delete(lastLine.features[0].id); // Delete the last drawn line from the map
+          draw.delete(lastLine.features[0].id as string); // Delete the last drawn line from the map
           draw.add(updatedLine); // Add the updated line back to the map
           onDrawEnd(updatedLine);
         } else {
           setRedoStates([...redoStates, lastLine]); // Track the undone state for redo
           setDrawStates(prev => prev.slice(0, -1)); // Remove the line from the line history
-          draw.delete(lastLine.features[0].id); // Delete the last drawn line from the map
+          draw.delete(lastLine.features[0].id as string); // Delete the last drawn line from the map
         }
       }
     } else {
@@ -374,7 +376,9 @@ export default function useDrawTool({
 
   // reverse line geometry
   const reverseLineGeometry = useCallback(() => {
-    const reversedLineString = reverseLineString(draw.getAll());
+    const reversedLineString = reverseLineString(
+      draw.getAll(),
+    ) as FeatureCollection;
     draw.set(reversedLineString);
     onDrawEnd(reversedLineString);
     setIsFeatureSelected(false);

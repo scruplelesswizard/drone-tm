@@ -164,10 +164,7 @@ export default function VectorLayer({
         try {
           parsedGeojson = JSON.parse(geojson) as Feature | FeatureCollection;
         } catch (error) {
-          toast.error(
-            'Invalid GeoJSON string:',
-            (error as Record<string, any>)?.message,
-          );
+          toast.error(`Invalid GeoJSON string: ${(error as Error)?.message}`);
           return;
         }
       } else {

@@ -3,13 +3,13 @@ import { MapInstanceType } from '../types';
 
 export default function changeLayerOrder(
   map: MapInstanceType,
-  newOrder: any[],
+  newOrder: string[],
 ) {
   const currentOrder = map.style._order;
   const mapLayerOrder = currentOrder.filter(item => newOrder.includes(item));
-  let beforeId: any = null;
-  let id: any = null;
-  newOrder.forEach((item: any, idx: number) => {
+  let beforeId: string | undefined;
+  let id: string | undefined;
+  newOrder.forEach((item, idx: number) => {
     if (id) return;
     if (mapLayerOrder[idx] !== item) {
       id = item;

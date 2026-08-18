@@ -824,8 +824,28 @@ than as inline notes on the item that found them:
             `Instructions/index.tsx` (1) and `QFieldExport/index.tsx` (1)
             were mechanical - `ProjectInfo` and an `AxiosError` cast
             respectively.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~93 sites,
-            spread across ~28 files with no single large concentration left
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 13 (13 of 93
+            sites) - rest of `common/MapLibreComponents/**` fully cleared
+            (completes the family started in batch 3/6): `VectorLayer.ts`
+            (1, plus surfaced a real pre-existing bug - `toast.error(msg,
+            errorObj)` was always passing a raw object as react-toastify's
+            second positional arg, which is `ToastOptions`, not text;
+            merged into one template-string message). `MeasureTool/
+            index.tsx` (1) and `PopupUI/index.tsx` (2) were mechanical -
+            `FeatureCollection` (from `draw.getAll()`'s real return type)
+            and `Record<string, unknown>`. `helpers/changeLayerOrder.ts`
+            (4, unreachable - no callers anywhere in the codebase, left
+            in place rather than deleted since that's outside this task's
+            scope) and `helpers/reverseLineString.ts` (1) typed against
+            their actual geojson-package shapes. `useDrawTool/index.ts`
+            (3): `drawStates`/`redoStates` are `FeatureCollection[]`, and
+            the `sourcedata` handler uses maplibre-gl's own
+            `MapSourceDataEvent`. The `FeatureCollection` typing cascaded
+            into a few narrowing casts already implied by this file's
+            existing `@ts-expect-error` comments (`geometry as LineString`,
+            `id as string` for `draw.delete`).
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~81 sites,
+            spread across ~27 files with no single large concentration left
             - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
