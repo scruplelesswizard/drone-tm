@@ -12,7 +12,9 @@ import { getDroneAltitude } from '@Services/createproject';
 // import { terrainOptions } from '@Constants/createProject';
 import { FlexRow } from '@Components/common/Layouts';
 import Switch from '@Components/RadixComponents/Switch';
-import FileUpload from '@Components/common/UploadArea';
+import FileUpload, {
+  UploadedFilesType,
+} from '@Components/common/UploadArea';
 import {
   demFileOptions,
   imageMergeTypeOptions,
@@ -126,12 +128,12 @@ const KeyParameters = ({ formProps }: { formProps: UseFormPropsType }) => {
                   valueKey="value"
                   selectedValue={measurementType}
                   activeClassName="naxatw-bg-red naxatw-text-white"
-                  onChange={(selected: any) => {
+                  onChange={selected => {
                     setValue('gsd_cm_px', '');
                     setValue('altitude_from_ground', '');
                     dispatch(
                       setCreateProjectState({
-                        measurementType: selected.value,
+                        measurementType: selected.value as 'gsd' | 'altitude',
                       }),
                     );
                   }}
@@ -244,7 +246,7 @@ const KeyParameters = ({ formProps }: { formProps: UseFormPropsType }) => {
                   valueKey="value"
                   selectedValue={imageMergeType}
                   activeClassName="naxatw-bg-red naxatw-text-white"
-                  onChange={(selected: any) => {
+                  onChange={selected => {
                     setValue('front_overlap', '');
                     setValue('side_overlap', '');
                     setValue('forward_spacing', '');
@@ -518,7 +520,7 @@ const KeyParameters = ({ formProps }: { formProps: UseFormPropsType }) => {
                     control={control}
                     name="dem"
                     rules={{
-                      validate: (value: any) =>
+                      validate: (value: UploadedFilesType) =>
                         (Array.isArray(value) &&
                           value.length > 0 &&
                           !!value[0]?.file) ||

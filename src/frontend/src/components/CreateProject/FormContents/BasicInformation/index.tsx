@@ -30,9 +30,9 @@ export default function BasicInformation({
       try {
         const trimmedName = nameValue.trim();
         const response = await getProjectsList({ search: trimmedName });
-        const projects = response?.data?.results || [];
+        const projects: { name?: string }[] = response?.data?.results || [];
         const exactMatch = projects.some(
-          (p: any) => p.name?.toLowerCase() === trimmedName.toLowerCase(),
+          p => p.name?.toLowerCase() === trimmedName.toLowerCase(),
         );
         if (exactMatch) {
           setError?.('name', {

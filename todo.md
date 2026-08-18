@@ -755,8 +755,31 @@ than as inline notes on the item that found them:
             in both files turned out to be fully redundant (the values were
             already implicitly `any` from untyped upstream calls like
             `validateGeoJSON`) and were just deleted rather than retyped.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~138 sites,
-            spread across ~40 files with no single large concentration left
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 10 (17 of 138
+            sites) - rest of `CreateProject/**` fully cleared:
+            `FormContents/GenerateTasks/index.tsx` (8, incl. `formProps:
+            any` -> `UseFormPropsType`, the two `useMutation<any,...>` calls
+            -> `AxiosResponse`/`AxiosError`, and the two redundant
+            `Record<string, any>` casts around `convertGeojsonToFile` -
+            it already accepts `unknown`, so the casts were pure dead
+            weight), `FormContents/KeyParameters/index.tsx` (3, incl. one
+            `SwitchTab.onChange`'s `selected.value` needing a `'gsd' |
+            'altitude'` cast at the dispatch site since `measurementType`
+            is a narrow union but `SwitchTabOption.value` is `string`),
+            `FormContents/BasicInformation/index.tsx` (1, same
+            duplicate-project-name-check pattern as `CreateprojectLayout`),
+            `StepSwitcher/index.tsx` (1), `FormContents/GenerateTasks/
+            MapSection/index.tsx` (1 - `canvas.toBlob`'s callback is
+            `(blob: Blob | null) => void`; added the previously-missing
+            null check, a small real bug fix since `new File([null], ...)`
+            was reachable before), `FormContents/DefineAOI/MapSection/
+            index.tsx` (3 - the two `feature: any` filter callbacks got a
+            minimal `{id?: string | number}` shape since `projectArea`/
+            `noFlyZone`'s `.features` access is itself only valid under the
+            file's existing `@ts-expect-error`, so a real Feature type
+            wasn't obtainable there without a larger refactor).
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~121 sites,
+            spread across ~35 files with no single large concentration left
             - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into

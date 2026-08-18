@@ -1,9 +1,11 @@
 /* eslint-disable camelcase */
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
+import { AxiosError, AxiosResponse } from 'axios';
 import ErrorMessage from '@Components/common/ErrorMessage';
 import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
 import { FormControl, Label, Input } from '@Components/common/FormUI';
+import { UseFormPropsType } from '@Components/common/FormUI/types';
 import { Button } from '@Components/RadixComponents/Button';
 import { toast } from 'react-toastify';
 import { setCreateProjectState } from '@Store/actions/createproject';
@@ -16,7 +18,11 @@ import {
 import { m } from '@/paraglide/messages';
 import MapSection from './MapSection';
 
-export default function GenerateTasks({ formProps }: { formProps: any }) {
+export default function GenerateTasks({
+  formProps,
+}: {
+  formProps: UseFormPropsType;
+}) {
   const dispatch = useTypedDispatch();
   const [error, setError] = useState('');
   const isTerrainFollow = useTypedSelector(
@@ -42,10 +48,8 @@ export default function GenerateTasks({ formProps }: { formProps: any }) {
   );
   const noFlyZone = useTypedSelector(state => state.createproject.noFlyZone);
 
-  const projectGeojsonFile =
-    !!projectArea && convertGeojsonToFile(projectArea as Record<string, any>);
-  const noFlyZoneGeojsonFile =
-    !!noFlyZone && convertGeojsonToFile(noFlyZone as Record<string, any>);
+  const projectGeojsonFile = !!projectArea && convertGeojsonToFile(projectArea);
+  const noFlyZoneGeojsonFile = !!noFlyZone && convertGeojsonToFile(noFlyZone);
 
   const payload = prepareFormData({
     project_geojson: projectGeojsonFile,
@@ -58,7 +62,11 @@ export default function GenerateTasks({ formProps }: { formProps: any }) {
     data: projectWayPoints,
     isPending: projectWaypointCountIsLoading,
   } = useMutation({
-    mutationFn: (projectGeoJsonPayload: Record<string, any>) => {
+    mutationFn: (projectGeoJsonPayload: {
+      project_geojson: File;
+      dem?: File | null;
+      [key: string]: unknown;
+    }) => {
       const { project_geojson, dem, ...params } = projectGeoJsonPayload;
       return getProjectWayPoints(params, {
         project_geojson,
@@ -67,9 +75,14 @@ export default function GenerateTasks({ formProps }: { formProps: any }) {
     },
   });
 
-  const { mutate, isPending } = useMutation<any, any, any, unknown>({
+  const { mutate, isPending } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    FormData,
+    unknown
+  >({
     mutationFn: postPreviewSplitBySquare,
-    onSuccess: (res: any) => {
+    onSuccess: res => {
       dispatch(setCreateProjectState({ splitGeojson: res.data }));
       toast.success(m.create_generate_task_success());
     },
