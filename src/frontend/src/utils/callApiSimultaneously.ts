@@ -1,10 +1,10 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { toast } from 'react-toastify';
 
 // function that calls the api simultaneously
 export default async function callApiSimultaneously(
-  urls: any,
-  data: any,
+  urls: string[],
+  data: unknown[],
   method: 'post' | 'patch' | 'put' = 'put',
 ) {
   // eslint-disable-next-line no-promise-executor-return
@@ -12,9 +12,9 @@ export default async function callApiSimultaneously(
 
   const retryFc = async (
     url: string,
-    singleData: any,
+    singleData: unknown,
     n: number,
-  ): Promise<any> => {
+  ): Promise<AxiosResponse> => {
     try {
       if (method === 'put') return await axios.put(url, singleData);
       if (method === 'patch') return await axios.patch(url, singleData);
@@ -28,9 +28,9 @@ export default async function callApiSimultaneously(
     }
   };
 
-  const promises = urls.map(
-    (url: any, index: any) => retryFc(url, data[index], 3), // 3 entries for each api call
-  );
+  const promises = urls.map((url: string, index: number) =>
+    retryFc(url, data[index], 3),
+  ); // 3 entries for each api call
 
   try {
     const responses = await Promise.all(promises);

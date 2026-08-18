@@ -1,4 +1,5 @@
 import { Controller, useForm } from 'react-hook-form';
+import { AxiosError, AxiosResponse } from 'axios';
 import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
 import { Flex, FlexColumn } from '@Components/common/Layouts';
 import { FormControl, Input, Label } from '@Components/common/FormUI';
@@ -16,6 +17,15 @@ import callApiSimultaneously from '@Utils/callApiSimultaneously';
 import { useEffect } from 'react';
 import { m } from '@/paraglide/messages';
 
+type OtherDetailsFormData = {
+  notify_for_projects_within_km: number | null;
+  experience_years: number | null;
+  certified_drone_operator: boolean;
+  drone_you_own: string | null;
+  certificate_file: unknown;
+  registration_file: unknown;
+};
+
 const OtherDetails = () => {
   const userProfile = getLocalStorageValue('userprofile');
   const dispatch = useTypedDispatch();
@@ -23,7 +33,7 @@ const OtherDetails = () => {
     state => state.common.isCertifiedDroneUser,
   );
 
-  const initialState = {
+  const initialState: OtherDetailsFormData = {
     // for drone operators
     notify_for_projects_within_km:
       userProfile?.notify_for_projects_within_km || null,
@@ -45,24 +55,31 @@ const OtherDetails = () => {
     });
 
   const { mutate: updateOtherDetails, isPending } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    { userId: number | string; data: Record<string, unknown> },
     unknown
   >({
     mutationFn: payloadDataObject => patchUserProfile(payloadDataObject),
-    onSuccess: async data => {
-      const results = data.data?.results;
+    onSuccess: async response => {
+      const results = (response.data as { results?: Record<string, unknown> })
+        ?.results;
       const values = getValues();
-      const urlsToUpload = [];
-      const assetsToUpload = [];
+      const urlsToUpload: string[] = [];
+      const assetsToUpload: unknown[] = [];
+      const certificateFile = values?.certificate_file as
+        | { file?: unknown }[]
+        | undefined;
+      const registrationFile = values?.registration_file as
+        | { file?: unknown }[]
+        | undefined;
       if (results?.certificate_url) {
-        urlsToUpload.push(results?.certificate_url);
-        assetsToUpload.push(values?.certificate_file?.[0]?.file);
+        urlsToUpload.push(results.certificate_url as string);
+        assetsToUpload.push(certificateFile?.[0]?.file);
       }
       if (results?.registration_certificate_url) {
-        urlsToUpload.push(results?.registration_certificate_url);
-        assetsToUpload.push(values?.registration_file?.[0]?.file);
+        urlsToUpload.push(results.registration_certificate_url as string);
+        assetsToUpload.push(registrationFile?.[0]?.file);
       }
       if (urlsToUpload.length) {
         await callApiSimultaneously(urlsToUpload, assetsToUpload, 'put');
@@ -75,9 +92,8 @@ const OtherDetails = () => {
     onError: err => {
       // eslint-disable-next-line no-console
       console.log(err);
-      toast.error(
-        err?.response?.data?.detail || m.profile_something_went_wrong(),
-      );
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || m.profile_something_went_wrong());
     },
   });
 
@@ -92,13 +108,19 @@ const OtherDetails = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onSubmit = (formData: Record<string, any>) => {
+  const onSubmit = (formData: OtherDetailsFormData) => {
+    const certificateFile = formData?.certificate_file as
+      | { file?: { name?: string } }[]
+      | undefined;
+    const registrationFile = formData?.registration_file as
+      | { file?: { name?: string } }[]
+      | undefined;
     updateOtherDetails({
       userId: userProfile?.id,
       data: {
         ...formData,
-        certificate_file: formData?.certificate_file?.[0]?.file?.name,
-        registration_file: formData?.registration_file?.[0]?.file?.name,
+        certificate_file: certificateFile?.[0]?.file?.name,
+        registration_file: registrationFile?.[0]?.file?.name,
       },
     });
   };
@@ -189,6 +211,7 @@ const OtherDetails = () => {
                       // @ts-expect-error register is stubbed as a no-op here, not react-hook-form's actual RegisterOptions-returning function
                       setValue={setValue}
                       name="certificate_file"
+                      // @ts-expect-error data prop is typed as [] on FileUpload, but this field's real value is a URL string or an UploadedFilesType array
                       data={value}
                       onChange={() => {}}
                       fileAccept=".pdf, .jpeg, .png"
@@ -215,6 +238,7 @@ const OtherDetails = () => {
                   // @ts-expect-error register is stubbed as a no-op here, not react-hook-form's actual RegisterOptions-returning function
                   setValue={setValue}
                   name="registration_file"
+                  // @ts-expect-error data prop is typed as [] on FileUpload, but this field's real value is a URL string or an UploadedFilesType array
                   data={value}
                   onChange={() => {}}
                   fileAccept=".pdf, .jpeg, .png"

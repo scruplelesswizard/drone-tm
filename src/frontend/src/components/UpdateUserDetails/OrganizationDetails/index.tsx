@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
+import { AxiosError, AxiosResponse } from 'axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ErrorMessage from '@Components/common/ErrorMessage';
 import { FormControl, Input, Label } from '@Components/common/FormUI';
@@ -9,10 +10,17 @@ import { patchUserProfile } from '@Services/common';
 import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
 import { m } from '@/paraglide/messages';
 
+type OrganizationDetailsFormData = {
+  organization_name: string | null;
+  organization_address: string | null;
+  job_title: string | null;
+  oam_api_token: string;
+};
+
 const OrganizationDetails = () => {
   const userProfile = getLocalStorageValue('userprofile');
 
-  const initialState = {
+  const initialState: OrganizationDetailsFormData = {
     organization_name: userProfile?.organization_name || null,
     organization_address: userProfile?.organization_address || null,
     job_title: userProfile?.job_title || null,
@@ -25,9 +33,9 @@ const OrganizationDetails = () => {
   });
 
   const { mutate: updateOrganizationDetails, isPending } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    { userId: number | string; data: OrganizationDetailsFormData },
     unknown
   >({
     mutationFn: payloadDataObject => patchUserProfile(payloadDataObject),
@@ -39,13 +47,12 @@ const OrganizationDetails = () => {
     onError: err => {
       // eslint-disable-next-line no-console
       console.log(err);
-      toast.error(
-        err?.response?.data?.detail || m.profile_something_went_wrong(),
-      );
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || m.profile_something_went_wrong());
     },
   });
 
-  const onSubmit = (formData: Record<string, any>) => {
+  const onSubmit = (formData: OrganizationDetailsFormData) => {
     updateOrganizationDetails({ userId: userProfile?.id, data: formData });
   };
 

@@ -1,6 +1,7 @@
 import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { FieldValues, useForm, UseFormReturn } from 'react-hook-form';
+import { AxiosError, AxiosResponse } from 'axios';
 import {
   BasicDetails,
   OrganizationDetails,
@@ -35,10 +36,34 @@ const filteredTabOptions = isHankoAuth
   ? tabOptions.filter(tab => tab.id !== 3)
   : tabOptions;
 
+type ProfileFormData = {
+  name?: string;
+  country: string | null;
+  city: string | null;
+  password: string | null;
+  confirm_password: string | null;
+  phone_number: string | null;
+  organization_name: string | null;
+  organization_address: string | null;
+  job_title: string | null;
+  notify_for_projects_within_km: number | null;
+  experience_years: number | null;
+  certified_drone_operator: boolean;
+  certificate_file: unknown;
+  registration_file: unknown;
+  drone_you_own: string | null;
+  role: number[];
+};
+
+type CompleteProfileFormProps = Pick<
+  UseFormReturn<FieldValues>,
+  'register' | 'setValue' | 'formState' | 'control' | 'watch'
+>;
+
 const getActiveFormContent = (
   activeTab: number,
   userType: string,
-  formProps: any,
+  formProps: CompleteProfileFormProps,
 ) => {
   switch (activeTab) {
     case 1:
@@ -71,7 +96,7 @@ const CompleteUserProfile = () => {
   const existingRole = userProfile?.role?.[0] === 'PROJECT_CREATOR' ? 1 : 2;
   const newRole = isDroneOperator ? 2 : 1;
 
-  const initialState = {
+  const initialState: ProfileFormData = {
     name: userProfile?.name,
     country: userProfile?.country || null,
     city: userProfile?.city || null,
@@ -113,24 +138,37 @@ const CompleteUserProfile = () => {
     watch,
   };
 
-  const { mutate: updateUserProfile } = useMutation<any, any, any, unknown>({
+  const { mutate: updateUserProfile } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    { userId: number; data: Record<string, unknown> },
+    unknown
+  >({
     mutationFn: payloadDataObject => {
-      return payloadDataObject?.data?.role?.length === 1
+      const role = payloadDataObject?.data?.role;
+      return Array.isArray(role) && role.length === 1
         ? postUserProfile(payloadDataObject)
         : patchUserProfile(payloadDataObject);
     },
-    onSuccess: async data => {
-      const results = data.data?.results;
-      const values: Record<string, any> = getValues();
-      const urlsToUpload = [];
-      const assetsToUpload = [];
+    onSuccess: async response => {
+      const results = (response.data as { results?: Record<string, unknown> })
+        ?.results;
+      const values = getValues() as Record<string, unknown>;
+      const certificateFile = values?.certificate_file as
+        | { file?: unknown }[]
+        | undefined;
+      const registrationFile = values?.registration_file as
+        | { file?: unknown }[]
+        | undefined;
+      const urlsToUpload: string[] = [];
+      const assetsToUpload: unknown[] = [];
       if (results?.certificate_url) {
-        urlsToUpload.push(results?.certificate_url);
-        assetsToUpload.push(values?.certificate_file?.[0]?.file);
+        urlsToUpload.push(results.certificate_url as string);
+        assetsToUpload.push(certificateFile?.[0]?.file);
       }
       if (results?.registration_certificate_url) {
-        urlsToUpload.push(results?.registration_certificate_url);
-        assetsToUpload.push(values?.registration_file?.[0]?.file);
+        urlsToUpload.push(results.registration_certificate_url as string);
+        assetsToUpload.push(registrationFile?.[0]?.file);
       }
       if (urlsToUpload.length) {
         await callApiSimultaneously(urlsToUpload, assetsToUpload, 'put');
@@ -152,7 +190,7 @@ const CompleteUserProfile = () => {
   // Existing users adding role: tabs 1, 2 → submit
   const lastTab = isHankoAuth ? 2 : 3;
 
-  const onSubmit = (formData: Record<string, any>) => {
+  const onSubmit = (formData: ProfileFormData) => {
     if (userProfile?.role) {
       if (userProfileActiveTab !== 2) {
         dispatch(
@@ -175,13 +213,19 @@ const CompleteUserProfile = () => {
       ? removeKeysFromObject(formData, projectCreatorKeys)
       : removeKeysFromObject(formData, droneOperatorKeys);
 
+    const certificateFile = formData?.certificate_file as
+      | { file?: { name?: string } }[]
+      | undefined;
+    const registrationFile = formData?.registration_file as
+      | { file?: { name?: string } }[]
+      | undefined;
     updateUserProfile({
       userId: userProfile?.id,
       data: {
         ...finalFormData,
         // post file name with data
-        certificate_file: formData?.certificate_file?.[0]?.file?.name,
-        registration_file: formData?.registration_file?.[0]?.file?.name,
+        certificate_file: certificateFile?.[0]?.file?.name,
+        registration_file: registrationFile?.[0]?.file?.name,
       },
     });
   };
@@ -207,7 +251,11 @@ const CompleteUserProfile = () => {
         </div>
         <div className="naxatw-flex naxatw-flex-[70%] naxatw-flex-col naxatw-justify-between naxatw-py-1">
           <div className="naxatw-h-[calc(80vh-7rem)] naxatw-overflow-y-scroll md:naxatw-h-[calc(80vh-5rem)]">
-            {getActiveFormContent(userProfileActiveTab, signedInAs, formProps)}
+            {getActiveFormContent(
+              userProfileActiveTab,
+              signedInAs,
+              formProps as unknown as CompleteProfileFormProps,
+            )}
           </div>
           <div className="naxatw-flex naxatw-h-[50px] naxatw-justify-between naxatw-px-12 naxatw-py-1">
             <Button

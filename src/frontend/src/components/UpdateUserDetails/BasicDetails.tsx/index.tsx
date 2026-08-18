@@ -1,5 +1,6 @@
 import { toast } from 'react-toastify';
 import { Controller, useForm } from 'react-hook-form';
+import { AxiosError, AxiosResponse } from 'axios';
 import { FormControl, Input, Label, Select } from '@Components/common/FormUI';
 import { Flex, FlexColumn } from '@Components/common/Layouts';
 import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
@@ -10,9 +11,16 @@ import { patchUserProfile } from '@Services/common';
 import { countries } from 'countries-list';
 import { m } from '@/paraglide/messages';
 
+type BasicDetailsFormData = {
+  name?: string;
+  country: string | null;
+  city: string | null;
+  phone_number: string | null;
+};
+
 const BasicDetails = () => {
   const userProfile = getLocalStorageValue('userprofile');
-  const initialState = {
+  const initialState: BasicDetailsFormData = {
     name: userProfile?.name,
     country: userProfile?.country || null,
     city: userProfile?.city || null,
@@ -25,9 +33,9 @@ const BasicDetails = () => {
   });
 
   const { mutate: updateBasicInfo, isPending } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    { userId: number | string; data: BasicDetailsFormData },
     unknown
   >({
     mutationFn: payloadDataObject => patchUserProfile(payloadDataObject),
@@ -38,13 +46,12 @@ const BasicDetails = () => {
     onError: err => {
       // eslint-disable-next-line no-console
       console.log(err);
-      toast.error(
-        err?.response?.data?.detail || m.profile_something_went_wrong(),
-      );
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || m.profile_something_went_wrong());
     },
   });
 
-  const onSubmit = (formData: Record<string, any>) => {
+  const onSubmit = (formData: BasicDetailsFormData) => {
     updateBasicInfo({ userId: userProfile?.id, data: formData });
   };
 

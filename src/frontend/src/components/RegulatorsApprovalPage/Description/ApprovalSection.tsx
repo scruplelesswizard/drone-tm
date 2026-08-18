@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { AxiosError, AxiosResponse } from 'axios';
 import { m } from '@/paraglide/messages';
 
 const ApprovalSection = () => {
@@ -12,9 +13,13 @@ const ApprovalSection = () => {
   const queryClient = useQueryClient();
 
   const { mutate: commentToProject, isPending } = useMutation<
-    any,
-    any,
-    any,
+    AxiosResponse,
+    AxiosError,
+    {
+      projectId: string;
+      regulator_comment: string;
+      regulator_approval_status: string;
+    },
     unknown
   >({
     mutationFn: regulatorComment,
@@ -23,8 +28,9 @@ const ApprovalSection = () => {
       toast.success(m.regulator_approval_saved_success());
       setComment('');
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.detail || err?.message || '');
+    onError: err => {
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || err?.message || '');
     },
   });
 
@@ -32,7 +38,7 @@ const ApprovalSection = () => {
     commentToProject({
       regulator_comment: comment,
       regulator_approval_status: status,
-      projectId: id,
+      projectId: id as string,
     });
   };
 

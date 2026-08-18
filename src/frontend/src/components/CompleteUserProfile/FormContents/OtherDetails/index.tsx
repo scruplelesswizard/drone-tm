@@ -6,10 +6,17 @@ import { droneOperatorOptions } from '@Constants/index';
 import FileUpload from '@Components/common/UploadArea';
 import ErrorMessage from '@Components/common/FormUI/ErrorMessage';
 import { setCommonState } from '@Store/actions/common';
-import { Controller } from 'react-hook-form';
+import { Controller, FieldValues, UseFormReturn } from 'react-hook-form';
 import { m } from '@/paraglide/messages';
 
-export default function OtherDetails({ formProps }: { formProps: any }) {
+export default function OtherDetails({
+  formProps,
+}: {
+  formProps: Pick<
+    UseFormReturn<FieldValues>,
+    'register' | 'setValue' | 'formState' | 'control' | 'watch'
+  >;
+}) {
   const dispatch = useTypedDispatch();
   const isCertifiedDroneOperator = useTypedSelector(
     state => state.common.isCertifiedDroneUser,
@@ -37,7 +44,8 @@ export default function OtherDetails({ formProps }: { formProps: any }) {
           />
           <ErrorMessage
             message={
-              formProps.formState.errors?.notify_for_projects_within_km?.message
+              formProps.formState.errors?.notify_for_projects_within_km
+                ?.message as string
             }
           />
         </FormControl>
@@ -53,7 +61,9 @@ export default function OtherDetails({ formProps }: { formProps: any }) {
             })}
           />
           <ErrorMessage
-            message={formProps.formState.errors?.experience_years?.message}
+            message={
+              formProps.formState.errors?.experience_years?.message as string
+            }
           />
         </FormControl>
         <FormControl>
@@ -66,7 +76,9 @@ export default function OtherDetails({ formProps }: { formProps: any }) {
             })}
           />
           <ErrorMessage
-            message={formProps.formState.errors?.drone_you_own?.message}
+            message={
+              formProps.formState.errors?.drone_you_own?.message as string
+            }
           />
         </FormControl>
         <FormControl>
@@ -82,7 +94,8 @@ export default function OtherDetails({ formProps }: { formProps: any }) {
           />
           <ErrorMessage
             message={
-              formProps.formState.errors?.certified_drone_operator?.message
+              formProps.formState.errors?.certified_drone_operator
+                ?.message as string
             }
           />
           {isCertifiedDroneOperator === 'yes' && (
