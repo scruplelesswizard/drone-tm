@@ -61,11 +61,13 @@ const DescriptionBox = () => {
 
     const state = taskAssetsInformation?.state;
     const hasImageryUploaded = (taskAssetsInformation?.image_count ?? 0) > 0;
-    const statusValue = state
-      ? state === 'LOCKED' && hasImageryUploaded
-        ? m.drone_task_image_uploading_failed()
-        : getTaskStateLabel(state)
-      : null;
+    let statusValue = null;
+    if (state) {
+      statusValue =
+        state === 'LOCKED' && hasImageryUploaded
+          ? m.drone_task_image_uploading_failed()
+          : getTaskStateLabel(state);
+    }
 
     const taskDescription = [
       {

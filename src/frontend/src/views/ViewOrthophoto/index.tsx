@@ -66,8 +66,9 @@ const ViewOrthophoto = () => {
   }, []);
 
   useEffect(() => {
-    if (!mapContainerRef.current || isFetching || !projectData) return;
-    if (mapRef.current) return;
+    if (!mapContainerRef.current || isFetching || !projectData)
+      return undefined;
+    if (mapRef.current) return undefined;
 
     // Backend exposes the COG via a direct publicuploads/ URL that never
     // expires, so the previous "fetch presigned URL + schedule refresh"
@@ -77,7 +78,7 @@ const ViewOrthophoto = () => {
       .cloud_ortho_cog_url as string | null | undefined;
     if (!rawCogUrl) {
       setViewState('unavailable');
-      return;
+      return undefined;
     }
     const cogUrl: string = rawCogUrl;
 

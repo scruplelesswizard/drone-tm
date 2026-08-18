@@ -20,7 +20,7 @@ export default function BasicInformation({
   useEffect(() => {
     clearErrors?.('name');
 
-    if (!nameValue || nameValue.trim().length === 0) return;
+    if (!nameValue || nameValue.trim().length === 0) return undefined;
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);

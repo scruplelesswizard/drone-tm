@@ -47,7 +47,7 @@ async function getAdbConnection(): Promise<Adb | undefined> {
 
   if (!Manager) {
     toast.error('WebUSB is not supported in this browser');
-    return;
+    return undefined;
   }
 
   const CredentialStore = new AdbWebCredentialStore();
@@ -56,7 +56,7 @@ async function getAdbConnection(): Promise<Adb | undefined> {
     await Manager.requestDevice();
   if (!device) {
     toast.error('No device selected');
-    return;
+    return undefined;
   }
 
   const connection = await device.connect();

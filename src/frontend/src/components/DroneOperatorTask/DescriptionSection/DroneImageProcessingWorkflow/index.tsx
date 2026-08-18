@@ -57,7 +57,7 @@ export const UploadImageryDialog = ({
 
   // Hold Ctrl to reveal the ingest button (same pattern as ScaleODM server prompt)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return undefined;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Control') setShowIngestButton(true);
     };
@@ -188,11 +188,12 @@ export const UploadImageryDialog = ({
                   disabled={ingestMutation.isPending || ingestTriggered}
                   leftIcon="cloud_sync"
                 >
-                  {ingestTriggered
-                    ? m.imagery_upload_ingestion_started_status()
-                    : ingestMutation.isPending
-                      ? m.common_starting()
-                      : m.imagery_upload_ingest_existing_s3()}
+                  {(() => {
+                    if (ingestTriggered)
+                      return m.imagery_upload_ingestion_started_status();
+                    if (ingestMutation.isPending) return m.common_starting();
+                    return m.imagery_upload_ingest_existing_s3();
+                  })()}
                 </Button>
               </div>
             ) : (

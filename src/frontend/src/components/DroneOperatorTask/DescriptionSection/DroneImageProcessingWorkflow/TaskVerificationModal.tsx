@@ -132,7 +132,7 @@ const TaskVerificationModal = ({
 
   // Initialize map after data is loaded and DOM is ready
   useEffect(() => {
-    if (!isOpen || !verificationData || map) return;
+    if (!isOpen || !verificationData || map) return undefined;
 
     const timer = setTimeout(() => {
       const container = document.getElementById('task-verification-map');
@@ -213,7 +213,7 @@ const TaskVerificationModal = ({
 
   // Pointer cursor + click handler on image points
   useEffect(() => {
-    if (!map || !isMapLoaded) return;
+    if (!map || !isMapLoaded) return undefined;
 
     const layerId = 'task-image-points-layer';
 
@@ -770,27 +770,33 @@ const TaskVerificationModal = ({
                                   }
                                 }}
                               >
-                                {thumbSrc ? (
-                                  <img
-                                    src={thumbSrc}
-                                    alt={image.filename}
-                                    className="naxatw-h-full naxatw-w-full naxatw-object-cover"
-                                    loading="lazy"
-                                  />
-                                ) : image.status === 'duplicate' ? (
-                                  <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-center naxatw-bg-gray-100 naxatw-text-gray-400">
-                                    <span className="material-icons naxatw-text-2xl">
-                                      content_copy
-                                    </span>
-                                    <span className="naxatw-mt-0.5 naxatw-text-[9px]">
-                                      {m.common_duplicate()}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-items-center naxatw-justify-center naxatw-bg-gray-100">
-                                    <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-500" />
-                                  </div>
-                                )}
+                                {(() => {
+                                  if (thumbSrc)
+                                    return (
+                                      <img
+                                        src={thumbSrc}
+                                        alt={image.filename}
+                                        className="naxatw-h-full naxatw-w-full naxatw-object-cover"
+                                        loading="lazy"
+                                      />
+                                    );
+                                  if (image.status === 'duplicate')
+                                    return (
+                                      <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-center naxatw-bg-gray-100 naxatw-text-gray-400">
+                                        <span className="material-icons naxatw-text-2xl">
+                                          content_copy
+                                        </span>
+                                        <span className="naxatw-mt-0.5 naxatw-text-[9px]">
+                                          {m.common_duplicate()}
+                                        </span>
+                                      </div>
+                                    );
+                                  return (
+                                    <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-items-center naxatw-justify-center naxatw-bg-gray-100">
+                                      <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-500" />
+                                    </div>
+                                  );
+                                })()}
                                 <button
                                   type="button"
                                   className="naxatw-bg-red-500 hover:naxatw-bg-red-600 naxatw-absolute naxatw-right-1 naxatw-top-1 naxatw-rounded-full naxatw-p-1 naxatw-text-white naxatw-opacity-0 naxatw-transition-opacity group-hover:naxatw-opacity-100"
@@ -855,11 +861,12 @@ const TaskVerificationModal = ({
               }
               leftIcon={verifyMutation.isPending ? 'sync' : 'check_circle'}
             >
-              {verifyMutation.isPending
-                ? m.common_verifying()
-                : isAlreadyVerified
-                  ? m.task_verification_already_fully_flown()
-                  : m.task_verification_mark_fully_flown()}
+              {(() => {
+                if (verifyMutation.isPending) return m.common_verifying();
+                if (isAlreadyVerified)
+                  return m.task_verification_already_fully_flown();
+                return m.task_verification_mark_fully_flown();
+              })()}
             </Button>
           </FlexRow>
         </div>

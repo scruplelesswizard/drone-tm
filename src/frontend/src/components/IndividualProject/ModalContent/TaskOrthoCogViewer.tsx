@@ -24,7 +24,7 @@ const TaskOrthoCogViewer = ({
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) return undefined;
     setLoadError(null);
 
     const container = containerRef.current;

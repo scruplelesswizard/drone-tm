@@ -16,17 +16,20 @@ interface IProtectedRoute {
  * session cookie.  We ping `/users/my-info` once per mount to confirm
  * the session is still valid.  If not, we clear stale state and redirect.
  */
+function getInitialSessionStatus(
+  isAuthenticated: boolean,
+): 'checking' | 'valid' | 'invalid' {
+  if (!isAuthenticated) return 'invalid';
+  return AUTH_PROVIDER === 'hanko' ? 'checking' : 'valid';
+}
+
 function useValidateSession(isAuthenticated: boolean) {
   const [status, setStatus] = useState<'checking' | 'valid' | 'invalid'>(
-    isAuthenticated && AUTH_PROVIDER === 'hanko'
-      ? 'checking'
-      : isAuthenticated
-        ? 'valid'
-        : 'invalid',
+    getInitialSessionStatus(isAuthenticated),
   );
 
   useEffect(() => {
-    if (!isAuthenticated || AUTH_PROVIDER !== 'hanko') return;
+    if (!isAuthenticated || AUTH_PROVIDER !== 'hanko') return undefined;
 
     let cancelled = false;
 

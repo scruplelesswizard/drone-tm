@@ -419,6 +419,21 @@ than as inline notes on the item that found them:
             `ProcessingStatusDialog.tsx` as scoped `eslint-disable`s —
             deliberate blocking confirmations before costly/irreversible
             processing actions, not a suppress-and-move-on.
+      - [x] `no-nested-ternary` (17), `consistent-return` (16) — grouped
+            together since fixes for both cluster in the same handful of
+            files (mostly map-lifecycle `useEffect`s in `ImageReview.tsx`
+            and its siblings). `consistent-return` was almost entirely one
+            recurring shape: a `useEffect` with an early bare `return;`
+            guard clause followed later by `return () => {...}` cleanup -
+            fixed by making the guard `return undefined;` instead of
+            introducing a behavioural change. `no-nested-ternary` fixes
+            were mostly 3-to-6-way ternary chains picking a CSS class or
+            button label/state; extracted to a named helper
+            (`getImageTileBorderClass` in `ImageReview.tsx`, for its 6-way
+            image-tile border/ring chain) or inlined as an IIFE with early
+            returns where a named function wasn't warranted, matching the
+            IIFE pattern already used elsewhere in
+            `views/IndividualProject/index.tsx`.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
