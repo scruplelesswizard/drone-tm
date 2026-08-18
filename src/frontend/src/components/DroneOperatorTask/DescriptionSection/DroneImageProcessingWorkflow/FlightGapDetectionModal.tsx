@@ -7,6 +7,8 @@ import {
   LngLatBoundsLike,
 } from 'maplibre-gl';
 import bbox from '@turf/bbox';
+import { AxiosError } from 'axios';
+import { GeoJsonProperties } from 'geojson';
 import { toast } from 'react-toastify';
 import {
   FlightGapDetectionData,
@@ -44,7 +46,7 @@ const FlightGapDetectionModal = ({
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isStyleReady, setIsStyleReady] = useState(false);
-  const [popupData, setPopupData] = useState<Record<string, any>>();
+  const [popupData, setPopupData] = useState<GeoJsonProperties>();
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [manualGapData, setManualGapData] =
     useState<GeoJSON.FeatureCollection | null>(null);
@@ -188,7 +190,7 @@ const FlightGapDetectionModal = ({
   }, [currentGapData]);
 
   const getPopupUI = useCallback(
-    (_properties: Record<string, any>) => {
+    (_properties: GeoJsonProperties) => {
       if (!popupData) {
         return <div>{m.common_loading()}</div>;
       }
@@ -228,9 +230,9 @@ const FlightGapDetectionModal = ({
 
       toast.info(data.message || m.flight_gap_gaps_updated_no_plan());
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError) => {
       const message =
-        error?.response?.data?.detail ||
+        (error.response?.data as { detail?: string })?.detail ||
         error.message ||
         m.flight_gap_finalize_failed();
       toast.error(message);
@@ -263,8 +265,10 @@ const FlightGapDetectionModal = ({
       window.URL.revokeObjectURL(url);
 
       toast.success(m.flight_gap_plan_downloaded());
-    } catch (error: any) {
-      const detail = error?.response?.data?.detail;
+    } catch (error) {
+      const detail = (
+        (error as AxiosError)?.response?.data as { detail?: string }
+      )?.detail;
       toast.error(detail || m.flight_gap_generate_failed());
     }
   };
@@ -403,11 +407,11 @@ const FlightGapDetectionModal = ({
 
               {/* Popup for image preview */}
               <AsyncPopup
-                showPopup={(feature: Record<string, any>) =>
+                showPopup={(feature: GeoJsonProperties) =>
                   feature?.source === 'task-image-points'
                 }
                 popupUI={getPopupUI}
-                fetchPopupData={(properties: Record<string, any>) => {
+                fetchPopupData={(properties: GeoJsonProperties) => {
                   setPopupData(properties);
                 }}
                 title={m.flight_gap_image_preview_title()}

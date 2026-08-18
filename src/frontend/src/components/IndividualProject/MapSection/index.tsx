@@ -613,7 +613,7 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
               ? m.map_popup_task_title({ index: selectedTaskIndex })
               : m.map_popup_task_title({ index: selectedTaskId })
           }
-          showPopup={(feature: Record<string, unknown>) => {
+          showPopup={feature => {
             if (!userDetails) return false;
 
             const source = feature?.source as string | undefined;

@@ -4,11 +4,12 @@
 import '@Components/common/MapLibreComponents/map.css';
 import { Button } from '@Components/RadixComponents/Button';
 import Skeleton from '@Components/RadixComponents/Skeleton';
-import type { MapMouseEvent } from 'maplibre-gl';
+import type { LngLatLike, MapMouseEvent } from 'maplibre-gl';
 import { Popup } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import { renderToString } from 'react-dom/server';
+import { GeoJsonProperties } from 'geojson';
 import { IAsyncPopup } from '../types';
 
 const popup = new Popup({
@@ -32,18 +33,18 @@ const AsyncPopup = forwardRef<HTMLDivElement, IAsyncPopup>(
       hasSecondaryButton = false,
       secondaryButtonText = '',
       handleSecondaryBtnClick,
-      showPopup = (_clickedFeature: Record<string, any>) => true,
+      showPopup = (_clickedFeature: GeoJsonProperties) => true,
       openPopupFor,
       popupCoordinate,
     }: IAsyncPopup,
     ref,
   ) => {
-    const [properties, setProperties] = useState<Record<string, any> | null>(
+    const [properties, setProperties] = useState<GeoJsonProperties | null>(
       null,
     );
     const internalPopupRef = useRef(null);
     const popupRef = ref || internalPopupRef;
-    const [coordinates, setCoordinates] = useState<any>(null);
+    const [coordinates, setCoordinates] = useState<LngLatLike | null>(null);
     const [popupHTML, setPopupHTML] = useState<string>('');
 
     useEffect(() => {
@@ -110,7 +111,7 @@ const AsyncPopup = forwardRef<HTMLDivElement, IAsyncPopup>(
     useEffect(() => {
       if (!map || !openPopupFor || !popupCoordinate) return;
       setProperties(openPopupFor);
-      setCoordinates(popupCoordinate);
+      setCoordinates(popupCoordinate as [number, number]);
     }, [map, openPopupFor, popupCoordinate]);
 
     if (!properties) return <div />;

@@ -660,9 +660,29 @@ than as inline notes on the item that found them:
             depending on call site - preserved that exact dual-branch
             defensive logic with `unknown` + `Array.isArray` narrowing
             instead of collapsing it to a single assumed shape.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~243 sites -
-            `common/MapLibreComponents/types/index.ts` (14),
-            `common/DataTable/index.tsx` (12), and
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 6 (34 of 243
+            sites) - `common/MapLibreComponents/types/index.ts` (the shared
+            prop-types file for the whole MapLibre component family)
+            rewritten in full: `GeoJsonProperties` (from the `geojson`
+            package) for all feature-properties callback params
+            (`onFeatureSelect`, `fetchPopupData`, `popupUI`, `showPopup`,
+            `handleBtnClick`), and `onDrag`'s event param changed from `any`
+            to `Record<string, unknown> & {originalCoordinates, isDragging}`
+            (a `MapMouseEvent` intersection doesn't work here - the real
+            call site in `VectorLayer.ts` spreads the event object, which
+            drops class methods, so the runtime value is never actually a
+            `MapMouseEvent`). Fixed the resulting fallout across every
+            consumer: `FlightGapDetectionModal.tsx`, `Projects/MapSection/
+            index.tsx` (incl. a full rewrite of its `projectsCentroidGeojson`
+            `useMemo`/`.reduce` to build a properly-typed `FeatureCollection`
+            instead of `any`), `IndividualProject/MapSection/index.tsx`,
+            and both `AsyncPopup/index.tsx` and `NewAsyncPopup/index.tsx`
+            (sibling components with slightly different `coordinates` state
+            shapes - `AsyncPopup` widened to `LngLatLike | null` since
+            `popupCoordinate` is a loose `number[]`, not a `[number,number]`
+            tuple, so it can't satisfy `LngLat` directly).
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~209 sites -
+            `common/DataTable/index.tsx` (12) and
             `DroneOperatorTask/DescriptionSection/UppyFileUploader/index.tsx`
             (11) are the largest remaining concentrations.
       - [ ] Everything else listed above, still open.
