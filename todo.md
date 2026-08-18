@@ -533,14 +533,58 @@ than as inline notes on the item that found them:
             same shared shape flagged in batch 1 as needing a dedicated
             `ProjectDetail` interface; fixing it here in isolation would
             just be guessing at a type other files already depend on.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~363 sites -
-            continue in file/directory batches. `MapSection.tsx` (both the
-            IndividualProject and DroneOperatorTask ones),
-            `ImageReview.tsx`, and `common/MapLibreComponents/types/index.ts`
-            are the largest remaining concentrations; all of them, plus
-            `DescriptionSection.tsx` above, funnel through the same
-            undefined `ProjectDetail`/`TaskData` shape - worth defining
-            that interface once, in its own PR, before continuing further.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 1 (23 of 363
+            sites) - researched the real backend response shapes (an
+            Explore agent read `project_schemas.py`/`task_schemas.py`
+            directly) instead of guessing from frontend usage. Finding:
+            there is no single "ProjectDetail" shape - the frontend
+            conflates **five distinct backend response shapes** under
+            `Record<string, any>`: `ProjectInfo` (GET /projects/{id}),
+            `TaskOut` (nested in `ProjectInfo.tasks`), `Task`/`TaskStateItem`
+            (GET /tasks/states/{project_id} - only `task_id`/`project_id`/
+            `state`, no `id`, no `outline`), `TaskDetailsOut` (single-task
+            detail), and `AssetsInfo` (task summary bulk endpoint). Added
+            real `ProjectInfo`/`TaskOut` to `services/createproject.ts` and
+            `TaskStateItem` to `services/project.ts`, then applied them to
+            `RegulatorsApprovalPage/Description/DescriptionSection.tsx`
+            (deferred from batch 2), `RegulatorsApprovalPage/index.tsx` +
+            its view wrapper, and `views/IndividualProject/index.tsx`.
+            **Found and fixed a real bug while researching this**: two map
+            components (`IndividualProject/MapSection/index.tsx`,
+            `IndividualProject/ExportSection/MapSection.tsx`) read
+            `projectData?.no_fly_zones_geojson`, a field that has never
+            existed on the backend response (the real field is
+            `no_fly_zones`) - no-fly-zone polygons have never rendered on
+            either map. Fixed both call sites.
+            **Flagged, not fixed**: `ProcessingStatusDialog.tsx` already
+            declares local types (`ProcessingDialogTask`,
+            `ProcessingDialogProjectDetail`) with fields
+            (`has_ready_imagery`, `imagery_transfer_pending`,
+            `assigned_images`, `pending_transfer_count`, `task_index`,
+            `failure_reason`, `task_state`) that don't exist on the current
+            backend `AssetsInfo` model or its actual construction in
+            `project_logic.py`. Either this is stale/aspirational typing
+            for a feature that was never shipped or was removed, or there's
+            a reconciliation endpoint the research didn't find - needs a
+            deliberate decision before touching, not a mechanical any-fix.
+            Discovered that `useGetProjectsDetailQuery`/`useGetTaskStatesQuery`
+            (in `api/projects.ts`) don't propagate real types to callers
+            regardless of how precisely `select` is typed internally,
+            because they're built on bare `Partial<UseQueryOptions>` with
+            no generics - callers still see `data` as `{}`/`unknown` and
+            need an explicit `as { data?: ProjectInfo; ... }` cast at each
+            call site (the pattern used throughout this batch). Properly
+            wiring the hook generics through would remove the need for
+            that cast but is a larger, separate refactor.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~340 sites -
+            `IndividualProject/MapSection/index.tsx` (~25, DIFFERENT file
+            from the DroneOperatorTask one of the same name) is now the
+            single largest concentration and the natural next target,
+            since it already imports the real `ProjectInfo`/`TaskStateItem`
+            types via its callers - just needs its own prop/local types
+            swapped over. `DroneOperatorTask/MapSection/MapSection.tsx`,
+            `ImageReview.tsx`, `TaskVerificationModal.tsx`, and
+            `common/MapLibreComponents/types/index.ts` remain after that.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the

@@ -2,12 +2,10 @@ import Tab from '@Components/common/Tabs';
 import DescriptionSection from '@Components/RegulatorsApprovalPage/Description/DescriptionSection';
 import { getTabOptions } from '@Constants/approvalPage';
 import { useState } from 'react';
+import { ProjectInfo } from '@Services/createproject';
 import InstructionSection from './InstructionSection';
 
-const getContent = (
-  selectedTab: string | number,
-  projectData: Record<string, any>,
-) => {
+const getContent = (selectedTab: string | number, projectData: ProjectInfo) => {
   if (selectedTab === 'about')
     return <DescriptionSection projectData={projectData} />;
   return (
@@ -16,7 +14,7 @@ const getContent = (
     />
   );
 };
-const DetailsTemplate = ({ projectData }: Record<string, any>) => {
+const DetailsTemplate = ({ projectData }: { projectData: ProjectInfo }) => {
   const [selectedTab, setSelectedTab] = useState<string | number>('about');
 
   return (

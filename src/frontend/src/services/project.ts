@@ -1,7 +1,15 @@
 import { authenticated, api } from '.';
 
+// Response item shape of GET /tasks/states/{project_id} (task_schemas.Task).
+// Only 3 fields - task_id, not id - distinct from TaskOut (services/createproject.ts).
+export interface TaskStateItem {
+  task_id: string;
+  project_id: string;
+  state: string;
+}
+
 export const getTaskStates = (projectId: string) =>
-  api.get(`/tasks/states/${projectId}`);
+  api.get<TaskStateItem[]>(`/tasks/states/${projectId}`);
 
 export const postTaskStatus = (payload: {
   projectId: string;

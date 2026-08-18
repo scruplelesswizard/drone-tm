@@ -14,7 +14,7 @@ import VectorLayer from '@Components/common/MapLibreComponents/Layers/VectorLaye
 import LocateUser from '@Components/common/MapLibreComponents/LocateUser';
 import MapContainer from '@Components/common/MapLibreComponents/MapContainer';
 import { GeojsonType } from '@Components/common/MapLibreComponents/types';
-import { postTaskStatus } from '@Services/project';
+import { postTaskStatus, TaskStateItem } from '@Services/project';
 import { setProjectState } from '@Store/actions/project';
 import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -166,13 +166,12 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
 
   useEffect(() => {
     if (!map || !taskStates) return;
-    const taskStatus: Record<string, any> = taskStates?.reduce(
-      (acc: Record<string, any>, task: Record<string, any>) => {
-        acc[task.task_id] = task.state;
-        return acc;
-      },
-      {},
-    );
+    const taskStatus: Record<string, string> = (
+      taskStates as TaskStateItem[]
+    )?.reduce<Record<string, string>>((acc, task) => {
+      acc[task.task_id] = task.state;
+      return acc;
+    }, {});
     setTaskStatusObj(taskStatus);
   }, [map, taskStates]);
 
@@ -457,7 +456,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
             }}
           />
         )}
-        {projectData?.no_fly_zones_geojson && showTaskArea && (
+        {projectData?.no_fly_zones && showTaskArea && (
           <VectorLayer
             map={map as Map}
             id="no-fly-zone-area"
@@ -465,7 +464,7 @@ const MapSection = ({ projectData }: { projectData: Record<string, any> }) => {
             geojson={
               {
                 type: 'FeatureCollection',
-                features: [projectData?.no_fly_zones_geojson],
+                features: [projectData?.no_fly_zones],
               } as GeojsonType
             }
             layerOptions={{

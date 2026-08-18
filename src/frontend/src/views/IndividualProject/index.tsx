@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import centroid from '@turf/centroid';
 import html2canvas from 'html2canvas';
+import { Feature } from 'geojson';
 import {
   useGetProjectsDetailQuery,
   useGetUserDetailsQuery,
@@ -27,6 +28,7 @@ import { deleteProject } from '@Services/project';
 import {
   triggerMeshConversion,
   triggerOrthophotoConversion,
+  ProjectInfo,
 } from '@Services/createproject';
 import { setProjectState } from '@Store/actions/project';
 import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
@@ -48,10 +50,10 @@ const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
 // function to render the content based on active tab
 const getActiveTabContent = (
   activeTab: string,
-  data: Record<string, any>,
+  data: ProjectInfo,
   isProjectDataLoading: boolean,
 
-  handleTableRowClick: (rowData: any) => void,
+  handleTableRowClick: (rowData: Record<string, unknown>) => void,
 
   onOpenUpload?: () => void,
 
@@ -99,7 +101,7 @@ const IndividualProject = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const dispatch = useTypedDispatch();
-  const exportRef = useRef<any>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
   const [exportingContent, setExportingContent] = useState(false);
   const [showProjectDeletePrompt, setShowProjectDeletePrompt] = useState(false);
   const [showDownloadOptions, setShowDownloadOptions] =
@@ -116,29 +118,34 @@ const IndividualProject = () => {
   const tasksList = useTypedSelector(state => state.project.tasksData);
   const showGcpEditor = useTypedSelector(state => state.project.showGcpEditor);
 
-  const { data: userDetails }: Record<string, any> = useGetUserDetailsQuery();
+  const { data: userDetails }: { data?: Record<string, unknown> } =
+    useGetUserDetailsQuery();
 
-  const {
-    data: projectData,
-    isFetching: isProjectDataFetching,
-  }: Record<string, any> = useGetProjectsDetailQuery(id as string);
+  const { data: projectData, isFetching: isProjectDataFetching } =
+    useGetProjectsDetailQuery(id as string) as {
+      data?: ProjectInfo;
+      isFetching: boolean;
+    };
   useEffect(() => {
     if (projectData) {
       dispatch(
         setProjectState({
           // modify each task geojson and set locked user id and name to properties and save to redux state called taskData
-          tasksData: projectData.tasks?.map((task: Record<string, any>) => ({
-            ...task,
-            outline: {
-              ...task.outline,
-              properties: {
-                ...task.outline.properties,
-                locked_user_id: task?.user_id,
-                locked_user_name: task?.name,
-                lock_comment: task?.comment,
+          tasksData: projectData.tasks?.map(task => {
+            const outline = task.outline as Feature | null;
+            return {
+              ...task,
+              outline: {
+                ...outline,
+                properties: {
+                  ...outline?.properties,
+                  locked_user_id: task?.user_id,
+                  locked_user_name: task?.name,
+                  lock_comment: task?.comment,
+                },
               },
-            },
-          })),
+            };
+          }),
           projectArea: projectData.outline,
         }),
       );
@@ -197,10 +204,8 @@ const IndividualProject = () => {
     onError: () => toast.error(m.individual_project_convert_failed()),
   });
 
-  const handleTableRowClick = (taskData: any) => {
-    const clickedTask = tasksList?.find(
-      (task: Record<string, any>) => taskData?.task_id === task?.id,
-    );
+  const handleTableRowClick = (taskData: Record<string, unknown>) => {
+    const clickedTask = tasksList?.find(task => taskData?.task_id === task?.id);
     const taskDetailToSave = {
       id: clickedTask?.id,
       locked_user_id: clickedTask?.user_id,
@@ -441,7 +446,7 @@ const IndividualProject = () => {
                       );
                       window.open(
                         `${viewerBase}/index.html?glb=${encodeURIComponent(
-                          projectData.mesh_glb_url,
+                          projectData.mesh_glb_url || '',
                         )}`,
                         '_blank',
                         'noopener',
@@ -530,12 +535,14 @@ const IndividualProject = () => {
                     onKeyDown={() => {}}
                     onClick={() => {
                       setExportingContent(true);
-                      html2canvas(exportRef?.current).then((canvas: any) => {
-                        const link = document.createElement('a');
-                        link.download = `${projectData?.name}.png`;
-                        link.href = canvas.toDataURL();
-                        link.click();
-                      });
+                      if (exportRef.current) {
+                        html2canvas(exportRef.current).then(canvas => {
+                          const link = document.createElement('a');
+                          link.download = `${projectData?.name}.png`;
+                          link.href = canvas.toDataURL();
+                          link.click();
+                        });
+                      }
                       setExportingContent(false);
                       setShowDownloadOptions(false);
                     }}
@@ -711,7 +718,7 @@ const IndividualProject = () => {
               <div className="naxatw-h-fit naxatw-max-h-[calc(100vh-280px)] naxatw-overflow-y-auto naxatw-border-t">
                 {getActiveTabContent(
                   individualProjectActiveTab,
-                  projectData as Record<string, any>,
+                  projectData as ProjectInfo,
                   isProjectDataFetching,
                   handleTableRowClick,
                   () => setIsUploadDialogOpen(true),
@@ -741,7 +748,11 @@ const IndividualProject = () => {
               {isProjectDataFetching ? (
                 <Skeleton className="naxatw-h-full naxatw-w-full" />
               ) : (
-                <MapSection projectData={projectData as Record<string, any>} />
+                <MapSection
+                  projectData={
+                    projectData as unknown as Record<string, unknown>
+                  }
+                />
               )}
             </div>
           </div>
@@ -754,7 +765,9 @@ const IndividualProject = () => {
           className="naxatw-flex naxatw-w-full naxatw-max-w-[600px] naxatw-justify-center"
           ref={exportRef}
         >
-          <ExportSection projectData={projectData} />
+          <ExportSection
+            projectData={projectData as unknown as Record<string, unknown>}
+          />
         </div>
       </div>
 
