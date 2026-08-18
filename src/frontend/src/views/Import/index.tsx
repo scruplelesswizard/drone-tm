@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AxiosError } from 'axios';
 import { toast } from 'react-toastify';
 
 import { Button } from '@Components/RadixComponents/Button';
@@ -31,10 +32,13 @@ const Import = () => {
       });
       setSubmitted(true);
       toast.success(m.import_job_submitted_success());
-    } catch (err: any) {
+    } catch (err) {
+      const detailData = (err as AxiosError)?.response?.data as
+        | { detail?: string }
+        | undefined;
       const detail =
-        err?.response?.data?.detail ||
-        err?.message ||
+        detailData?.detail ||
+        (err as AxiosError)?.message ||
         m.import_request_failed();
       toast.error(detail);
     } finally {

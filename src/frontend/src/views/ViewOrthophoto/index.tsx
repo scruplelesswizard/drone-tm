@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { cogProtocol, getCogMetadata } from '@geomatico/maplibre-cog-protocol';
 import bbox from '@turf/bbox';
 import { useGetProjectsDetailQuery } from '@Api/projects';
+import { ProjectInfo } from '@Services/createproject';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import { m } from '@/paraglide/messages';
 
@@ -51,7 +52,7 @@ const ViewOrthophoto = () => {
 
   const { data: projectData, isFetching } = useGetProjectsDetailQuery(
     id as string,
-  );
+  ) as { data?: ProjectInfo; isFetching: boolean };
 
   const handleZoomToExtent = useCallback(() => {
     if (!mapRef.current || !layerBoundsRef.current) return;
@@ -74,15 +75,14 @@ const ViewOrthophoto = () => {
     // expires, so the previous "fetch presigned URL + schedule refresh"
     // dance is gone. Absence of the URL means the cloudnative job hasn't
     // produced a COG for this project yet.
-    const rawCogUrl = (projectData as Record<string, any>)
-      .cloud_ortho_cog_url as string | null | undefined;
+    const rawCogUrl = projectData?.cloud_ortho_cog_url;
     if (!rawCogUrl) {
       setViewState('unavailable');
       return undefined;
     }
     const cogUrl: string = rawCogUrl;
 
-    const outline = (projectData as Record<string, any>).outline as
+    const outline = projectData?.outline as
       | GeoJSON.Feature
       | GeoJSON.FeatureCollection
       | undefined;
@@ -97,7 +97,7 @@ const ViewOrthophoto = () => {
     let initialBounds: LngLatBounds | null = null;
     if (outline) {
       try {
-        const [minX, minY, maxX, maxY] = bbox(outline as any);
+        const [minX, minY, maxX, maxY] = bbox(outline);
         initialBounds = new LngLatBounds([minX, minY], [maxX, maxY]);
         initialCenter = [(minX + maxX) / 2, (minY + maxY) / 2];
       } catch {
@@ -171,9 +171,7 @@ const ViewOrthophoto = () => {
     };
   }, [projectData, isFetching]);
 
-  const projectName = (projectData as Record<string, any>)?.name as
-    | string
-    | undefined;
+  const projectName = projectData?.name ?? undefined;
 
   return (
     <div className="naxatw-relative naxatw-flex naxatw-h-screen naxatw-flex-col">

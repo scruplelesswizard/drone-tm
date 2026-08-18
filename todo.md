@@ -882,8 +882,30 @@ than as inline notes on the item that found them:
             only, so extending that helper's key union would have been
             misleading; added a minimal `ImportMetaEnv` augmentation
             instead).
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~51 sites,
-            spread across ~17 files with no single large concentration left
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 16 (17 of 51
+            sites) - all of `views/**` fully cleared. `Dashboard/index.tsx`
+            (4): the query's `select` cast against `AxiosResponse<Record
+            <string, number>>`, and the mapped-card type derived as
+            `(typeof dashboardCards)[number] & {count?: number}` rather
+            than a hand-written literal, since the cards carry paraglide's
+            branded `LocalizedString` title type which a plain `string`
+            annotation doesn't satisfy. `Import/index.tsx` (1) and
+            `View3DModel/index.tsx` (4, incl. a new `TilesetNode` interface
+            for the 3D Tiles JSON tree walk, matching the
+            `changeLayerOrder.ts`/`ProcessingStatusDialog.tsx` "type the
+            actual shape accessed" pattern) were mechanical. `Projects/
+            index.tsx` (4): typed the list-query response with a new local
+            `ProjectListItem` interface and surfaced a real pre-existing
+            mismatch - `ProjectCard`'s `id` prop is typed `number` but
+            backend project ids are UUID strings everywhere else in this
+            codebase (same class of bug as `postTaskBoundary`'s `id:
+            number` found in batch 3/9); left a cast + comment rather than
+            silently changing `ProjectCard`'s contract. `ViewOrthophoto/
+            index.tsx` (4): reused the existing `ProjectInfo` interface
+            instead of a bespoke local type, since all the accessed fields
+            (`cloud_ortho_cog_url`, `outline`, `name`) are already on it.
+      - [ ] `@typescript-eslint/no-explicit-any` remaining ~34 sites,
+            spread across ~13 files with no single large concentration left
             - continue in small file/directory-scoped batches.
       - [ ] Everything else listed above, still open.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into

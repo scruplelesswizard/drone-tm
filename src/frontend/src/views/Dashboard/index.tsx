@@ -1,3 +1,4 @@
+import { AxiosResponse } from 'axios';
 import { useGetDashboardTaskStaticsQuery } from '@Api/dashboard';
 import { DashboardSidebar, DashboardCard } from '@Components/Dashboard';
 import { DashboardCardSkeleton } from '@Components/Dashboard/DashboardCard';
@@ -35,16 +36,18 @@ const Dashboard = () => {
       ? dashboardCardsForProjectCreator()
       : dashboardCardsForDroneOperator();
 
-  const { data: taskStatistics, isLoading }: Record<string, any> =
-    useGetDashboardTaskStaticsQuery({
-      select: (data: any) => {
-        const taskCounts: Record<string, any> = data?.data;
-        return dashboardCards?.map(card => ({
-          ...card,
-          count: taskCounts?.[`${card?.value}`],
-        }));
-      },
-    });
+  const { data: taskStatistics, isLoading } = useGetDashboardTaskStaticsQuery({
+    select: (res: unknown) => {
+      const taskCounts = (res as AxiosResponse<Record<string, number>>).data;
+      return dashboardCards?.map(card => ({
+        ...card,
+        count: taskCounts?.[`${card?.value}`],
+      }));
+    },
+  }) as {
+    data?: ((typeof dashboardCards)[number] & { count?: number })[];
+    isLoading: boolean;
+  };
 
   return (
     <section className="naxatw-flex naxatw-h-screen-nav naxatw-flex-col naxatw-px-3 naxatw-pt-2 lg:naxatw-px-16">
@@ -64,7 +67,7 @@ const Dashboard = () => {
                 ))}
               </>
             ) : (
-              taskStatistics?.map((task: any) => (
+              taskStatistics?.map(task => (
                 <div
                   key={task.id}
                   tabIndex={0}
@@ -79,7 +82,7 @@ const Dashboard = () => {
                 >
                   <DashboardCard
                     title={task.title}
-                    count={task?.count}
+                    count={task?.count ?? 0}
                     active={task.value === activeTab.value}
                   />
                 </div>
