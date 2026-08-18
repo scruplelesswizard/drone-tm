@@ -78,7 +78,6 @@ const DefineAOI = ({ formProps }: { formProps: UseFormPropsType }) => {
     }
   };
 
-  // @ts-ignore
   const validateAreaOfFileUpload = async (file: any) => {
     try {
       if (!file) return false;

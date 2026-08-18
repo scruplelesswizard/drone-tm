@@ -20,7 +20,7 @@ export interface IMeasureToolProps {
 }
 
 const { modes } = MapboxDraw;
-// @ts-ignore
+// @ts-expect-error MapboxDraw modes object types only its built-in modes, not custom ones like this
 modes.static = StaticMode;
 
 const popup = new Popup({
@@ -44,7 +44,7 @@ export default function MeasureTool({
       new MapboxDraw({
         displayControlsDefault: false,
         defaultMode: 'draw_polygon',
-        // @ts-ignore
+        // @ts-expect-error MapboxDraw modes object types only its built-in modes, not custom ones like this
         modes,
         styles: measureStyles,
         drawControl: true,
@@ -53,17 +53,17 @@ export default function MeasureTool({
   );
 
   useEffect(() => {
-    // @ts-ignore
+    // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
     if (!map || !isMapLoaded || !enable || map.hasControl(draw))
       return () => {};
-    // @ts-ignore
+    // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
     map.addControl(draw);
     draw.changeMode(
-      // @ts-ignore
+      // @ts-expect-error draw_line_string/draw_polygon are valid MapboxDraw mode names but not part of its narrower built-in DrawMode type
       measureType === 'length' ? 'draw_line_string' : 'draw_polygon',
     );
     return () => {
-      // @ts-ignore
+      // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
       map.removeControl(draw);
       isMeasureCompleted.current = false;
       popup.remove();
@@ -86,7 +86,6 @@ export default function MeasureTool({
       });
       onDrawComplete?.(data);
       if (geomType === 'Polygon') {
-        // @ts-ignore
         const centroidGeojson = centroid(data);
         const { coordinates } = centroidGeojson.geometry;
         if (!coordinates) return;

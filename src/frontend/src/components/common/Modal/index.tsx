@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { MouseEventHandler, ReactNode, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 import { m } from '@/paraglide/messages';

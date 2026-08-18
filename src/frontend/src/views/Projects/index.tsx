@@ -57,13 +57,13 @@ const Projects = () => {
   // fetch api for projectsList
   const { data: projectListData, isFetching: isLoading }: Record<string, any> =
     useGetProjectsListQuery({
-      // @ts-ignore
+      // @ts-expect-error queryKey override is not part of this hook's documented params type
       queryKey: { ...filterParams },
     });
 
   // fetch project centroid
   const { data: projectCentroids, isFetching: isCentroidFetching } =
-    // @ts-ignore
+    // @ts-expect-error queryKey override is not part of this hook's documented params type
     useGetProjectCentroidQuery({ queryKey: { ...filterParams } });
 
   useEffect(() => {

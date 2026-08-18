@@ -19,7 +19,7 @@ type FileType = File & {
 
 type UploadedFilesType = {
   id: string;
-  previewUrl: string;
+  previewURL: string;
   file: FileType;
 }[];
 
@@ -53,7 +53,7 @@ export default function FileUpload({
 
   // for edit
   useEffect(() => {
-    // @ts-ignore
+    // @ts-expect-error data prop is typed as [], not narrowed enough for this runtime shape check
     if (!data || (data && typeof data?.[0] !== 'string')) return;
     const uploaded = data.map((url: string) => {
       const urlArray = url?.split('/');
@@ -63,7 +63,7 @@ export default function FileUpload({
         file: { name: urlArray?.[urlArray.length - 1] || null },
       };
     });
-    //   @ts-ignore
+    // @ts-expect-error uploaded is built from data (typed as []), so its inferred element shape conflicts with UploadedFilesType
     setUploadedFiles(uploaded);
   }, [data]);
 
@@ -83,7 +83,7 @@ export default function FileUpload({
     const uploadedFilesState = multiple
       ? [...uploadedFiles, ...uploaded]
       : uploaded;
-    //   @ts-ignore
+    // @ts-expect-error uploadedFilesState is built from data (typed as []), so its inferred element shape conflicts with UploadedFilesType
     setUploadedFiles(uploadedFilesState);
     setValue(name, uploadedFilesState, { shouldDirty: true });
     onChange?.(uploadedFiles);
@@ -108,7 +108,7 @@ export default function FileUpload({
     <FlexColumn gap={2}>
       <FlexColumn
         className="naxatw-cursor-pointer naxatw-items-center naxatw-justify-center naxatw-rounded-lg naxatw-border-2 naxatw-border-dashed naxatw-bg-grey-100 naxatw-py-2.5"
-        //   @ts-ignore
+        // @ts-expect-error useCustomUpload returns a handler typed for a narrower element/event than this onClick expects
         onClick={onFileUpload}
       >
         <Icon
@@ -131,7 +131,6 @@ export default function FileUpload({
         gap={2}
         className="scrollbar naxatw-max-h-52 naxatw-overflow-auto"
       >
-        {/* @ts-ignore */}
         {uploadedFiles.map(({ file, id, previewURL }) => (
           <FlexRow
             key={id}

@@ -84,8 +84,7 @@ export default function Select({
 
   const handleOptionClick = (value: string) => {
     setSelected(value);
-    // @ts-ignore
-    onChange(value);
+    onChange?.(value);
   };
 
   // check if selected option value matches with item value key

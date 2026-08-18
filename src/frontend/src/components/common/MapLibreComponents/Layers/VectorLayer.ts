@@ -204,7 +204,7 @@ export default function VectorLayer({
     function handleSelectInteraction(event: MapMouseEvent) {
       if (!map) return;
       map.getCanvas().style.cursor = 'pointer';
-      // @ts-ignore
+      // @ts-expect-error features is populated by MapLibre at runtime on layer-bound mouse events but is not part of the base MapMouseEvent type
       const { features } = event;
       if (!features?.length) return;
       const { properties, layer } = features[0];

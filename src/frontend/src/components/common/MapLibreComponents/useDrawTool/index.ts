@@ -10,9 +10,9 @@ import { DrawModeTypes, IUseDrawToolProps } from '../types';
 import reverseLineString from '../helpers/reverseLineString';
 
 const { modes } = MapboxDraw;
-// @ts-ignore
+// @ts-expect-error MapboxDraw modes object types only its built-in modes, not custom ones like this
 modes.static = StaticMode;
-// @ts-ignore
+// @ts-expect-error MapboxDraw modes object types only its built-in modes, not custom ones like this
 modes.cut_line = CutLineMode;
 
 const popup = new Popup({
@@ -44,7 +44,7 @@ export default function useDrawTool({
         displayControlsDefault: false,
         styles,
         defaultMode: 'draw_polygon',
-        // @ts-ignore
+        // @ts-expect-error MapboxDraw modes object types only its built-in modes, not custom ones like this
         modes,
         drawControl: true,
       }),
@@ -67,15 +67,14 @@ export default function useDrawTool({
   // add control to map & geojson to draw
   useEffect(() => {
     if (!map || !enable || !drawMode) return;
-    // @ts-ignore
+    // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
     if (!map.hasControl(draw)) {
-      // @ts-ignore
+      // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
       map.addControl(draw);
-      // @ts-ignore
+      // @ts-expect-error MapboxDraw.changeMode does not know about custom modes like this
       draw.changeMode(drawMode);
-      // @ts-ignore
       if (geojson) {
-        // @ts-ignore
+        // @ts-expect-error MapboxDraw.add expects its own GeoJSON typing, narrower than the geojson package types used elsewhere here
         draw.add(geojson);
       }
     }
@@ -122,13 +121,13 @@ export default function useDrawTool({
     if (!firstFeature) return () => {};
     const { geometry } = firstFeature;
     if (!lineStringTypes.includes(geometry.type)) return () => {};
-    // @ts-ignore
+    // @ts-expect-error geometry.type was already narrowed to a line-string type above, but TS cannot propagate that through the array .includes() check
     const coordinates = firstFeature.geometry?.coordinates;
     const firstCoords = coordinates[0];
     const lastCoords = coordinates[coordinates.length - 1];
     map.addSource('line-start-point', {
       type: 'geojson',
-      // @ts-ignore
+      // @ts-expect-error maplibre-gl GeoJSONSourceSpecification.data expects a stricter Feature shape than this inline literal provides
       data: {
         type: 'Feature',
         geometry: {
@@ -139,7 +138,7 @@ export default function useDrawTool({
     });
     map.addSource('line-end-point', {
       type: 'geojson',
-      // @ts-ignore
+      // @ts-expect-error maplibre-gl GeoJSONSourceSpecification.data expects a stricter Feature shape than this inline literal provides
       data: {
         type: 'Feature',
         geometry: {
@@ -185,7 +184,6 @@ export default function useDrawTool({
     if (!lineStringTypes.includes(geometry.type)) return () => {};
     map.loadImage(DirectionArrow).then(({ data }) => {
       if (map.getLayer('arrowId')) return;
-      // @ts-ignore
       map.addImage('arrow', data);
       map.addLayer({
         id: 'arrowId',
@@ -232,9 +230,9 @@ export default function useDrawTool({
   useEffect(() => {
     if (!map) return () => {};
     return () => {
-      // @ts-ignore
+      // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
       if (map.hasControl(draw)) {
-        // @ts-ignore
+        // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
         map.removeControl(draw);
         setIsDrawLayerAdded(false);
         setIsFeatureSelected(false);
@@ -247,27 +245,25 @@ export default function useDrawTool({
   // reset draw function
   const resetDraw = useCallback(() => {
     if (!map) return;
-    // @ts-ignore
+    // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
     if (map.hasControl(draw)) {
       // remove arrow layer before removing control
       if (map.getLayer('arrowId')) {
         map.removeImage('arrow');
         map.removeLayer('arrowId');
       }
-      // @ts-ignore
+      // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
       map.removeControl(draw);
     }
-    // @ts-ignore
+    // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
     map.addControl(draw);
-    // @ts-ignore
     if (drawMode) {
-      // @ts-ignore
       if (geojson) {
         draw.changeMode('static');
 
         // setIsDrawLayerAdded(true);
       } else {
-        // @ts-ignore
+        // @ts-expect-error MapboxDraw.changeMode does not know about custom modes like this
         draw.changeMode(drawMode);
       }
     }
@@ -280,22 +276,21 @@ export default function useDrawTool({
   const setDrawMode = useCallback(
     (mode: DrawModeTypes) => {
       if (!map || !enable || !mode) {
-        // @ts-ignore
+        // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
         if (map?.hasControl(draw)) {
-          // @ts-ignore
+          // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
           map?.removeControl(draw);
           return;
         }
         return;
       }
 
-      // @ts-ignore
+      // @ts-expect-error @mapbox/mapbox-gl-draw types are written for mapbox-gl, not maplibre-gl - IControl shapes are structurally similar but not identical
       if (map.hasControl(draw)) {
-        // @ts-ignore
         if (geojson) {
           draw.changeMode('static');
         } else {
-          // @ts-ignore
+          // @ts-expect-error MapboxDraw.changeMode does not know about custom modes like this
           draw.changeMode(drawMode);
         }
       }

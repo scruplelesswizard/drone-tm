@@ -184,9 +184,9 @@ const OtherDetails = () => {
                 return (
                   <>
                     <FileUpload
-                      // @ts-ignore
+                      // @ts-expect-error register is stubbed as a no-op here, not react-hook-form's actual RegisterOptions-returning function
                       register={() => {}}
-                      // @ts-ignore
+                      // @ts-expect-error register is stubbed as a no-op here, not react-hook-form's actual RegisterOptions-returning function
                       setValue={setValue}
                       name="certificate_file"
                       data={value}
@@ -210,9 +210,9 @@ const OtherDetails = () => {
               // console.log(value, 'value12');
               return (
                 <FileUpload
-                  // @ts-ignore
+                  // @ts-expect-error register is stubbed as a no-op here, not react-hook-form's actual RegisterOptions-returning function
                   register={() => {}}
-                  // @ts-ignore
+                  // @ts-expect-error register is stubbed as a no-op here, not react-hook-form's actual RegisterOptions-returning function
                   setValue={setValue}
                   name="registration_file"
                   data={value}
