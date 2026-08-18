@@ -101,14 +101,8 @@ jobs:
       - run: pnpm run prebuild
         working-directory: src/frontend
 
-      # Non-blocking: ~6600 pre-existing violations surfaced by the ESLint
-      # v9 migration are tracked in todo.md as their own triage pass, not
-      # something a new PR should be blocked on fixing. continue-on-error
-      # is set on this step (not the job) so the job itself still reports
-      # success to the Checks API - a job-level continue-on-error only
-      # spares the overall workflow run, not the individual check, so it
-      # wouldn't actually be non-blocking once branch protection requires
-      # this check. Flip this to a normal gate once that backlog clears.
+      # Blocking: the ~6600 pre-existing violations surfaced by the ESLint
+      # v9 migration (tracked in todo.md) have been fully triaged to zero,
+      # so this is now a normal gate like `test`/`build`.
       - run: ./node_modules/.bin/eslint .
         working-directory: src/frontend
-        continue-on-error: true

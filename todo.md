@@ -63,11 +63,12 @@ inline on the original item.
       covers test execution only, not lint/typecheck/build.
 - [x] Add lint + typecheck + build gate for the frontend on PRs — `build`
       job (`tsc && vite build`, builds the `gcp-editor` sibling package
-      first) is a hard gate; `lint` is non-blocking
-      (`continue-on-error` on the eslint step, not the job, so it stays
-      non-blocking even once branch protection requires the check) since
-      the ~6600 pre-existing violations below aren't this PR's to fix.
-      Flip `lint` to blocking once that backlog clears.
+      first) is a hard gate; `lint` was initially non-blocking
+      (`continue-on-error` on the eslint step) since the ~6600
+      pre-existing violations below weren't that PR's to fix. That
+      backlog is now fully cleared (see the `no-explicit-any` triage
+      below, PR #50) — flipped `lint` to a normal blocking gate
+      (`frontend-test.yml`, `continue-on-error` removed).
 - [x] Turn on dependency vulnerability scanning — added Dependabot
       (`.github/dependabot.yml`) for `uv` (backend + drone-flightplan
       workspace member), `npm` (pnpm workspace: frontend + gcp-editor),
@@ -214,9 +215,12 @@ inline on the original item.
       feature work that already touches them. Not attempted this pass: a
       blind split risks behavior changes in components this size without
       the usual manual browser check this repo's guidelines call for.
-- [ ] Reduce `any` usage starting at the API layer (193 occurrences across
-      86 files despite `strict: true`) — large mechanical sweep, not
-      attempted this pass.
+- [x] Reduce `any` usage starting at the API layer (193 occurrences across
+      86 files despite `strict: true`) — DONE, superseded by the full
+      `@typescript-eslint/no-explicit-any` triage below (448 → 0 sites
+      across the whole frontend, not just the API layer). Only remaining
+      `any` token left in `src/` is inside a commented-out code block in
+      `VectorLayer.ts` (not live code, not linted).
 - [ ] Finish i18n coverage (`LandingPage`/`Footer` and several cross-cutting
       `toast.error()` calls are hardcoded English) — not attempted this
       pass; translating user-facing strings is a copy/product call as much
