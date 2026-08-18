@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FieldValues, UseFormSetValue } from 'react-hook-form';
 import { useTypedSelector, useTypedDispatch } from '@Store/hooks';
 import { useMapLibreGLMap } from '@Components/common/MapLibreComponents';
 import MapContainer from '@Components/common/MapLibreComponents/MapContainer';
@@ -20,7 +21,7 @@ const MapSection = ({
   setValue,
 }: {
   selectedTab: string;
-  setValue: any;
+  setValue: UseFormSetValue<FieldValues>;
 }) => {
   const dispatch = useTypedDispatch();
   const [bufferGeojson, setBufferGeojson] = useState<GeojsonType | null>(null);
@@ -117,12 +118,14 @@ const MapSection = ({
     if (selectedTab === 'project') {
       // @ts-expect-error finalFeatureList is declared as [] above, which TS infers as never[] until reassigned
       finalFeatureList = projectArea?.features?.filter(
-        (feature: any) => !selectedFeatureIds.includes(feature?.id),
+        (feature: { id?: string | number }) =>
+          !selectedFeatureIds.includes(feature?.id as string),
       );
     } else {
       // @ts-expect-error finalFeatureList is declared as [] above, which TS infers as never[] until reassigned
       finalFeatureList = noFlyZone?.features?.filter(
-        (feature: any) => !selectedFeatureIds.includes(feature?.id),
+        (feature: { id?: string | number }) =>
+          !selectedFeatureIds.includes(feature?.id as string),
       );
     }
     if (finalFeatureList?.length) {

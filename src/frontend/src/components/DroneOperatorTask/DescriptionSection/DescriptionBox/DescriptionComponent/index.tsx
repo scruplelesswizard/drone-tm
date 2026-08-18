@@ -2,7 +2,7 @@ interface IDescriptionBoxComponentProps {
   title: string;
   data: {
     name: string;
-    value: string;
+    value: string | number | null | undefined;
   }[];
 }
 const DescriptionBoxComponent = ({

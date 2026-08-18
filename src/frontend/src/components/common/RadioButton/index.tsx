@@ -12,7 +12,7 @@ interface RadioButtonProps {
   topic?: string;
   options: IRadioButton[];
   direction: 'row' | 'column';
-  onChangeData: (value: any) => void;
+  onChangeData: (value: string) => void;
   value: string;
   errorMsg?: string;
   className?: string;

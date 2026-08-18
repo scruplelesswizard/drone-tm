@@ -56,6 +56,16 @@ type ProjectData = {
   cloud_mesh_tileset_url?: string | null;
 };
 
+// 3D Tiles tileset JSON node - only the fields this file's tree walk reads.
+interface TilesetNode {
+  children?: unknown[];
+  content?: unknown;
+  contents?: unknown;
+  geometricError?: number;
+  transform?: unknown;
+  asset?: { gltfUpAxis?: string };
+}
+
 function matrixFromArray(matrix: Iterable<number>): THREE.Matrix4 {
   return new THREE.Matrix4().fromArray(Array.from(matrix));
 }
@@ -89,7 +99,7 @@ function configureTilesRendererForPhotogrammetry(tiles: TilesRenderer) {
 // than a child) blocks refinement and whole branches never load.
 function repairTilesetGeometricErrors(root: unknown) {
   function visit(tile: unknown): number | null {
-    const record = tile as Record<string, any> | null;
+    const record = tile as TilesetNode | null;
     if (!record) return null;
 
     const children = Array.isArray(record.children) ? record.children : [];
@@ -231,10 +241,7 @@ const View3DModel = () => {
     }
 
     const projectCentroid = outlineRef.current
-      ? (centroid(outlineRef.current as any).geometry.coordinates as [
-          number,
-          number,
-        ])
+      ? (centroid(outlineRef.current).geometry.coordinates as [number, number])
       : [0, 0];
     const [initLng, initLat] = projectCentroid;
 
@@ -387,7 +394,7 @@ const View3DModel = () => {
         let tilesetTransform: number[] = [
           1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
         ];
-        const rootRecord = root as Record<string, any> | null;
+        const rootRecord = root as TilesetNode | null;
         if (rootRecord && Array.isArray(rootRecord.transform)) {
           tilesetTransform = rootRecord.transform as number[];
         }
@@ -457,8 +464,8 @@ const View3DModel = () => {
 
       // load-error fires per failed asset. Failing on the tileset itself is
       // fatal; sporadic per-tile failures aren't.
-      tiles.addEventListener('load-error', (event: any) => {
-        const failedUrl: string | undefined = event?.url;
+      tiles.addEventListener('load-error', event => {
+        const failedUrl = event?.url?.toString();
         const isTileset = !!failedUrl && failedUrl.endsWith('tileset.json');
         if (isTileset) {
           console.error('Failed to load 3D tileset', event?.error);

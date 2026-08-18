@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { AxiosError, AxiosResponse } from 'axios';
 import { toast } from 'react-toastify';
 
 import Image from '@Components/RadixComponents/Image';
@@ -29,7 +30,7 @@ const HANKO_URL = getRuntimeConfig(
   'https://dev.login.hotosm.org',
 );
 const FRONTEND_URL =
-  (import.meta as any).env.VITE_FRONTEND_URL || window.location.origin;
+  import.meta.env.VITE_FRONTEND_URL || window.location.origin;
 
 const initialState = {
   username: '',
@@ -49,9 +50,14 @@ export default function Login() {
 
   const signedInAs = localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
 
-  const { mutate, isPending } = useMutation<any, any, any, unknown>({
+  const { mutate, isPending } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    Parameters<typeof signInUser>[0],
+    unknown
+  >({
     mutationFn: signInUser,
-    onSuccess: async (res: any) => {
+    onSuccess: async res => {
       dispatch(setUserState({ user: res.data }));
       localStorage.setItem('token', res.data.access_token);
       localStorage.setItem('refresh', res.data.refresh_token);
@@ -80,14 +86,15 @@ export default function Login() {
       }
     },
     onError: err => {
-      toast.error(err.response.data.detail);
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail);
     },
   });
 
   const googleLoginQuery = useQuery({
     queryKey: ['google-login'],
     queryFn: signInGoogle,
-    select: (res: any) => res.data,
+    select: (res: unknown) => (res as AxiosResponse).data,
     enabled: !!onSignUpBtnClick,
   });
 

@@ -7,6 +7,7 @@ import {
 } from '@Constants/projectDescription';
 import { toggleModal } from '@Store/actions/common';
 import { useGetUserDetailsQuery } from '@Api/projects';
+import { ProjectInfo } from '@Services/createproject';
 import Skeleton from '@Components/RadixComponents/Skeleton';
 import { formatString, gsdToAltitude, altitudeToGsd } from '@Utils/index';
 import { m } from '@/paraglide/messages';
@@ -66,7 +67,7 @@ const formatDescriptionValue = (
   return String(value);
 };
 
-const getDescriptionValue = (projectData: Record<string, any>, key: string) => {
+const getDescriptionValue = (projectData: ProjectInfo, key: string) => {
   if (key === 'gsd_cm_px') {
     if (
       projectData?.gsd_cm_px !== undefined &&
@@ -93,7 +94,7 @@ const getDescriptionValue = (projectData: Record<string, any>, key: string) => {
     return Number.isFinite(gsd) && gsd > 0 ? gsdToAltitude(gsd) : null;
   }
 
-  return projectData?.[key];
+  return (projectData as unknown as Record<string, unknown>)?.[key];
 };
 
 const DescriptionSection = ({
@@ -105,7 +106,7 @@ const DescriptionSection = ({
   onOpenVerify,
   onOpenWorkflow,
 }: {
-  projectData: Record<string, any>;
+  projectData: ProjectInfo;
   page?: 'project-description' | 'project-approval';
   isProjectDataLoading?: boolean;
   onOpenUpload?: () => void;
@@ -115,14 +116,16 @@ const DescriptionSection = ({
 }) => {
   const dispatch = useDispatch();
 
-  const { data: userDetails }: Record<string, any> = useGetUserDetailsQuery();
+  const { data: userDetails }: { data?: Record<string, unknown> } =
+    useGetUserDetailsQuery();
 
   // know if any of the task is completed (assets_url) is the key that provides the final results of a task OR any of the task's status is the image uploaded or next step
   const isAbleToStartProcessing = useMemo(
     () =>
       projectData?.tasks?.some(
-        (task: Record<string, any>) =>
-          task?.assets_url || statusAfterImageUploaded.includes(task?.state),
+        task =>
+          task?.assets_url ||
+          statusAfterImageUploaded.includes(task?.state || ''),
       ),
     [projectData?.tasks],
   );

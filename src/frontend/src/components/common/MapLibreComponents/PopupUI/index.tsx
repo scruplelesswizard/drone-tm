@@ -5,11 +5,11 @@ import capitalizeFirstLetter from '@Utils/capitalizeFirstLetter';
 const exceptions: string[] = [];
 
 interface IPopupUIProps {
-  data: Record<string, any> | null;
+  data: Record<string, unknown> | null;
 }
 
 export default function PopupUI({ data = {} }: IPopupUIProps) {
-  const popupData: Record<string, any> = Object.keys(data || {}).reduce(
+  const popupData: Record<string, unknown> = Object.keys(data || {}).reduce(
     (obj, key) => {
       const name = capitalizeFirstLetter(key);
       const exceptionKeys = [...exceptions];

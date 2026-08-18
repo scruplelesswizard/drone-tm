@@ -58,6 +58,7 @@ type ProcessingDialogTask = {
 };
 
 type ProcessingDialogProjectDetail = {
+  id?: string;
   total_task_count?: number;
   has_gcp?: boolean;
   image_processing_status?: string;
@@ -98,7 +99,7 @@ const ProcessingStatusDialog = () => {
   const { data: projectDetail } = useGetProjectsDetailQuery(projectRouteId) as {
     data?: ProcessingDialogProjectDetail;
   };
-  const projectId = (projectDetail as any)?.id || projectRouteId;
+  const projectId = projectDetail?.id || projectRouteId;
   const isProjectProcessing =
     projectDetail?.image_processing_status === 'PROCESSING';
   const {
@@ -463,10 +464,17 @@ const ProcessingStatusDialog = () => {
   }, [allTaskAssets, taskSummary, projectDetail]);
 
   const taskList = useMemo<ProcessingDialogTask[]>(() => {
-    const assetsByTaskId = new Map<string, any>();
-    if (Array.isArray(allTaskAssets)) {
-      allTaskAssets.forEach((task: any) => {
-        assetsByTaskId.set(task.task_id, task);
+    // allTaskAssets (AssetsInfo[]) doesn't declare task_index/failure_reason -
+    // either stale/aspirational fields or a reconciliation endpoint this
+    // codebase doesn't have yet (see todo.md). Kept loose rather than
+    // asserting a backend shape that isn't confirmed.
+    const looseTaskAssets = allTaskAssets as unknown as
+      | Record<string, unknown>[]
+      | undefined;
+    const assetsByTaskId = new Map<string, Record<string, unknown>>();
+    if (Array.isArray(looseTaskAssets)) {
+      looseTaskAssets.forEach(task => {
+        assetsByTaskId.set(task.task_id as string, task);
       });
     }
 
@@ -488,33 +496,36 @@ const ProcessingStatusDialog = () => {
             image_count: task.assigned_images,
             state: task.task_state,
             failure_reason: task.failure_reason,
-            assets_url: assetInfo?.assets_url,
-            orthophoto_url: assetInfo?.orthophoto_url,
+            assets_url: assetInfo?.assets_url as string | null | undefined,
+            orthophoto_url: assetInfo?.orthophoto_url as
+              | string
+              | null
+              | undefined,
             pending_transfer_count: task.pending_transfer_count,
           };
         })
         .sort((a, b) => a.task_index - b.task_index);
     }
 
-    if (!Array.isArray(allTaskAssets)) return [];
+    if (!Array.isArray(looseTaskAssets)) return [];
 
-    return [...allTaskAssets]
+    return [...looseTaskAssets]
       .filter(
-        (t: any) =>
-          t.image_count > 0 ||
+        t =>
+          (t.image_count as number) > 0 ||
           t.state === 'READY_FOR_PROCESSING' ||
           t.state === 'IMAGE_PROCESSING_STARTED' ||
           t.state === 'IMAGE_PROCESSING_FINISHED' ||
           t.state === 'IMAGE_PROCESSING_FAILED',
       )
-      .map((task: any) => ({
-        task_id: task.task_id,
-        task_index: task.task_index,
-        image_count: task.image_count,
-        state: task.state,
-        failure_reason: task.failure_reason,
-        assets_url: task.assets_url,
-        orthophoto_url: task.orthophoto_url,
+      .map(task => ({
+        task_id: task.task_id as string,
+        task_index: task.task_index as number,
+        image_count: task.image_count as number,
+        state: task.state as string,
+        failure_reason: task.failure_reason as string | null | undefined,
+        assets_url: task.assets_url as string | null | undefined,
+        orthophoto_url: task.orthophoto_url as string | null | undefined,
       }))
       .sort((a, b) => {
         const aIdx = a.task_id?.localeCompare?.(b.task_id) || 0;
@@ -559,9 +570,7 @@ const ProcessingStatusDialog = () => {
   }, [selectedTasks, processableTasks]);
 
   const processedCount = useMemo(
-    () =>
-      taskList.filter((t: any) => t.state === 'IMAGE_PROCESSING_FINISHED')
-        .length,
+    () => taskList.filter(t => t.state === 'IMAGE_PROCESSING_FINISHED').length,
     [taskList],
   );
 

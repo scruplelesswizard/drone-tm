@@ -9,7 +9,15 @@ import { m } from '@/paraglide/messages';
 
 const CUSTOM_EVENT = 'save-gcp-click';
 
-const GcpEditor = ({ cogUrl, finalButtonText, rawImageUrl }: any) => {
+const GcpEditor = ({
+  cogUrl,
+  finalButtonText,
+  rawImageUrl,
+}: {
+  cogUrl?: string;
+  finalButtonText: string;
+  rawImageUrl: string;
+}) => {
   const [loaded, setLoaded] = useState(false);
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -28,9 +36,9 @@ const GcpEditor = ({ cogUrl, finalButtonText, rawImageUrl }: any) => {
   });
 
   const handleSaveGcp = useCallback(
-    (data: any) => {
+    (data: Event) => {
       if (isPending) return;
-      const gcpData = data.detail;
+      const gcpData = (data as CustomEvent<string>).detail;
       const blob = new Blob([gcpData], { type: 'text/plain;charset=utf-8;' });
       const gcpFile = new File([blob], 'gcp.txt');
       saveGcp({ projectId: id!, gcp_file: gcpFile });

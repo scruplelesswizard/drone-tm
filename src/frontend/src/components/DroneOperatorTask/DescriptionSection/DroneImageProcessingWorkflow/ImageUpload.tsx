@@ -1,3 +1,4 @@
+import type { Meta, UploadResult } from '@uppy/core';
 import UppyFileUploader from '../UppyFileUploader';
 import { m } from '@/paraglide/messages';
 
@@ -16,7 +17,10 @@ const IMAGE_FILE_TYPES = [
 interface ImageUploadProps {
   projectId: string;
   onUploadStart?: () => void;
-  onUploadComplete?: (result: any, batchId?: string) => void;
+  onUploadComplete?: (
+    result: UploadResult<Meta, Record<string, never>>,
+    batchId?: string,
+  ) => void;
 }
 
 const ImageUpload = ({

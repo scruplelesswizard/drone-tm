@@ -1,3 +1,4 @@
+import { Feature } from 'geojson';
 import { useGetProjectsDetailQuery } from '@Api/projects';
 import BindContentContainer from '@Components/common/BindContentContainer';
 import BreadCrumb from '@Components/common/Breadcrumb';
@@ -5,7 +6,7 @@ import { MapSection } from '@Components/IndividualProject';
 import Skeleton from '@Components/RadixComponents/Skeleton';
 import DetailsTemplate from '@Components/RegulatorsApprovalPage';
 import useAuth from '@Hooks/useAuth';
-import { regulatorUser } from '@Services/createproject';
+import { ProjectInfo, regulatorUser } from '@Services/createproject';
 import { setProjectState } from '@Store/actions/project';
 import { useTypedDispatch } from '@Store/hooks';
 import { useMutation } from '@tanstack/react-query';
@@ -43,28 +44,29 @@ const RegulatorsApprovalPage = () => {
     userToken({ token });
   }, [token, userToken]);
 
-  const {
-    data: projectData,
-    isFetching: isProjectDataFetching,
-  }: Record<string, any> = useGetProjectsDetailQuery(id as string, {
-    enabled: isAuthenticated(), // call only if the user is created and saved token on local storage
-  });
+  const { data: projectData, isFetching: isProjectDataFetching } =
+    useGetProjectsDetailQuery(id as string, {
+      enabled: isAuthenticated(), // call only if the user is created and saved token on local storage
+    }) as { data?: ProjectInfo; isFetching: boolean };
   useEffect(() => {
     if (projectData) {
       dispatch(
         setProjectState({
           // modify each task geojson and set locked user id and name to properties and save to redux state called taskData
-          tasksData: projectData.tasks?.map((task: Record<string, any>) => ({
-            ...task,
-            outline: {
-              ...task.outline,
-              properties: {
-                ...task.outline.properties,
-                locked_user_id: task?.user_id,
-                locked_user_name: task?.name,
+          tasksData: projectData.tasks?.map(task => {
+            const outline = task.outline as Feature | null;
+            return {
+              ...task,
+              outline: {
+                ...outline,
+                properties: {
+                  ...outline?.properties,
+                  locked_user_id: task?.user_id,
+                  locked_user_name: task?.name,
+                },
               },
-            },
-          })),
+            };
+          }),
           projectArea: projectData.outline,
         }),
       );
@@ -105,12 +107,12 @@ const RegulatorsApprovalPage = () => {
         ]}
       />
       <div className="naxatw-flex naxatw-flex-col naxatw-gap-6 md:naxatw-flex-row">
-        <DetailsTemplate projectData={projectData} />
+        <DetailsTemplate projectData={projectData as ProjectInfo} />
         <div className="naxatw-h-[calc(100vh-10rem)] naxatw-w-full">
           {isProjectDataFetching ? (
             <Skeleton className="naxatw-h-full naxatw-w-full" />
           ) : (
-            <MapSection projectData={projectData as Record<string, any>} />
+            <MapSection projectData={projectData as ProjectInfo} />
           )}
         </div>
       </div>

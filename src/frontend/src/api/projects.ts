@@ -9,8 +9,9 @@ import {
   getProjectsList,
   getProjectDetail,
   getProjectCentroid,
+  ProjectInfo,
 } from '@Services/createproject';
-import { getTaskStates } from '@Services/project';
+import { getTaskStates, TaskStateItem } from '@Services/project';
 import { getUserProfileInfo, getUsers } from '@Services/common';
 import {
   startProjectClassification,
@@ -49,7 +50,7 @@ export const useGetProjectsDetailQuery = (
   return useQuery({
     queryKey: ['project-detail', id],
     queryFn: () => getProjectDetail(id),
-    select: (res: unknown) => (res as AxiosResponse).data,
+    select: (res: unknown) => (res as AxiosResponse<ProjectInfo>).data,
     enabled: !!id,
     ...queryOptions,
   });
@@ -62,7 +63,7 @@ export const useGetTaskStatesQuery = (
   return useQuery({
     queryKey: ['project-task-states', projectId],
     queryFn: () => getTaskStates(projectId),
-    select: (res: unknown) => (res as AxiosResponse).data,
+    select: (res: unknown) => (res as AxiosResponse<TaskStateItem[]>).data,
     enabled: !!projectId,
     ...queryOptions,
   });

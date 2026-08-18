@@ -3,12 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Map as MapLibreMap,
+  MapMouseEvent,
   NavigationControl,
   AttributionControl,
   LngLatBoundsLike,
   Popup,
 } from 'maplibre-gl';
 import bbox from '@turf/bbox';
+import { AxiosError } from 'axios';
 import { toast } from 'react-toastify';
 import {
   getProjectTaskVerificationData,
@@ -28,6 +30,8 @@ import BaseLayerSwitcherUI from '@Components/common/BaseLayerSwitcher';
 import { GeojsonType } from '@Components/common/MapLibreComponents/types';
 import { setProjectState } from '@Store/actions/project';
 import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
+import { TaskStateItem } from '@Services/project';
+import { ProjectInfo, TaskOut } from '@Services/createproject';
 import { m } from '@/paraglide/messages';
 import FlightGapDetectionModal from './FlightGapDetectionModal';
 
@@ -224,14 +228,16 @@ const TaskVerificationModal = ({
       map.getCanvas().style.cursor = '';
     };
 
-    const handleClick = (e: any) => {
+    const handleClick = (e: MapMouseEvent) => {
       const features = map.queryRenderedFeatures(e.point, {
         layers: [layerId],
       });
       if (!features?.length) return;
 
       const props = features[0].properties;
-      const coords = (features[0].geometry as any).coordinates.slice();
+      const coords = (
+        features[0].geometry as GeoJSON.Point
+      ).coordinates.slice() as [number, number];
 
       // Close existing popup
       if (popupRef.current) {
@@ -351,17 +357,18 @@ const TaskVerificationModal = ({
 
       queryClient.setQueryData(
         ['project-task-states', projectId],
-        (existing: any) => {
+        (existing: unknown) => {
           if (Array.isArray(existing)) {
-            return existing.map((task: Record<string, any>) =>
+            return (existing as TaskStateItem[]).map(task =>
               task.task_id === taskId ? { ...task, state: nextState } : task,
             );
           }
 
-          if (Array.isArray(existing?.data)) {
+          const existingObj = existing as { data?: unknown } | undefined;
+          if (Array.isArray(existingObj?.data)) {
             return {
-              ...existing,
-              data: existing.data.map((task: Record<string, any>) =>
+              ...existingObj,
+              data: (existingObj.data as TaskStateItem[]).map(task =>
                 task.task_id === taskId ? { ...task, state: nextState } : task,
               ),
             };
@@ -374,15 +381,19 @@ const TaskVerificationModal = ({
       if (tasksData) {
         dispatch(
           setProjectState({
-            tasksData: tasksData.map((task: Record<string, any>) =>
+            tasksData: tasksData.map(task =>
               task.id === taskId
                 ? {
                     ...task,
                     state: nextState,
                     outline: {
-                      ...task.outline,
+                      ...(task.outline as Record<string, unknown>),
                       properties: {
-                        ...task.outline.properties,
+                        ...(
+                          task.outline as {
+                            properties?: Record<string, unknown>;
+                          }
+                        )?.properties,
                         state: nextState,
                       },
                     },
@@ -397,16 +408,22 @@ const TaskVerificationModal = ({
       // button becomes available immediately (before the refetch lands).
       // Use setQueriesData (partial match) because the cache key may use
       // either the project UUID or a slug, depending on how the user navigated.
-      queryClient.setQueriesData<any>(
+      queryClient.setQueriesData<unknown>(
         { queryKey: ['project-detail'] },
-        (existing: any) => {
-          const data = existing?.data ?? existing;
+        (existing: unknown) => {
+          const existingObj = existing as
+            | { data?: ProjectInfo; tasks?: TaskOut[] }
+            | undefined;
+          const data = existingObj?.data ?? existingObj;
           if (data?.tasks && Array.isArray(data.tasks)) {
-            const updatedTasks = data.tasks.map((task: Record<string, any>) =>
+            const updatedTasks = data.tasks.map(task =>
               task.id === taskId ? { ...task, state: nextState } : task,
             );
-            if (existing?.data) {
-              return { ...existing, data: { ...data, tasks: updatedTasks } };
+            if (existingObj?.data) {
+              return {
+                ...existingObj,
+                data: { ...data, tasks: updatedTasks },
+              };
             }
             return { ...data, tasks: updatedTasks };
           }
@@ -433,9 +450,9 @@ const TaskVerificationModal = ({
       onVerified?.();
       onClose();
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError) => {
       const message =
-        error?.response?.data?.detail ||
+        (error.response?.data as { detail?: string })?.detail ||
         error.message ||
         'Failed to verify task';
       toast.error(message);
@@ -450,9 +467,9 @@ const TaskVerificationModal = ({
       refetch();
       setSelectedImageId(null);
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError) => {
       const message =
-        error?.response?.data?.detail ||
+        (error.response?.data as { detail?: string })?.detail ||
         error.message ||
         'Failed to delete image';
       toast.error(message);
@@ -471,12 +488,8 @@ const TaskVerificationModal = ({
         gapData: data,
       });
     },
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.detail ||
-        error.message ||
-        'Failed to run flight gap analysis';
-      toast.error(message);
+    onError: error => {
+      toast.error(error.message || 'Failed to run flight gap analysis');
     },
   });
 

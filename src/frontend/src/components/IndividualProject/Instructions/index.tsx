@@ -1,10 +1,11 @@
+import { ProjectInfo } from '@Services/createproject';
 import Skeleton from '@Components/RadixComponents/Skeleton';
 
 export default function Instructions({
   projectData,
   isProjectDataLoading,
 }: {
-  projectData: Record<string, any>;
+  projectData: ProjectInfo;
   isProjectDataLoading: boolean;
 }) {
   return (

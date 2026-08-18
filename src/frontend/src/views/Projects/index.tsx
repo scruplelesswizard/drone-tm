@@ -18,6 +18,17 @@ import Skeleton from '@Components/RadixComponents/Skeleton';
 import { setCommonState } from '@Store/actions/common';
 import { m } from '@/paraglide/messages';
 
+interface ProjectListItem {
+  id: string;
+  slug: string;
+  image_url?: string;
+  name: string;
+  description?: string;
+  total_task_count?: number;
+  status?: string;
+  completed_task_count?: number;
+}
+
 const Projects = () => {
   const dispatch = useDispatch();
   const showMap = useTypedSelector(state => state.common.showMap);
@@ -55,11 +66,17 @@ const Projects = () => {
       };
 
   // fetch api for projectsList
-  const { data: projectListData, isFetching: isLoading }: Record<string, any> =
+  const { data: projectListData, isFetching: isLoading } =
     useGetProjectsListQuery({
       // @ts-expect-error queryKey override is not part of this hook's documented params type
       queryKey: { ...filterParams },
-    });
+    }) as {
+      data?: {
+        results?: ProjectListItem[];
+        pagination?: { total?: number };
+      };
+      isFetching: boolean;
+    };
 
   // fetch project centroid
   const { data: projectCentroids, isFetching: isCentroidFetching } =
@@ -97,21 +114,22 @@ const Projects = () => {
               {!projectListData?.results?.length && (
                 <div>{m.projects_no_projects_available()}</div>
               )}
-              {(projectListData?.results as Record<string, any>[])?.map(
-                (project: Record<string, any>) => (
-                  <ProjectCard
-                    key={project.id}
-                    id={project.id}
-                    slug={project.slug}
-                    imageUrl={project?.image_url}
-                    title={project.name}
-                    description={project.description}
-                    totalTasks={project?.total_task_count}
-                    status={project?.status}
-                    completedTask={project?.completed_task_count}
-                  />
-                ),
-              )}
+              {projectListData?.results?.map(project => (
+                <ProjectCard
+                  key={project.id}
+                  // ProjectCard's id prop is typed number, but backend
+                  // project ids are UUID strings - pre-existing mismatch,
+                  // not introduced here.
+                  id={project.id as unknown as number}
+                  slug={project.slug}
+                  imageUrl={project?.image_url ?? null}
+                  title={project.name}
+                  description={project.description ?? ''}
+                  totalTasks={project?.total_task_count ?? 0}
+                  status={project?.status ?? ''}
+                  completedTask={project?.completed_task_count ?? 0}
+                />
+              ))}
             </>
           )}
         </div>
@@ -119,7 +137,9 @@ const Projects = () => {
           <div className="naxatw-h-[70vh] naxatw-w-full naxatw-py-2 naxatw-shadow-xl md:naxatw-h-full md:naxatw-w-1/2">
             {!isCentroidFetching ? (
               <ProjectsMapSection
-                projectCentroidList={projectCentroids as Record<string, any>[]}
+                projectCentroidList={
+                  projectCentroids as Record<string, unknown>[]
+                }
               />
             ) : (
               <Skeleton className="axatw-animate-pulse naxatw-h-full naxatw-w-full" />
@@ -129,7 +149,7 @@ const Projects = () => {
       </div>
       <div className="naxatw-px-3 lg:naxatw-px-16">
         <Pagination
-          totalCount={projectListData?.pagination?.total}
+          totalCount={projectListData?.pagination?.total ?? 0}
           currentPage={paginationState?.activePage}
           pageSize={paginationState?.selectedNumberOfRows}
           handlePaginationState={handlePaginationState}

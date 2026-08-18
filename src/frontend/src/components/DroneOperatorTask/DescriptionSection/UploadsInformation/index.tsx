@@ -1,6 +1,10 @@
 import { m } from '@/paraglide/messages';
 
-const UploadsInformation = ({ data }: { data: Record<string, any>[] }) => {
+const UploadsInformation = ({
+  data,
+}: {
+  data: { name: string; value: string | number | null | undefined }[];
+}) => {
   return (
     <>
       <div className="naxatw-flex naxatw-w-full naxatw-flex-col naxatw-gap-2">

@@ -1,5 +1,6 @@
 import { useEffect, useContext, useRef } from 'react';
 import AwsS3 from '@uppy/aws-s3';
+import type { Meta, UploadResult, UppyFile } from '@uppy/core';
 import Dashboard from '@uppy/react/dashboard';
 import { UppyContext } from '@uppy/react';
 import { toast } from 'react-toastify';
@@ -15,7 +16,10 @@ interface UppyFileUploaderProps {
   taskId?: string;
   label?: string;
   onUploadStart?: () => void;
-  onUploadComplete?: (result: any, batchId?: string) => void;
+  onUploadComplete?: (
+    result: UploadResult<Meta, Record<string, never>>,
+    batchId?: string,
+  ) => void;
   allowedFileTypes?: string[];
   note?: string;
   staging?: boolean; // If true, uploads to user-uploads staging directory
@@ -83,7 +87,12 @@ const UppyFileUploader = ({
       shouldUseMultipart: true,
       createMultipartUpload: async file => {
         try {
-          const requestData: any = {
+          const requestData: {
+            project_id: string;
+            file_name: string;
+            staging: boolean;
+            task_id?: string;
+          } = {
             project_id: projectId,
             file_name: file.name,
             staging,
@@ -108,7 +117,7 @@ const UppyFileUploader = ({
             uploadId: response.data.upload_id,
             key: response.data.file_key,
           };
-        } catch (error: any) {
+        } catch (error) {
           toast.error(`Failed to initiate upload for ${file.name}`);
           throw error;
         }
@@ -133,7 +142,7 @@ const UppyFileUploader = ({
           return {
             url: response.data.url,
           };
-        } catch (error: any) {
+        } catch (error) {
           toast.error(
             `Failed to sign part ${partData.partNumber} for ${file.name}`,
           );
@@ -142,7 +151,14 @@ const UppyFileUploader = ({
       },
       completeMultipartUpload: async (file, data) => {
         try {
-          const requestBody: any = {
+          const requestBody: {
+            upload_id: string;
+            file_key: string;
+            parts: typeof data.parts;
+            project_id: string;
+            filename: string;
+            batch_id?: string;
+          } = {
             upload_id: data.uploadId,
             file_key: data.key,
             parts: data.parts,
@@ -168,7 +184,7 @@ const UppyFileUploader = ({
           return {
             location: data.key,
           };
-        } catch (error: any) {
+        } catch (error) {
           toast.error(`Failed to complete upload for ${file.name}`);
           throw error;
         }
@@ -187,7 +203,7 @@ const UppyFileUploader = ({
               },
             },
           );
-        } catch (error: any) {
+        } catch (error) {
           console.error(`Failed to abort upload for ${file.name}:`, error);
         }
       },
@@ -198,7 +214,7 @@ const UppyFileUploader = ({
           );
 
           return response.data.parts || [];
-        } catch (error: any) {
+        } catch (error) {
           console.error(`Failed to list parts for ${file.name}:`, error);
           return [];
         }
@@ -216,7 +232,7 @@ const UppyFileUploader = ({
     // Purge files that finalised while no listener was attached (e.g. modal
     // closed mid-upload); uppy keeps completed files in state for the session.
     const purgeCompletedFiles = () => {
-      uppy.getFiles().forEach((file: any) => {
+      uppy.getFiles().forEach(file => {
         if (file.progress?.uploadComplete && uppy.getFile(file.id)) {
           uppy.removeFile(file.id);
         }
@@ -235,11 +251,16 @@ const UppyFileUploader = ({
       onUploadStart?.();
     };
 
-    const handleUploadError = (file: any, error: Error) => {
+    const handleUploadError = (
+      file: UppyFile<Meta, Record<string, never>> | undefined,
+      error: { name: string; message: string; details?: string },
+    ) => {
       toast.error(`Upload failed for ${file?.name}: ${error.message}`);
     };
 
-    const handleComplete = (result: any) => {
+    const handleComplete = (
+      result: UploadResult<Meta, Record<string, never>>,
+    ) => {
       const successfulUploads = result.successful?.length || 0;
       const failedUploads = result.failed?.length || 0;
 

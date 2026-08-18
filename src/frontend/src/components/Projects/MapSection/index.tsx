@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LngLatBoundsLike, Map } from 'maplibre-gl';
 import getBbox from '@turf/bbox';
-import { FeatureCollection } from 'geojson';
+import { FeatureCollection, GeoJsonProperties } from 'geojson';
 import { useMapLibreGLMap } from '@Components/common/MapLibreComponents';
 import AsyncPopup from '@Components/common/MapLibreComponents/AsyncPopup';
 import BaseLayerSwitcher from '@Components/common/MapLibreComponents/BaseLayerSwitcher';
@@ -15,11 +15,11 @@ import VectorLayerWithCluster from './VectorLayerWithCluster';
 const ProjectsMapSection = ({
   projectCentroidList,
 }: {
-  projectCentroidList: Record<string, any>[];
+  projectCentroidList: Record<string, unknown>[];
 }) => {
-  const [projectProperties, setProjectProperties] = useState<
-    Record<string, any>
-  >({});
+  const [projectProperties, setProjectProperties] = useState<GeoJsonProperties>(
+    {},
+  );
   const navigate = useNavigate();
   const { map, isMapLoaded } = useMapLibreGLMap({
     containerId: 'dashboard-map',
@@ -31,38 +31,37 @@ const ProjectsMapSection = ({
     disableRotation: true,
   });
 
-  const projectsCentroidGeojson: any = useMemo(() => {
-    if (!projectCentroidList || !projectCentroidList?.length) return [];
+  const projectsCentroidGeojson: FeatureCollection = useMemo(() => {
+    if (!projectCentroidList || !projectCentroidList?.length)
+      return { type: 'FeatureCollection', features: [] };
     // find all polygons centroid and set to geojson save to single geojson
-    const combinedGeojson = projectCentroidList?.reduce(
-      (acc: Record<string, any>, current: Record<string, any>) => {
-        return {
-          ...acc,
-          features: [
-            ...acc.features,
-            {
-              geometry: current?.centroid,
-              properties: {
-                id: current?.id,
-                name: current?.name,
-                slug: current?.slug,
-                colorCode:
-                  current?.status === 'not-started'
-                    ? '#808080'
-                    : current?.status === 'completed'
-                      ? '#028a0f'
-                      : '#11b4da',
-              },
+    return projectCentroidList.reduce<FeatureCollection>(
+      (acc, current) => ({
+        ...acc,
+        features: [
+          ...acc.features,
+          {
+            type: 'Feature',
+            geometry: current?.centroid as GeoJSON.Geometry,
+            properties: {
+              id: current?.id,
+              name: current?.name,
+              slug: current?.slug,
+              colorCode:
+                current?.status === 'not-started'
+                  ? '#808080'
+                  : current?.status === 'completed'
+                    ? '#028a0f'
+                    : '#11b4da',
             },
-          ],
-        };
-      },
+          },
+        ],
+      }),
       {
         type: 'FeatureCollection',
         features: [],
       },
     );
-    return combinedGeojson;
   }, [projectCentroidList]);
 
   useEffect(() => {
@@ -73,7 +72,7 @@ const ProjectsMapSection = ({
       !isMapLoaded
     )
       return;
-    const bbox = getBbox(projectsCentroidGeojson as FeatureCollection);
+    const bbox = getBbox(projectsCentroidGeojson);
     map?.fitBounds(bbox as LngLatBoundsLike, { padding: 0, duration: 500 });
   }, [projectsCentroidGeojson, map, isMapLoaded]);
 
@@ -111,11 +110,9 @@ const ProjectsMapSection = ({
       <AsyncPopup
         map={map as Map}
         title={projectProperties?.slug}
-        showPopup={(feature: Record<string, any>) =>
-          feature?.layer?.id === 'unclustered-point'
-        }
+        showPopup={feature => feature?.layer?.id === 'unclustered-point'}
         popupUI={getPopupUI}
-        fetchPopupData={(properties: Record<string, any>) => {
+        fetchPopupData={properties => {
           setProjectProperties(properties);
         }}
         buttonText={m.projects_map_go_to_project()}

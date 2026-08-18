@@ -4,13 +4,20 @@ import { FlexRow } from '@Components/common/Layouts';
 import ToolTip from '@Components/RadixComponents/ToolTip';
 import Icon from '../Icon';
 
+export interface SwitchTabOption {
+  label: string;
+  value: string;
+  icon?: string;
+  message?: string;
+}
+
 interface ISwitchTabProps {
   wrapperClassName?: string;
-  options: Record<string, any>[];
+  options: SwitchTabOption[];
   selectedValue: string | number;
-  onChange: any;
-  valueKey?: string;
-  labelKey?: string;
+  onChange: (option: SwitchTabOption) => void;
+  valueKey?: keyof SwitchTabOption;
+  labelKey?: keyof SwitchTabOption;
   activeClassName?: string;
 }
 const SwitchTab = ({
@@ -18,7 +25,7 @@ const SwitchTab = ({
   options,
   selectedValue,
   onChange,
-  valueKey = 'id',
+  valueKey = 'value',
   labelKey = 'label',
   activeClassName,
 }: ISwitchTabProps) => {
@@ -29,7 +36,7 @@ const SwitchTab = ({
         wrapperClassName,
       )}
     >
-      {options?.map((option: Record<string, any>) => {
+      {options?.map(option => {
         return (
           <span
             role="button"

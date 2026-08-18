@@ -55,7 +55,9 @@ export default function ProjectsHeader() {
               selectedOption={projectsFilterByOwner}
               onChange={value =>
                 dispatch(
-                  setCreateProjectState({ ProjectsFilterByOwner: value }),
+                  setCreateProjectState({
+                    ProjectsFilterByOwner: value as 'yes' | 'no',
+                  }),
                 )
               }
             />
@@ -85,7 +87,7 @@ export default function ProjectsHeader() {
             <SearchInput
               inputValue={searchValue}
               placeholder={m.projects_search_placeholder()}
-              onChange={(e: any) => setSearchValue(e.target.value)}
+              onChange={e => setSearchValue(e.target.value)}
               onClear={() => setSearchValue('')}
             />
           </div>

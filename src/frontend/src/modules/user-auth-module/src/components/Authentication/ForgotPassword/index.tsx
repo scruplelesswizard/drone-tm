@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import { AxiosError, AxiosResponse } from 'axios';
 
 import { Input, Label, FormControl } from '@Components/common/FormUI';
 import { Button } from '@Components/RadixComponents/Button';
@@ -18,7 +19,12 @@ const initialState = {
 export default function ForgotPassword() {
   const navigate = useNavigate();
 
-  const { mutate, error } = useMutation<any, any, any, unknown>({
+  const { mutate, error } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    { email: string },
+    unknown
+  >({
     mutationFn: forgotPassword,
     onSuccess: () => {
       toast.success(m.auth_forgot_password_email_sent());
@@ -31,7 +37,7 @@ export default function ForgotPassword() {
     defaultValues: initialState,
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: { email: string }) => {
     mutate(data);
   };
 
@@ -66,8 +72,8 @@ export default function ForgotPassword() {
           />
           <ErrorMessage
             message={
-              error?.response?.data?.detail?.[0]?.msg ||
-              m.auth_reset_password_error()
+              (error?.response?.data as { detail?: { msg?: string }[] })
+                ?.detail?.[0]?.msg || m.auth_reset_password_error()
             }
           />
         </FormControl>

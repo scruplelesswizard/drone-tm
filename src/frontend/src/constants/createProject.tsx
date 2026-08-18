@@ -1,3 +1,4 @@
+import type React from 'react';
 import lineOrientation from '@Assets/images/line_orientation.svg';
 import straightenFlightPlan from '@Assets/images/straigh-flight.svg';
 import generateAllPoints from '@Assets/images/generate-all-points.svg';
@@ -15,7 +16,7 @@ import DSMIcon from '@Assets/images/DSM-icon.svg';
 import { m } from '@/paraglide/messages';
 
 export type StepComponentMap = {
-  [key: number]: any;
+  [key: number]: React.ComponentType;
 };
 
 export const stepDescriptionComponents: StepComponentMap = {
@@ -318,7 +319,11 @@ export const demFileOptions = () => [
   },
 ];
 
-export const uploadOrDrawAreaOptions = (): Record<string, any>[] => [
+export const uploadOrDrawAreaOptions = (): {
+  name: string;
+  value: string;
+  label: string;
+}[] => [
   { name: 'project', value: 'project', label: m.create_aoi_option_project() },
   {
     name: 'no_fly_zone',

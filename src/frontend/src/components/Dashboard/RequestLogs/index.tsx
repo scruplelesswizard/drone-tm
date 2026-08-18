@@ -4,9 +4,11 @@ import { FlexColumn } from '@Components/common/Layouts';
 import { Button } from '@Components/RadixComponents/Button';
 import { taskStatusObj } from '@Constants/index';
 import { postTaskStatus } from '@Services/project';
+import { UserTasksOut } from '@Services/dashboard';
 import { setCommonState, toggleModal } from '@Store/actions/common';
 import { documentDetailType } from '@Store/slices/common';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { AxiosError, AxiosResponse } from 'axios';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import { getFileExtension } from '@Utils/index';
 import { useDispatch } from 'react-redux';
@@ -16,21 +18,26 @@ import { m } from '@/paraglide/messages';
 const RequestLogs = () => {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
-  const { data: requestedTasks }: any = useGetTaskListQuery({
-    select: (data: any) =>
-      data?.data?.filter((task: Record<string, any>) =>
-        taskStatusObj.request_logs.includes(task?.state),
+  const { data: requestedTasks } = useGetTaskListQuery({
+    select: (res: unknown) =>
+      (res as AxiosResponse<{ results: UserTasksOut[] }>).data?.results?.filter(
+        task => taskStatusObj.request_logs.includes(task?.state),
       ),
-  });
+  }) as { data?: UserTasksOut[] };
 
-  const { mutate: respondToRequest } = useMutation<any, any, any, unknown>({
+  const { mutate: respondToRequest } = useMutation<
+    AxiosResponse,
+    AxiosError,
+    Parameters<typeof postTaskStatus>[0],
+    unknown
+  >({
     mutationFn: postTaskStatus,
     onSuccess: () => {
       toast.success(m.dashboard_responded_to_request_toast());
       queryClient.invalidateQueries({ queryKey: ['task-list'] });
       queryClient.invalidateQueries({ queryKey: ['task-statistics'] });
     },
-    onError: (err: any) => {
+    onError: err => {
       toast.error(err.message);
     },
   });
@@ -63,7 +70,7 @@ const RequestLogs = () => {
       </h4>
       <FlexColumn className="naxatw-max-h-[24.4rem] naxatw-gap-2 naxatw-overflow-y-auto">
         {requestedTasks?.length ? (
-          requestedTasks?.map((task: Record<string, any>) => (
+          requestedTasks?.map(task => (
             <>
               <div
                 key={task.task_id}
@@ -87,7 +94,7 @@ const RequestLogs = () => {
                           dispatch(
                             setCommonState({
                               selectedDocumentDetails: getDocumentDetails(
-                                task?.certificate_url,
+                                task.certificate_url as string,
                               ) as documentDetailType,
                             }),
                           );
@@ -112,7 +119,7 @@ const RequestLogs = () => {
                           dispatch(
                             setCommonState({
                               selectedDocumentDetails: getDocumentDetails(
-                                task?.registration_certificate_url,
+                                task.registration_certificate_url as string,
                               ) as documentDetailType,
                             }),
                           );

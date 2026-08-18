@@ -1,12 +1,17 @@
 import { useParams } from 'react-router-dom';
 import { useGetProjectsDetailQuery } from '@Api/projects';
 import { useGetIndividualTaskQuery, useGetTaskByIndexQuery } from '@Api/tasks';
+import { ProjectInfo } from '@Services/createproject';
+import { TaskDetailsOut } from '@Services/tasks';
 
 export default function useTaskParams() {
   const { projectId: urlProjectId, taskId: urlTaskId } = useParams();
   const { data: projectData, isFetching: isProjectFetching } =
-    useGetProjectsDetailQuery(urlProjectId as string);
-  const projectUuid = (projectData as any)?.id || '';
+    useGetProjectsDetailQuery(urlProjectId as string) as {
+      data?: ProjectInfo;
+      isFetching: boolean;
+    };
+  const projectUuid = projectData?.id || '';
   const isTaskUuid =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       urlTaskId || '',
@@ -22,8 +27,11 @@ export default function useTaskParams() {
       enabled: !!(urlTaskId && isTaskUuid),
     });
 
-  const taskData = (isTaskUuid ? taskDataById : taskDataByIndex) as any;
-  const taskUuid = taskData?.outline?.id || taskData?.id || '';
+  const taskData = (isTaskUuid ? taskDataById : taskDataByIndex) as
+    | TaskDetailsOut
+    | undefined;
+  const outlineId = (taskData?.outline as { id?: string | number })?.id;
+  const taskUuid = String(outlineId || taskData?.id || '');
   const resolvedProjectId = taskData?.project_id || projectUuid;
 
   return {

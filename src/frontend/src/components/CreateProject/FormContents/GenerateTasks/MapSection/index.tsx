@@ -46,7 +46,8 @@ const MapSection = () => {
     if (!map || !isMapLoaded || !splitGeojson) return;
     // const data = map.getCanvas().toDataURL('image/jpeg', 0.95);
     map.getCanvas().toBlob(
-      (blob: any) => {
+      blob => {
+        if (!blob) return;
         const file = new File([blob], 'project.png', { type: blob.type });
         dispatch(
           saveProjectImageFile({

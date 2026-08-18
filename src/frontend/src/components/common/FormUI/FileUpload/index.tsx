@@ -33,7 +33,7 @@ interface IFileUploadProps {
   fileAccept?: string;
   data?: [];
   placeholder?: string;
-  onChange?: any;
+  onChange?: (files: UploadedFilesType) => void;
   register: UseFormRegister<FieldValues>;
   setValue: UseFormSetValue<FieldValues>;
 }

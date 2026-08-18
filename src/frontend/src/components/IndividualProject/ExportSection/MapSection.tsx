@@ -8,10 +8,11 @@ import { useTypedSelector } from '@Store/hooks';
 import BaseLayerSwitcherUI from '@Components/common/BaseLayerSwitcher';
 import { useEffect } from 'react';
 import { FeatureCollection } from 'geojson';
+import { ProjectInfo } from '@Services/createproject';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 
 interface IMapSectionProps {
-  projectData: Record<string, any>;
+  projectData: ProjectInfo;
 }
 
 const MapSection = ({ projectData }: IMapSectionProps) => {
@@ -30,7 +31,10 @@ const MapSection = ({ projectData }: IMapSectionProps) => {
   // zoom to layer in the project area
   useEffect(() => {
     if (!tasksData) return;
-    const tasksCollectiveGeojson = tasksData?.reduce(
+    const tasksCollectiveGeojson = tasksData?.reduce<{
+      type: 'FeatureCollection';
+      features: (Record<string, unknown> | null)[];
+    }>(
       (acc, curr) => {
         return {
           ...acc,
@@ -42,7 +46,9 @@ const MapSection = ({ projectData }: IMapSectionProps) => {
         features: [],
       },
     );
-    const bbox = getBbox(tasksCollectiveGeojson as FeatureCollection);
+    const bbox = getBbox(
+      tasksCollectiveGeojson as unknown as FeatureCollection,
+    );
     map?.fitBounds(bbox as LngLatBoundsLike, { padding: 25, duration: 500 });
   }, [map, tasksData]);
 
@@ -79,7 +85,7 @@ const MapSection = ({ projectData }: IMapSectionProps) => {
           />
         )}
 
-        {projectData?.no_fly_zones_geojson && (
+        {projectData?.no_fly_zones && (
           <VectorLayer
             map={map as Map}
             id="no-fly-zone-area"
@@ -87,7 +93,7 @@ const MapSection = ({ projectData }: IMapSectionProps) => {
             geojson={
               {
                 type: 'FeatureCollection',
-                features: [projectData?.no_fly_zones_geojson],
+                features: [projectData?.no_fly_zones],
               } as GeojsonType
             }
             layerOptions={{
@@ -102,14 +108,14 @@ const MapSection = ({ projectData }: IMapSectionProps) => {
         )}
 
         {tasksData &&
-          tasksData?.map((task: Record<string, any>) => {
+          tasksData?.map(task => {
             return (
               <VectorLayer
                 key={task?.id}
                 map={map as Map}
                 id={`tasks-layer-${task?.id}`}
-                visibleOnMap={task?.id}
-                geojson={task.outline as GeojsonType}
+                visibleOnMap={!!task?.id}
+                geojson={task.outline as unknown as GeojsonType}
                 interactions={['feature']}
                 layerOptions={{
                   type: 'fill',

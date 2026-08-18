@@ -57,7 +57,7 @@ export interface ILayerState {
   id: string | number;
   endPoint: string;
   checked: boolean;
-  styles: Record<string, any>;
+  styles: Record<string, unknown>;
 }
 
 const buildingColor = '#0077E4';

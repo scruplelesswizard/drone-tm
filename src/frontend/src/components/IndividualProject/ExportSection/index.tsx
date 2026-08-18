@@ -1,11 +1,12 @@
 import MapSection from '@Components/IndividualProject/ExportSection/MapSection';
 import dtmLogo from '@Assets/images/DTM-logo-black.svg';
 import Image from '@Components/RadixComponents/Image';
+import { ProjectInfo } from '@Services/createproject';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import { m } from '@/paraglide/messages';
 
 interface IExportSectionProps {
-  projectData: Record<string, any>;
+  projectData: ProjectInfo;
 }
 
 const ExportSection = ({ projectData }: IExportSectionProps) => {

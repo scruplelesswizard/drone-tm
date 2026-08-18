@@ -25,7 +25,7 @@ const CustomDatePicker = ({
       )}
       <DatePicker
         selected={selectedDate}
-        onChange={(date: any) => setSelectedDate(date)}
+        onChange={date => date && setSelectedDate(date)}
         className="naxawtw-pt-1 hover naxatw-z-50 naxatw-h-[2rem] naxatw-w-full naxatw-border-[1px] naxatw-border-gray-300 naxatw-px-2 naxatw-text-base naxatw-outline-none"
         placeholderText="YYYY/MM/DD"
         dateFormat="yyyy/MM/dd"

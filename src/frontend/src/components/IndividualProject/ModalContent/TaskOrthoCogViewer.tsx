@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Map from 'ol/Map';
-import View from 'ol/View';
+import View, { ViewOptions } from 'ol/View';
+import type BaseEvent from 'ol/events/Event';
 import TileLayer from 'ol/layer/WebGLTile';
 import GeoTIFF from 'ol/source/GeoTIFF';
 import Zoom from 'ol/control/Zoom';
@@ -46,8 +47,12 @@ const TaskOrthoCogViewer = ({
         sources: [{ url: signedUrl, nodata: 0 }],
       });
 
-      source.on('error', (event: any) => {
-        const detail = event?.error?.message || 'Failed to load orthophoto.';
+      source.on('error', (event: BaseEvent) => {
+        // GeoTIFF's error event carries an undocumented `.error` property
+        // beyond OL's generic BaseEvent type.
+        const detail =
+          (event as BaseEvent & { error?: { message?: string } })?.error
+            ?.message || 'Failed to load orthophoto.';
         if (!cancelled) setLoadError(detail);
       });
 
@@ -55,7 +60,7 @@ const TaskOrthoCogViewer = ({
       // before the map renders. The async `view: promise` pattern races
       // with our initial fit() call and leaves the user staring at the
       // GeoTIFF's default (zoomed-in) resolution.
-      let viewConfig: any;
+      let viewConfig: ViewOptions;
       try {
         viewConfig = await source.getView();
       } catch (err) {
@@ -91,7 +96,7 @@ const TaskOrthoCogViewer = ({
           ) * 1.1
         : largestRes;
 
-      const cfg: any = {
+      const cfg: ViewOptions = {
         projection: viewConfig.projection,
         center: viewConfig.center,
         extent,

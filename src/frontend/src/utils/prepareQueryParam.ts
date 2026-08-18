@@ -1,4 +1,4 @@
-export default function prepareQueryParam(queryParam: Record<string, any>) {
+export default function prepareQueryParam(queryParam: Record<string, unknown>) {
   return Object.entries(queryParam).reduce(
     (obj, [key, val]) => ({
       ...obj,

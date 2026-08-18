@@ -83,9 +83,9 @@ function GoogleAuth() {
         try {
           await completeLogin();
           toast.success(m.auth_login_success());
-        } catch (e: any) {
+        } catch (e) {
           console.error(e);
-          toast.error(e?.message || m.auth_login_failed_generic());
+          toast.error((e as Error)?.message || m.auth_login_failed_generic());
           navigate('/', { replace: true });
           return;
         }

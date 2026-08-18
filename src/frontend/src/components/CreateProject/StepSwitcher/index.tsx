@@ -14,7 +14,7 @@ interface IIndividualStep {
 
 interface IStepSwitcherProps {
   data: IIndividualStep[];
-  switchSteps?: any;
+  switchSteps?: (step: number) => void;
 }
 
 const StepSwitcher = ({ data, switchSteps }: IStepSwitcherProps) => {

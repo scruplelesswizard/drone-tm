@@ -12,7 +12,7 @@ const HANKO_URL = getRuntimeConfig(
   'https://dev.login.hotosm.org',
 );
 const FRONTEND_URL =
-  (import.meta as any).env.VITE_FRONTEND_URL || window.location.origin;
+  import.meta.env.VITE_FRONTEND_URL || window.location.origin;
 
 // Import Hanko web component for session verification
 if (AUTH_PROVIDER === 'hanko') {

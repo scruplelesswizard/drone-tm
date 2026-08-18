@@ -8,10 +8,10 @@ import { m } from '@/paraglide/messages';
 import Input from '../Input';
 
 interface IMultiSelectProps {
-  options: Record<string, any>[];
+  options: Record<string, unknown>[];
   selectedOptions?: string[];
   placeholder?: string;
-  onChange?: (selectedOptions: string[]) => any;
+  onChange?: (selectedOptions: string[]) => void;
   labelKey?: string;
   valueKey?: string;
   className?: string;
@@ -53,7 +53,7 @@ export default function MultiSelect({
     } else if (selectedLength === 1) {
       const selectedLabel = options.find(
         item => item[valueKey] === selected[0],
-      )?.[labelKey];
+      )?.[labelKey] as string | undefined;
       placeholderText = selectedLabel || '';
     } else {
       placeholderText = `${selectedLength} Selected`;
@@ -87,7 +87,10 @@ export default function MultiSelect({
   }, []);
 
   const filterOptions = options?.filter(opt =>
-    opt[labelKey]?.toString()?.toLowerCase().includes(searchText.toLowerCase()),
+    (opt[labelKey] as string | undefined)
+      ?.toString()
+      ?.toLowerCase()
+      .includes(searchText.toLowerCase()),
   );
 
   const showClearIcon = !!searchText.length;
@@ -134,20 +137,20 @@ export default function MultiSelect({
             filterOptions.map(option => (
               <li
                 className="hover:naxatw-bg-primary-50 naxatw-flex naxatw-cursor-pointer naxatw-list-none naxatw-items-start naxatw-px-2 naxatw-py-2 naxatw-text-sm"
-                key={option[valueKey]}
+                key={option[valueKey] as string}
                 onClick={e => {
                   e.stopPropagation();
-                  toggleOption(option[valueKey]);
+                  toggleOption(option[valueKey] as string);
                 }}
               >
                 <input
                   type="checkbox"
                   className="naxatw-mr-2 naxatw-h-5"
-                  value={option[valueKey]}
-                  checked={selected.includes(option[valueKey])}
-                  onChange={() => toggleOption(option[valueKey])}
+                  value={option[valueKey] as string}
+                  checked={selected.includes(option[valueKey] as string)}
+                  onChange={() => toggleOption(option[valueKey] as string)}
                 />
-                <div>{option[labelKey]}</div>
+                <div>{option[labelKey] as string}</div>
               </li>
             ))
           ) : (

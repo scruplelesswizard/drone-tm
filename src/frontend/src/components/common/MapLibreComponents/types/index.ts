@@ -1,7 +1,12 @@
 import type { DrawMode } from '@mapbox/mapbox-gl-draw';
-import type { Feature, FeatureCollection, GeoJsonTypes } from 'geojson';
+import type {
+  Feature,
+  FeatureCollection,
+  GeoJsonProperties,
+  GeoJsonTypes,
+} from 'geojson';
 import type { Map, MapOptions } from 'maplibre-gl';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 export type MapInstanceType = Map;
 
@@ -15,8 +20,7 @@ export type MapOptionsType = {
 export type IMapOptionsProps = Partial<MapOptionsType>;
 
 export interface IMapContainer {
-  // children?: ReactNode;
-  children?: ReactElement<any> | ReactElement<any>[] | any;
+  children?: ReactNode;
   containerId?: string;
   map: MapInstanceType | null;
   isMapLoaded: boolean;
@@ -44,9 +48,9 @@ export type GeojsonType = GeoJsonTypes | FeatureCollection | Feature;
 export interface IVectorLayer extends ILayer {
   geojson: GeojsonType | null;
   interactions?: string[];
-  onFeatureSelect?: (properties: Record<string, any>) => void;
+  onFeatureSelect?: (properties: GeoJsonProperties) => void;
   hasImage?: boolean;
-  image?: any;
+  image?: string;
   symbolPlacement?: 'point' | 'line' | 'line-center';
   iconAnchor?:
     | 'center'
@@ -60,7 +64,14 @@ export interface IVectorLayer extends ILayer {
     | 'bottom-right';
   imageLayerOptions?: object;
   zoomToExtent?: boolean;
-  onDrag?: (e: any) => void;
+  // A plain snapshot of the MapMouseEvent's own enumerable fields at
+  // drag time (spread, not the live event instance - no event methods).
+  onDrag?: (
+    e: Record<string, unknown> & {
+      originalCoordinates: [number, number];
+      isDragging: boolean;
+    },
+  ) => void;
   onDragEnd?: () => void;
   needDragEvent?: boolean;
   imageLayoutOptions?: object;
@@ -71,25 +82,25 @@ type InteractionsType = 'hover' | 'select';
 export interface IVectorTileLayer extends ILayer {
   url: string;
   interactions?: InteractionsType[];
-  onFeatureSelect?: (properties: Record<string, any>) => void;
+  onFeatureSelect?: (properties: GeoJsonProperties) => void;
 }
 
 export interface IAsyncPopup {
   map?: MapInstanceType;
-  fetchPopupData?: (properties: Record<string, any>) => void;
-  popupUI?: (properties: Record<string, any>) => ReactElement;
+  fetchPopupData?: (properties: GeoJsonProperties) => void;
+  popupUI?: (properties: GeoJsonProperties) => ReactElement;
   title?: string;
-  handleBtnClick?: (properties: Record<string, any>) => void;
+  handleBtnClick?: (properties: GeoJsonProperties) => void;
   isLoading?: boolean;
   onClose?: () => void;
   buttonText?: string;
   hideButton?: boolean;
   getCoordOnProperties?: boolean;
-  showPopup?: (clickedFeature: Record<string, any>) => boolean;
+  showPopup?: (clickedFeature: GeoJsonProperties) => boolean;
   hasSecondaryButton?: boolean;
   secondaryButtonText?: string;
-  handleSecondaryBtnClick?: (properties: Record<string, any>) => void;
-  openPopupFor?: Record<string, any> | null;
+  handleSecondaryBtnClick?: (properties: GeoJsonProperties) => void;
+  openPopupFor?: GeoJsonProperties | null;
   popupCoordinate?: number[];
   closePopupOnButtonClick?: boolean;
 }
@@ -101,6 +112,6 @@ export interface IUseDrawToolProps {
   enable: boolean;
   drawMode: DrawModeTypes;
   geojson?: GeojsonType | null;
-  styles: Record<string, any>[];
+  styles: Record<string, unknown>[];
   onDrawEnd: (geojson: GeojsonType | null) => void;
 }

@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Map as MapLibreMap,
+  MapMouseEvent,
   NavigationControl,
   AttributionControl,
   LngLatBoundsLike,
   Popup,
 } from 'maplibre-gl';
+import { AxiosError } from 'axios';
 import bbox from '@turf/bbox';
 import {
   getProjectReview,
@@ -607,7 +609,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     const features = mapData?.images?.features;
     if (!features) return result;
     features.forEach(feature => {
-      const props: any = feature.properties || {};
+      const props: GeoJSON.GeoJsonProperties = feature.properties || {};
       const taskId: string | null = props.task_id ?? null;
       const img: TaskGroupImage = {
         id: props.id,
@@ -882,7 +884,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         const imageId = inspectBtn.getAttribute('data-inspect-image-id');
         if (!imageId || !mapData?.images?.features) return;
         const feature = mapData.images.features.find(
-          (f: GeoJSON.Feature<any>) => f.properties?.id === imageId,
+          f => f.properties?.id === imageId,
         );
         if (feature?.properties) {
           const p = feature.properties;
@@ -935,7 +937,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
 
     const layerId = 'review-image-points-layer';
 
-    const handleClick = (e: any) => {
+    const handleClick = (e: MapMouseEvent) => {
       if (boxSelectModeRef.current) return;
       const features = map.queryRenderedFeatures(e.point, {
         layers: [layerId],
@@ -943,7 +945,9 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       if (!features?.length) return;
 
       const props = features[0].properties;
-      const coords = (features[0].geometry as any).coordinates.slice();
+      const coords = (
+        features[0].geometry as GeoJSON.Point
+      ).coordinates.slice() as [number, number];
 
       // Sequence-select intercepts the map click: build a same-task range
       // by filename and add to the bulk selection. Suppress the popup so
@@ -974,7 +978,14 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         popupRef.current.remove();
       }
 
-      const html = buildPopupHtml(props as any);
+      const html = buildPopupHtml(
+        props as {
+          id: string;
+          filename: string;
+          status: string;
+          rejection_reason?: string;
+        },
+      );
 
       const newPopup = new Popup({
         closeButton: true,
@@ -1078,7 +1089,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     const isPickerActive = () =>
       !!taskMatchingImageRef.current || !!bulkTaskMatchingImagesRef.current;
 
-    const onMouseMove = (e: any) => {
+    const onMouseMove = (e: MapMouseEvent) => {
       if (!isPickerActive()) return;
       const features = map.queryRenderedFeatures(e.point, {
         layers: [fillLayerId],
@@ -1110,7 +1121,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       }
     };
 
-    const onClick = (e: any) => {
+    const onClick = (e: MapMouseEvent) => {
       if (!isPickerActive()) return;
       const features = map.queryRenderedFeatures(e.point, {
         layers: [fillLayerId],
@@ -1306,9 +1317,9 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       });
       setSelectedImage(null);
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError) => {
       const message =
-        err?.response?.data?.detail ||
+        (err.response?.data as { detail?: string })?.detail ||
         err.message ||
         m.image_review_failed_accept_image();
       toast.error(message);
@@ -1328,9 +1339,9 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       });
       setSelectedImage(null);
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError) => {
       const message =
-        err?.response?.data?.detail ||
+        (err.response?.data as { detail?: string })?.detail ||
         err.message ||
         m.image_review_failed_reject_image();
       toast.error(message);
@@ -1352,9 +1363,9 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       setConfirmMatch(null);
       setTaskMatchingImage(null);
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError) => {
       const message =
-        err?.response?.data?.detail ||
+        (err.response?.data as { detail?: string })?.detail ||
         err.message ||
         m.image_review_failed_assign_image();
       toast.error(message);
@@ -1385,9 +1396,9 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       });
       setShowCleanupConfirm(false);
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError) => {
       const message =
-        err?.response?.data?.detail ||
+        (err.response?.data as { detail?: string })?.detail ||
         err.message ||
         m.image_review_failed_delete_invalid_images();
       toast.error(message);
@@ -1515,8 +1526,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     // Find the image's coordinates on the map and fly to it
     if (map && mapData?.images?.features) {
       const feature = mapData.images.features.find(
-        (f: GeoJSON.Feature<any>) =>
-          f.properties?.id === image.id && f.geometry,
+        f => f.properties?.id === image.id && f.geometry,
       );
       if (feature && feature.geometry && 'coordinates' in feature.geometry) {
         const coords = (feature.geometry as GeoJSON.Point).coordinates;
@@ -1664,16 +1674,15 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
 
   const locatedImages = useMemo(
     () =>
-      mapData?.images?.features?.filter(
-        (feature: GeoJSON.Feature<any>) => feature.geometry !== null,
-      ) || [],
+      mapData?.images?.features?.filter(feature => feature.geometry !== null) ||
+      [],
     [mapData],
   );
 
   const filteredLocatedImages = useMemo(
     () =>
       showOnlyIssueImages
-        ? locatedImages.filter((feature: GeoJSON.Feature<any>) =>
+        ? locatedImages.filter(feature =>
             hasIssueStatus(feature.properties?.status),
           )
         : locatedImages,
@@ -1683,7 +1692,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
   const locatedImagesGeojson = useMemo<GeoJSON.FeatureCollection>(
     () => ({
       type: 'FeatureCollection',
-      features: filteredLocatedImages as GeoJSON.Feature<any>[],
+      features: filteredLocatedImages,
     }),
     [filteredLocatedImages],
   );

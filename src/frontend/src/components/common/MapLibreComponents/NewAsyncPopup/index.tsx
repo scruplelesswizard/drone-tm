@@ -6,8 +6,9 @@
 import type { LngLatLike, MapMouseEvent } from 'maplibre-gl';
 import { Popup } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { forwardRef, useEffect, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useState, ReactElement } from 'react';
 import { renderToString } from 'react-dom/server';
+import { GeoJsonProperties } from 'geojson';
 import '@Components/common/MapLibreComponents/map.css';
 import { Button } from '@Components/RadixComponents/Button';
 import Skeleton from '@Components/RadixComponents/Skeleton';
@@ -21,8 +22,8 @@ const popup = new Popup({
 
 interface IPopupUIComponent {
   isLoading: boolean;
-  popupUI: any;
-  properties: Record<string, any>;
+  popupUI: (properties: GeoJsonProperties) => ReactElement;
+  properties: GeoJsonProperties;
   title: string;
   hideButton: boolean;
   buttonText?: string;
@@ -90,7 +91,7 @@ const AsyncPopup = forwardRef<HTMLDivElement, IAsyncPopup>(
       onClose,
       hideButton = false,
       getCoordOnProperties = false,
-      showPopup = (_clickedFeature: Record<string, any>) => true,
+      showPopup = (_clickedFeature: GeoJsonProperties) => true,
       openPopupFor,
       popupCoordinate,
       closePopupOnButtonClick,
@@ -98,7 +99,7 @@ const AsyncPopup = forwardRef<HTMLDivElement, IAsyncPopup>(
     _ref,
   ) => {
     const { map } = useMap();
-    const [properties, setProperties] = useState<Record<string, any> | null>(
+    const [properties, setProperties] = useState<GeoJsonProperties | null>(
       null,
     );
     const [coordinates, setCoordinates] = useState<number[]>();

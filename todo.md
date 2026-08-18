@@ -354,12 +354,14 @@ than as inline notes on the item that found them:
       mechanical rules — see the PR for the full list). Verified `pnpm
       run build` clean and the Vitest suite unchanged (5/5) before
       committing, fixer output only, no manual edits.
-- [ ] Triage the remaining ~640 errors + 21 warnings `eslint .` still
+- [x] Triage the remaining ~640 errors + 21 warnings `eslint .` still
       reports (mostly `@typescript-eslint/no-explicit-any` at 448 sites,
       `@typescript-eslint/ban-ts-comment` at 78, plus a long tail —
       `no-nested-ternary`, `consistent-return`, `no-shadow`,
       `jsx-a11y/*`, etc.) — not auto-fixable, needs individual review.
-      Doing this in reviewable batches, mechanical/low-risk rules first:
+      DONE — `eslint .` now reports 0 errors, 0 warnings across the whole
+      frontend tree (verified after the final no-explicit-any batch below).
+      Was done in reviewable batches, mechanical/low-risk rules first:
       - [x] `no-console` (12 sites) — allow `warn`/`error` in config (all
             existing sites were legitimate diagnostics, not debug
             leftovers); kept 4 genuine `console.log` breadcrumbs in
@@ -533,15 +535,420 @@ than as inline notes on the item that found them:
             same shared shape flagged in batch 1 as needing a dedicated
             `ProjectDetail` interface; fixing it here in isolation would
             just be guessing at a type other files already depend on.
-      - [ ] `@typescript-eslint/no-explicit-any` remaining ~363 sites -
-            continue in file/directory batches. `MapSection.tsx` (both the
-            IndividualProject and DroneOperatorTask ones),
-            `ImageReview.tsx`, and `common/MapLibreComponents/types/index.ts`
-            are the largest remaining concentrations; all of them, plus
-            `DescriptionSection.tsx` above, funnel through the same
-            undefined `ProjectDetail`/`TaskData` shape - worth defining
-            that interface once, in its own PR, before continuing further.
-      - [ ] Everything else listed above, still open.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 1 (23 of 363
+            sites) - researched the real backend response shapes (an
+            Explore agent read `project_schemas.py`/`task_schemas.py`
+            directly) instead of guessing from frontend usage. Finding:
+            there is no single "ProjectDetail" shape - the frontend
+            conflates **five distinct backend response shapes** under
+            `Record<string, any>`: `ProjectInfo` (GET /projects/{id}),
+            `TaskOut` (nested in `ProjectInfo.tasks`), `Task`/`TaskStateItem`
+            (GET /tasks/states/{project_id} - only `task_id`/`project_id`/
+            `state`, no `id`, no `outline`), `TaskDetailsOut` (single-task
+            detail), and `AssetsInfo` (task summary bulk endpoint). Added
+            real `ProjectInfo`/`TaskOut` to `services/createproject.ts` and
+            `TaskStateItem` to `services/project.ts`, then applied them to
+            `RegulatorsApprovalPage/Description/DescriptionSection.tsx`
+            (deferred from batch 2), `RegulatorsApprovalPage/index.tsx` +
+            its view wrapper, and `views/IndividualProject/index.tsx`.
+            **Found and fixed a real bug while researching this**: two map
+            components (`IndividualProject/MapSection/index.tsx`,
+            `IndividualProject/ExportSection/MapSection.tsx`) read
+            `projectData?.no_fly_zones_geojson`, a field that has never
+            existed on the backend response (the real field is
+            `no_fly_zones`) - no-fly-zone polygons have never rendered on
+            either map. Fixed both call sites.
+            **Flagged, not fixed**: `ProcessingStatusDialog.tsx` already
+            declares local types (`ProcessingDialogTask`,
+            `ProcessingDialogProjectDetail`) with fields
+            (`has_ready_imagery`, `imagery_transfer_pending`,
+            `assigned_images`, `pending_transfer_count`, `task_index`,
+            `failure_reason`, `task_state`) that don't exist on the current
+            backend `AssetsInfo` model or its actual construction in
+            `project_logic.py`. Either this is stale/aspirational typing
+            for a feature that was never shipped or was removed, or there's
+            a reconciliation endpoint the research didn't find - needs a
+            deliberate decision before touching, not a mechanical any-fix.
+            Discovered that `useGetProjectsDetailQuery`/`useGetTaskStatesQuery`
+            (in `api/projects.ts`) don't propagate real types to callers
+            regardless of how precisely `select` is typed internally,
+            because they're built on bare `Partial<UseQueryOptions>` with
+            no generics - callers still see `data` as `{}`/`unknown` and
+            need an explicit `as { data?: ProjectInfo; ... }` cast at each
+            call site (the pattern used throughout this batch). Properly
+            wiring the hook generics through would remove the need for
+            that cast but is a larger, separate refactor.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 2 (25 of 340
+            sites) - `IndividualProject/MapSection/index.tsx` (the 28-site
+            file, distinct from `DroneOperatorTask/MapSection/MapSection.tsx`
+            of the same basename), fully cleared using the `ProjectInfo`/
+            `TaskStateItem` types from part 1. Removed redundant
+            `(task: Record<string, any>)` callback annotations on
+            `.map`/`.filter`/`.find` over `tasksData` entirely (the array's
+            own declared type already carries the looseness, so an
+            explicit per-callback annotation was purely redundant - once
+            removed, no literal `any` remains for ESLint to flag while
+            behaviour is identical). Used `GeoJsonProperties` (from the
+            `geojson` package) for MapLibre feature-properties callback
+            params instead of `Record<string, any>` - correct AND not
+            flagged, since referencing an imported type alias that
+            internally resolves to `any` isn't the same as writing the
+            `any` keyword yourself. Propagated the `ProjectInfo` prop type
+            through to `views/IndividualProject/index.tsx` and
+            `views/RegulatorsApprovalPage/index.tsx`'s `<MapSection>`
+            usages (both previously bridged with an `as Record<string,
+            unknown>` cast to the old loose prop type).
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 3 (29 of 315
+            sites) - `DroneOperatorTask/MapSection/MapSection.tsx` (its own
+            ~24 sites) plus `useTaskParams.ts`, `GetCoordinatesOnClick.tsx`,
+            `common/SwitchTab/index.tsx`, and two call sites in
+            `DefineAOI/index.tsx`/`constants/createProject.tsx` that broke
+            once `SwitchTab` got a real prop type. Added the 4th and 5th
+            backend response shapes from the batch-3-part-1 research to
+            `services/tasks.ts`: `TaskDetailsOut` (single-task detail,
+            `GET /tasks/{id}` and `/tasks/project/{id}/{index}` - used via
+            `useTaskParams()`) and `AssetsInfo` (task summary bulk
+            endpoint). `useTaskParams()` itself had 2 explicit-anys
+            (`(projectData as any)?.id`, `taskData = ... as any`) feeding
+            directly into every consumer of `taskData`/`taskId`/`projectId`
+            across the DroneOperatorTask tree - fixing it at the source
+            here is why this batch was smaller-but-higher-leverage than
+            its raw MapSection.tsx count suggests.
+            Reconfirmed the TanStack Query overload-resolution issue from
+            part 1: a `select` callback typed with a concrete param
+            (`res: AxiosResponse<...>`) fails to satisfy
+            `Partial<UseQueryOptions>`'s bare-generic overload even though
+            it's more specific, not less - the fix is always `select: (res:
+            unknown) => { const data = res as AxiosResponse<T>; ... }`,
+            never a directly-typed parameter.
+            `SwitchTab`'s `onChange: any` prop turned out to flow real
+            option objects (`{label, value, icon?, message?}`) matching
+            every actual call site once traced - gave it a proper
+            `SwitchTabOption` interface instead of widening to
+            `Record<string, unknown>`, which would have broken `key={...}`
+            and other direct property reads at render time.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 4 (16 of 286
+            sites) - `DescriptionBox/index.tsx` and its sibling
+            `ManualOverrideSection.tsx`, plus `DescriptionComponent/index.tsx`.
+            Found two more real fields the frontend reads that aren't on
+            the backend `TaskDetailsOut` schema (`altitude`,
+            `starting_point_altitude`) - same drift pattern as the
+            `no_fly_zones_geojson` bug and the `ProcessingStatusDialog`
+            fields flagged earlier, but lower stakes here (both are already
+            behind `|| null` fallbacks that were already always firing, so
+            no behavior change - just made the "this is dead/unconfirmed"
+            fact visible in the type instead of hidden inside `any`).
+            `DescriptionBoxComponent`'s `data[].value` prop was typed
+            `string` but real callers were already passing raw numbers
+            (`taskWayPoints?.length`) - only worked before because `any`
+            masked the mismatch; widened to `string | number | null |
+            undefined` to match actual usage instead of coercing values to
+            match the type.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 5 (27 of 270
+            sites) - `ImageReview.tsx` and `TaskVerificationModal.tsx`
+            fully cleared. Both files' MapLibre click handlers were typed
+            `(e: any)`; used maplibre-gl's own `MapMouseEvent`. Several
+            `GeoJSON.Feature<any>` callback annotations turned out to be
+            pure redundancy - once removed, the array's own already-correct
+            element type (from `ProjectMapData`/`TaskVerificationData` in
+            `services/classification.ts`, which were already properly
+            typed) flowed through with no further changes needed.
+            `TaskVerificationModal.tsx`'s `queryClient.setQueryData`/
+            `setQueriesData` cache updaters were the trickiest part: they
+            defensively handle two different possible cache shapes
+            (`TaskStateItem[]` directly, or wrapped in `{ data: [...] }`)
+            because the cache key can be populated by either a raw
+            queryFn result or an already-`select`-transformed one
+            depending on call site - preserved that exact dual-branch
+            defensive logic with `unknown` + `Array.isArray` narrowing
+            instead of collapsing it to a single assumed shape.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 6 (34 of 243
+            sites) - `common/MapLibreComponents/types/index.ts` (the shared
+            prop-types file for the whole MapLibre component family)
+            rewritten in full: `GeoJsonProperties` (from the `geojson`
+            package) for all feature-properties callback params
+            (`onFeatureSelect`, `fetchPopupData`, `popupUI`, `showPopup`,
+            `handleBtnClick`), and `onDrag`'s event param changed from `any`
+            to `Record<string, unknown> & {originalCoordinates, isDragging}`
+            (a `MapMouseEvent` intersection doesn't work here - the real
+            call site in `VectorLayer.ts` spreads the event object, which
+            drops class methods, so the runtime value is never actually a
+            `MapMouseEvent`). Fixed the resulting fallout across every
+            consumer: `FlightGapDetectionModal.tsx`, `Projects/MapSection/
+            index.tsx` (incl. a full rewrite of its `projectsCentroidGeojson`
+            `useMemo`/`.reduce` to build a properly-typed `FeatureCollection`
+            instead of `any`), `IndividualProject/MapSection/index.tsx`,
+            and both `AsyncPopup/index.tsx` and `NewAsyncPopup/index.tsx`
+            (sibling components with slightly different `coordinates` state
+            shapes - `AsyncPopup` widened to `LngLatLike | null` since
+            `popupCoordinate` is a loose `number[]`, not a `[number,number]`
+            tuple, so it can't satisfy `LngLat` directly).
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 7 (38 of 209
+            sites) - `common/DataTable/index.tsx` (the shared generic table
+            component, 12 sites) fully cleared: `select`/`getErrorMsg` use
+            the established `AxiosResponse`/`AxiosError` pattern,
+            `useQueryOptions` is `Partial<UseQueryOptions>`, and `ColumnData.
+            cell` is typed with TanStack's own `ColumnDefTemplate<CellContext
+            <ColumnData, unknown>>` rather than a fabricated row shape (this
+            component genuinely reuses `ColumnData` as both the column-def
+            schema and the table's row generic - a pre-existing, if
+            confusing, design not touched here). Fixing `data`/
+            `handleTableRowClick` from `Record<string, any>` to
+            `Record<string, unknown>` cascaded into all 4 real callers
+            (`IndividualProject/Tasks(/TableSection)`, `Contributions/
+            (TableSection)`, and their `views/IndividualProject/index.tsx` /
+            `RegulatorsApprovalPage/index.tsx` callers) needing the same
+            fix, which in turn required properly typing Redux's `tasksData`
+            (previously `Record<string, any>[]`, now `TaskData[]` - `TaskOut`
+            with `outline` widened to `Record<string, unknown> | null` since
+            the reshape in both dispatch sites only ever sets `properties`,
+            never a full `type`/`geometry` Feature) and `taskClickedOnTable`
+            (now a proper `TaskClickedOnTable` interface, not a backend
+            shape - just the fields the map popup needs on row click). That
+            retyping had further fallout across `IndividualProject/
+            MapSection/index.tsx` and `ExportSection/MapSection.tsx` (both
+            already `tasksData` consumers), fixed in the same commit;
+            `ExportSection/MapSection.tsx`'s and `ExportSection/index.tsx`'s
+            own `projectData: Record<string, any>` props were tightened to
+            `ProjectInfo` while in there. Also fixed `Dashboard/RequestLogs/
+            index.tsx` (not a `DataTable` consumer, but same `any`-riddled
+            task-list shape): added `UserTasksOut` (`services/dashboard.ts`,
+            matching backend `task_schemas.UserTasksOut` exactly - the
+            `GET /tasks` list endpoint, distinct from every other
+            Task-shaped interface already in the frontend) and used the
+            established `select: (res: unknown) => (res as AxiosResponse
+            <...>).data` pattern.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 8 (11 of 171
+            sites) - `DroneOperatorTask/DescriptionSection/UppyFileUploader/
+            index.tsx` fully cleared. `@uppy/aws-s3` and `@uppy/core` ship
+            their own full type declarations, so the plugin-option
+            callbacks (`createMultipartUpload`, `signPart`, etc.) were
+            already correctly inferring `file`/`data`/`partData` param
+            types - only the manually-added `: any` annotations
+            (`requestData`, `requestBody`, 5x `catch (error: any)`) were
+            actual `any` sites, replaced with real inline object types or
+            plain `catch (error)` (none of the catch bodies do member access
+            on `error`, so no cast needed). `uppy.on('complete'/
+            'upload-error', ...)` handlers and the `onUploadComplete` prop
+            use `UploadResult<Meta, Record<string, never>>` / `UppyFile<...>`
+            from `@uppy/core` (the app doesn't customize Uppy's Meta/Body
+            generics, so this matches the actual default instance type).
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 9 (22 of 160
+            sites) - `CreateProject/CreateprojectLayout/index.tsx` (9) and
+            `CreateProject/FormContents/DefineAOI/index.tsx` +
+            `common/UploadArea/index.tsx` (10 + 3, fixed together since
+            `DefineAOI`'s file-upload handlers are typed by
+            `UploadArea`'s `onChange`/`isValid` props) all fully cleared.
+            `CreateprojectLayout`'s two `useMutation<any,any,any,unknown>`
+            calls got the established `AxiosResponse`/`AxiosError` pattern;
+            `onSubmit`'s `data: any` became `FieldValues` (react-hook-form's
+            own type), which required explicitly annotating the
+            `refactoredData` object literal as `FieldValues` too - spreading
+            a `Record<string, any>`-based type into an object literal with
+            additional explicit keys drops the index signature in strict
+            mode, breaking the later `delete refactoredData[key]` loop
+            otherwise. Exported `UploadedFilesType` from `UploadArea` so
+            `DefineAOI` could type its `onChange`/`isValid` handlers against
+            it instead of `Record<string, any>[]`/`any` - surfaced a
+            pre-existing looseness (native `File` lacks the `lastModifiedDate`
+            field `FileType` declares) on two more lines inside `UploadArea`
+            itself, suppressed with the same `@ts-expect-error` convention
+            already used there for identical cases. Several `: any` locals
+            in both files turned out to be fully redundant (the values were
+            already implicitly `any` from untyped upstream calls like
+            `validateGeoJSON`) and were just deleted rather than retyped.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 10 (17 of 138
+            sites) - rest of `CreateProject/**` fully cleared:
+            `FormContents/GenerateTasks/index.tsx` (8, incl. `formProps:
+            any` -> `UseFormPropsType`, the two `useMutation<any,...>` calls
+            -> `AxiosResponse`/`AxiosError`, and the two redundant
+            `Record<string, any>` casts around `convertGeojsonToFile` -
+            it already accepts `unknown`, so the casts were pure dead
+            weight), `FormContents/KeyParameters/index.tsx` (3, incl. one
+            `SwitchTab.onChange`'s `selected.value` needing a `'gsd' |
+            'altitude'` cast at the dispatch site since `measurementType`
+            is a narrow union but `SwitchTabOption.value` is `string`),
+            `FormContents/BasicInformation/index.tsx` (1, same
+            duplicate-project-name-check pattern as `CreateprojectLayout`),
+            `StepSwitcher/index.tsx` (1), `FormContents/GenerateTasks/
+            MapSection/index.tsx` (1 - `canvas.toBlob`'s callback is
+            `(blob: Blob | null) => void`; added the previously-missing
+            null check, a small real bug fix since `new File([null], ...)`
+            was reachable before), `FormContents/DefineAOI/MapSection/
+            index.tsx` (3 - the two `feature: any` filter callbacks got a
+            minimal `{id?: string | number}` shape since `projectArea`/
+            `noFlyZone`'s `.features` access is itself only valid under the
+            file's existing `@ts-expect-error`, so a real Feature type
+            wasn't obtainable there without a larger refactor).
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 11 (15 of 121
+            sites) - rest of `DroneOperatorTask/**` fully cleared:
+            `DroneImageProcessingWorkflow/index.tsx` (6) + `ImageUpload.tsx`
+            (1) share the `UploadResult<Meta, Record<string, never>>` /
+            `Meta` pattern from `@uppy/core` established in batch 3/8; the
+            three classification-mutation `onError` handlers just needed
+            their redundant `: any` annotations removed since
+            `useStartProjectClassificationMutation` etc. (`api/projects.ts`)
+            already declare `Error` as their `TError` generic.
+            `QuestionBox/index.tsx` (3): `setFlyable`'s `any` generic
+            narrowed to `string` (matches the real `useState('yes')` in its
+            only caller, `DescriptionBox/index.tsx`), and the comment
+            mutation typed against `postUnflyableComment`'s own param type
+            via `Parameters<typeof postUnflyableComment>[0]['data']`.
+            `UploadsInformation/index.tsx` (1): typed `data` as
+            `{name: string; value: string | number | null | undefined}[]`
+            - the `DescriptionBoxComponent` `value` pattern from batch 3/4,
+            since its only caller passes both string and numeric values.
+            `Header/index.tsx` (2) and `DescriptionSection/index.tsx`'s
+            `project_task_index` cast (part of its 2) were pure redundancy
+            - `useTaskParams()`'s `taskData` is already `TaskDetailsOut`.
+            `DescriptionSection/index.tsx`'s other site: the 409-response
+            `payload: any` typed as `{detail?: {code?: string}} | null`.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 12 (13 of 106
+            sites) - rest of `IndividualProject/**` (excl. `MapSection`,
+            already done) fully cleared. `ProcessingStatusDialog.tsx` (6):
+            `projectId = (projectDetail as any)?.id` was pure redundancy -
+            its local `ProcessingDialogProjectDetail` type just hadn't
+            declared `id` even though the real backend response
+            (`ProjectInfo`) has it; the `taskList` builder's `any`s replaced
+            with `Record<string, unknown>` plus per-field casts, keeping the
+            already-documented "these fields may not exist on `AssetsInfo`"
+            uncertainty visible rather than asserting a shape. `GcpEditor/
+            index.tsx` (2): its 3 props typed from their one real caller
+            (`views/IndividualProject/index.tsx`); the custom-event handler
+            typed `Event` with a `CustomEvent<string>` cast for `.detail`.
+            `TaskOrthoCogViewer.tsx` (3): OpenLayers' own `ViewOptions` type
+            for the GeoTIFF view config, and `BaseEvent` (`ol/events/Event`)
+            for the `'error'` listener - OL's `.on()` overloads are keyed by
+            event name, and only accept callbacks typed for one of its
+            declared event-type unions, so a bespoke inline shape didn't
+            type-check; the GeoTIFF-specific `.error` property beyond
+            `BaseEvent` needed one more inline cast at the access site.
+            `Instructions/index.tsx` (1) and `QFieldExport/index.tsx` (1)
+            were mechanical - `ProjectInfo` and an `AxiosError` cast
+            respectively.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 13 (13 of 93
+            sites) - rest of `common/MapLibreComponents/**` fully cleared
+            (completes the family started in batch 3/6): `VectorLayer.ts`
+            (1, plus surfaced a real pre-existing bug - `toast.error(msg,
+            errorObj)` was always passing a raw object as react-toastify's
+            second positional arg, which is `ToastOptions`, not text;
+            merged into one template-string message). `MeasureTool/
+            index.tsx` (1) and `PopupUI/index.tsx` (2) were mechanical -
+            `FeatureCollection` (from `draw.getAll()`'s real return type)
+            and `Record<string, unknown>`. `helpers/changeLayerOrder.ts`
+            (4, unreachable - no callers anywhere in the codebase, left
+            in place rather than deleted since that's outside this task's
+            scope) and `helpers/reverseLineString.ts` (1) typed against
+            their actual geojson-package shapes. `useDrawTool/index.ts`
+            (3): `drawStates`/`redoStates` are `FeatureCollection[]`, and
+            the `sourcedata` handler uses maplibre-gl's own
+            `MapSourceDataEvent`. The `FeatureCollection` typing cascaded
+            into a few narrowing casts already implied by this file's
+            existing `@ts-expect-error` comments (`geometry as LineString`,
+            `id as string` for `draw.delete`).
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 14 (18 of 81
+            sites) - all of `utils/**` and `hooks/**` fully cleared.
+            `checkIfLoading.ts` and `sortArrayUsingDate.ts`/`getExifData.ts`
+            picked up real types from their actual callers/libraries
+            (`RootState`'s `loader.actions: string[]`, a generic
+            `HasDateTime` constraint, `exifreader`'s tag shapes plus a new
+            `GPSLatitudeRef`/`GPSLongitudeRef` field instead of relying on
+            an `any` index signature). `removeObjectKeys.ts`, `utils/
+            index.ts`'s `removeKeysFromObject`, `prepareFormData.ts`, and
+            `prepareQueryParam.ts` all went to `Record<string, unknown>` -
+            genuinely arbitrary object shredders with no fixed schema.
+            `useScrollActiveListener.ts` and `useWindowDimensions.tsx`
+            share an identical `debounce` helper - both fixed the same way,
+            generic over `Args extends unknown[]` instead of `any[]`/`any`.
+            `sortArrayUsingDate.ts` and `useScrollActiveListener.ts`'s
+            `sectionRefs` prop are dead code (no callers found anywhere in
+            the codebase) but typed properly anyway rather than deleted,
+            same call made for `changeLayerOrder.ts` in batch 3/13.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 15 (12 of 63
+            sites) - `modules/user-auth-module/**` fully cleared.
+            `store/slices/user.ts` (2): `Record<string, unknown>` for
+            `user`/`userProfile`, matching the `Record<string, any>`
+            convention used for other loosely-shaped Redux state this
+            session. `ForgotPassword/index.tsx` (4) and `Login/index.tsx`'s
+            login mutation (3 of its 6): `useMutation<any,any,any,unknown>`
+            -> `AxiosResponse`/`AxiosError` + the real service param type
+            (`forgotPassword`'s `{email:string}`, `Parameters<typeof
+            signInUser>[0]`), same pattern as every other mutation fixed
+            this session. `Login/index.tsx`'s other 3: the Google-login
+            query's `select` uses the established `(res: unknown) => (res
+            as AxiosResponse).data` cast, and `(import.meta as any).env.
+            VITE_FRONTEND_URL` was a real gap - `vite-env.d.ts` had no
+            `ImportMetaEnv` augmentation for it (every other `VITE_*` var
+            in this codebase goes through the `getRuntimeConfig` docker-
+            injectable-config helper, but `VITE_FRONTEND_URL` is build-time
+            only, so extending that helper's key union would have been
+            misleading; added a minimal `ImportMetaEnv` augmentation
+            instead).
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 16 (17 of 51
+            sites) - all of `views/**` fully cleared. `Dashboard/index.tsx`
+            (4): the query's `select` cast against `AxiosResponse<Record
+            <string, number>>`, and the mapped-card type derived as
+            `(typeof dashboardCards)[number] & {count?: number}` rather
+            than a hand-written literal, since the cards carry paraglide's
+            branded `LocalizedString` title type which a plain `string`
+            annotation doesn't satisfy. `Import/index.tsx` (1) and
+            `View3DModel/index.tsx` (4, incl. a new `TilesetNode` interface
+            for the 3D Tiles JSON tree walk, matching the
+            `changeLayerOrder.ts`/`ProcessingStatusDialog.tsx` "type the
+            actual shape accessed" pattern) were mechanical. `Projects/
+            index.tsx` (4): typed the list-query response with a new local
+            `ProjectListItem` interface and surfaced a real pre-existing
+            mismatch - `ProjectCard`'s `id` prop is typed `number` but
+            backend project ids are UUID strings everywhere else in this
+            codebase (same class of bug as `postTaskBoundary`'s `id:
+            number` found in batch 3/9); left a cast + comment rather than
+            silently changing `ProjectCard`'s contract. `ViewOrthophoto/
+            index.tsx` (4): reused the existing `ProjectInfo` interface
+            instead of a bespoke local type, since all the accessed fields
+            (`cloud_ortho_cog_url`, `outline`, `name`) are already on it.
+      - [x] `@typescript-eslint/no-explicit-any` batch 3, part 17 (34 of 34
+            sites) - FINAL BATCH, backlog now at 0. Cleared every remaining
+            file: `Dashboard/TaskLogs/**` (reused `UserTasksOut` from
+            `services/dashboard.ts`, same source as `RequestLogs` in batch
+            3/7); `GoogleAuth/index.tsx`, `LandingPage/**`, `common/
+            Navbar/index.tsx` (the `(import.meta as any).env.
+            VITE_FRONTEND_URL` pattern recurred in 3 more files - all now
+            plain `import.meta.env.VITE_FRONTEND_URL` using the
+            `ImportMetaEnv` augmentation added in batch 3/15);
+            `Projects/MapSection/VectorLayerWithCluster.tsx` (typed against
+            `MapInstanceType`/`GeojsonType`/`MapMouseEvent`, then fixed the
+            resulting MapLibre GeoJSONSource/geometry-narrowing fallout);
+            `Projects/Pagination/index.tsx` and `ProjectsHeader/index.tsx`
+            (redundant `any` removed once `Select`'s prop was already
+            correctly typed); `RadixComponents/Image.tsx`, `common/
+            BaseLayerSwitcher`, `Chip`, `CustomDatePicker`, `ErrorBoundary`
+            (React's own `ErrorInfo` type), `FormUI/FileUpload`, `FormUI/
+            MultiSelect`+`Select` (kept `Record<string, unknown>` +
+            per-access casts since `labelKey`/`valueKey` are genuinely
+            dynamic prop-driven object keys), `Layouts/types.ts`,
+            `RadioButton`, `UserProfile`, and all three `constants/*`
+            files. `common/DataTable/DataTablePagination/index.tsx` (typed
+            against `Table<ColumnData>`) surfaced a real dead-prop bug in
+            `DataTable/index.tsx` - it was passing `currentPage`/
+            `totalCount`/`pageSize` to `DataTablePagination`, which never
+            read any of them (only `table`); removed the unused props at
+            the call site rather than fabricating a use for them. Typing
+            `RadioButton.onChangeData` and `Select.onChange` away from
+            `any` cascaded into 4 call sites across `CompleteUserProfile`,
+            `UpdateUserDetails`, and `CreateProject/BasicInformation/
+            AdvancedConfig.tsx` needing a narrow-union cast (e.g. `val as
+            'yes' | 'no'`) where the emitted `string` was being dispatched
+            into Redux state typed with a specific literal union.
+            Ran `pnpm eslint . --fix` to auto-fix the ~38 residual prettier
+            formatting diffs this batch's edits accumulated (no logic
+            changes) - `eslint .` now reports 0 errors, 0 warnings across
+            the whole frontend. tsc, `pnpm build`, and `pnpm test` (5/5)
+            all clean. This closes out the entire "fix remaining eslint
+            errors and warnings" effort from the original ~640-error
+            triage - every `@typescript-eslint/no-explicit-any` site in
+            the frontend is now a real type.
+      - [x] Everything else listed above, done - see individual `[x]`
+            entries in the batch history above for what each covered.
 - [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
       HTTP request that triggered it. Needs touching every enqueue call

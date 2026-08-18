@@ -90,9 +90,9 @@ export const getLayerOptionsByStatus = (status: string) => {
 
 export const showPrimaryButton = (
   status: string,
-  lockedUser: any,
-  currentUser: any,
-  author: any,
+  lockedUser: unknown,
+  currentUser: unknown,
+  author: unknown,
 ) => {
   switch (status) {
     case 'UNLOCKED':

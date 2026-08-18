@@ -1,11 +1,12 @@
 import NoDataComponent from '@Components/common/DataTable/NoDataFound';
+import { UserTasksOut } from '@Services/dashboard';
 import { formatString } from '@Utils/index';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { m } from '@/paraglide/messages';
 
 interface ITaskLogsTableProps {
-  data: any[];
+  data?: UserTasksOut[];
 }
 
 const TaskLogsTable = ({ data: taskList }: ITaskLogsTableProps) => {

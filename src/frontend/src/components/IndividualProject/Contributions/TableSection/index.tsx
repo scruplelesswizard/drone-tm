@@ -1,6 +1,7 @@
-import DataTable from '@Components/common/DataTable';
+import DataTable, { ColumnData } from '@Components/common/DataTable';
 import Icon from '@Components/common/Icon';
 import { RasterSourceSpecification } from 'maplibre-gl';
+import { CellContext } from '@tanstack/react-table';
 import { setProjectState } from '@Store/actions/project';
 import { useTypedSelector } from '@Store/hooks';
 import { formatString, buildDownloadUrl } from '@Utils/index';
@@ -27,8 +28,16 @@ const contributionsDataColumns = [
   {
     header: m.contributions_table_orthophoto(),
     accessorKey: 'assets_url',
-    cell: function CellComponent({ row }: any) {
-      const { original: rowData } = row;
+    cell: function CellComponent({ row }: CellContext<ColumnData, unknown>) {
+      const { original: rowDataRaw } = row;
+      const rowData = rowDataRaw as unknown as {
+        assets_url?: string;
+        task_id?: string;
+        // orthophoto_url isn't set by the taskDataForTable reduce below -
+        // not part of this row's shape, kept as a defensive fallback
+        // (always undefined before this was typed, same as now).
+        orthophoto_url?: string;
+      };
       const dispatch = useDispatch();
       const visibleOrthophotoList = useTypedSelector(
         state => state.project.visibleOrthophotoList,
@@ -68,8 +77,7 @@ const contributionsDataColumns = [
       };
 
       const currentOrthophoto = visibleOrthophotoList?.find(
-        (orthophoto: Record<string, any>) =>
-          orthophoto?.taskId === rowData.task_id,
+        orthophoto => orthophoto?.taskId === rowData.task_id,
       );
 
       const handleViewResult = () => {
@@ -80,14 +88,13 @@ const contributionsDataColumns = [
         }[] = [];
         if (currentOrthophoto) {
           newVisibleList = visibleOrthophotoList.filter(
-            (orthophoto: Record<string, any>) =>
-              orthophoto?.taskId !== rowData?.task_id,
+            orthophoto => orthophoto?.taskId !== rowData?.task_id,
           );
         } else {
           newVisibleList = [
             ...visibleOrthophotoList,
             {
-              taskId: rowData.task_id,
+              taskId: rowData.task_id as string,
               source: {
                 type: 'raster',
                 url: `cog://${rowData?.orthophoto_url}`,
@@ -153,7 +160,7 @@ const contributionsDataColumns = [
 interface ITableSectionProps {
   isFetching: boolean;
 
-  handleTableRowClick: (rowData: any) => void;
+  handleTableRowClick: (rowData: Record<string, unknown>) => void;
 }
 
 export default function TableSection({
@@ -164,7 +171,7 @@ export default function TableSection({
 
   const taskDataForTable = useMemo(() => {
     if (!tasksData) return [];
-    return tasksData?.reduce((acc: any, curr: any) => {
+    return tasksData?.reduce<Record<string, unknown>[]>((acc, curr) => {
       if (!curr?.state || curr?.state === 'UNLOCKED') return acc;
 
       return [
@@ -188,7 +195,7 @@ export default function TableSection({
       wrapperStyle={{
         height: '100%',
       }}
-      data={taskDataForTable as Record<string, any>[]}
+      data={taskDataForTable}
       withPagination={false}
       loading={isFetching}
       tableOptions={{ manualSorting: false }}
