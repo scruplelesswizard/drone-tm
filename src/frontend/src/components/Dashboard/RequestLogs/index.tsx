@@ -71,6 +71,7 @@ const RequestLogs = () => {
               >
                 <div className="naxatw-flex naxatw-flex-col naxatw-gap-1">
                   <div
+                    // eslint-disable-next-line react/no-danger -- app-controlled i18n message string (paraglide), not user input
                     dangerouslySetInnerHTML={{
                       __html: m.dashboard_request_log_message({
                         taskIndex: task.project_task_index,

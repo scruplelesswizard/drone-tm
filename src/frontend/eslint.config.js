@@ -114,8 +114,19 @@ export default [
     // Runtime config stub, overwritten at container start - not part of the
     // `src/**` glob above, so it needs its own __RUNTIME_CONFIG__ allowance.
     files: ['public/config.js'],
+    languageOptions: {
+      globals: { ...globals.browser },
+    },
     rules: {
       'no-underscore-dangle': ['error', { allow: ['__RUNTIME_CONFIG__'] }],
+    },
+  },
+  {
+    // 15 call sites import this by name; switching to a default export is
+    // pure churn for a stylistic preference, not worth the diff.
+    files: ['src/runtimeConfig.ts'],
+    rules: {
+      'import/prefer-default-export': 'off',
     },
   },
   {

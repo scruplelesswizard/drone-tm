@@ -16,7 +16,7 @@ import { useTypedDispatch } from '@Store/hooks';
 import { signInGoogle, signInUser } from '@Services/common';
 import { setUserState } from '@UserModule/store/actions/user';
 import googleIcon from '@Assets/images/google-icon.svg';
-import { isSafeRedirect } from '@Utils/url';
+import isSafeRedirect from '@Utils/url';
 import { getRuntimeConfig } from '@/runtimeConfig';
 import { m } from '@/paraglide/messages';
 

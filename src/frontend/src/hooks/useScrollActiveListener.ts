@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from 'react';
 
-function debounce(func: Function, timeout = 300) {
+function debounce(func: (...args: any[]) => void, timeout = 300) {
   let timer: any;
   return (arg: any) => {
     clearTimeout(timer);

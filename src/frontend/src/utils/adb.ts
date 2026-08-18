@@ -18,6 +18,7 @@ async function readShellOutput(
   const reader = process.stdout.getReader();
   let output = '';
   while (true) {
+    // eslint-disable-next-line no-await-in-loop -- each read() depends on the previous chunk being consumed; this is a sequential stream, not parallelizable
     const { value, done } = await reader.read();
     if (done) break;
     output += decoder.decode(value);
@@ -26,7 +27,7 @@ async function readShellOutput(
 }
 
 async function encodeDataAsBase64String(data: Blob): Promise<string> {
-  return await new Promise<string>(resolve => {
+  return new Promise<string>(resolve => {
     const reader = new FileReader();
     reader.onload = () => {
       const arrayBuffer = reader.result as ArrayBuffer;

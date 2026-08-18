@@ -1,4 +1,4 @@
-export const isSafeRedirect = (path: string | undefined | null): boolean => {
+const isSafeRedirect = (path: string | undefined | null): boolean => {
   if (!path || !path.startsWith('/')) {
     return false;
   }
@@ -11,3 +11,5 @@ export const isSafeRedirect = (path: string | undefined | null): boolean => {
     return false;
   }
 };
+
+export default isSafeRedirect;
