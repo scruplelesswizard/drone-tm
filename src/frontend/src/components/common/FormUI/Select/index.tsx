@@ -17,6 +17,7 @@ interface ISelectProps {
   className?: string;
   withSearch?: boolean;
   inputTagClassname?: string;
+  ariaLabel?: string;
 }
 
 function getPosition(direction: string) {
@@ -41,6 +42,7 @@ export default function Select({
   className,
   withSearch = false,
   inputTagClassname,
+  ariaLabel,
 }: ISelectProps) {
   const resolvedPlaceholder = placeholder ?? m.common_select();
   const [isOpen, setIsOpen] = useState(false);
@@ -111,11 +113,13 @@ export default function Select({
         ref={dropdownRef}
         className={`naxatw-group naxatw-relative naxatw-flex naxatw-h-9 naxatw-w-full naxatw-cursor-pointer naxatw-items-center naxatw-justify-between naxatw-rounded-md naxatw-border naxatw-border-gray-800 hover:naxatw-border-red ${className}`}
         onClick={toggleDropdown}
+        aria-label={!withSearch ? ariaLabel || resolvedPlaceholder : undefined}
       >
         {withSearch ? (
           <Input
             type="text"
             placeholder={getPlaceholderText()}
+            aria-label={ariaLabel || resolvedPlaceholder}
             className={`naxatw-w-full naxatw-border-none ${inputTagClassname} ${
               selected ? 'placeholder:naxatw-text-grey-800' : ''
             } focus:placeholder:naxatw-text-grey-400`}

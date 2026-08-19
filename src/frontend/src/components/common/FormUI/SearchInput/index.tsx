@@ -11,6 +11,7 @@ interface ISearchInputProps {
   onClear?: () => void;
   showClearIcon?: boolean;
   className?: string;
+  ariaLabel?: string;
 }
 
 export default function SearchInput({
@@ -20,7 +21,9 @@ export default function SearchInput({
   onClear,
   showClearIcon = false,
   className,
+  ariaLabel,
 }: ISearchInputProps) {
+  const resolvedPlaceholder = placeholder || m.common_search();
   return (
     <FlexRow
       className={`hover:naxatw-border-b-primary-400 naxatw-group naxatw-relative naxatw-w-full naxatw-items-center naxatw-border-b-2 ${className}`}
@@ -32,7 +35,8 @@ export default function SearchInput({
       <Input
         type="text"
         className="naxatw-w-full naxatw-border-none"
-        placeholder={placeholder || m.common_search()}
+        placeholder={resolvedPlaceholder}
+        aria-label={ariaLabel || resolvedPlaceholder}
         value={inputValue}
         onChange={onChange}
       />
