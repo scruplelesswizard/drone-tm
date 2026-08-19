@@ -577,7 +577,7 @@ inline on the original item.
 
 ## Frontend — P2
 
-- [ ] Break up the four largest components: `DroneImageProcessingWorkflow/
+- [x] Break up the four largest components: `DroneImageProcessingWorkflow/
       ImageReview.tsx` (2559 lines as of 2026-08, was 2334),
       `ModalContent/ProcessingStatusDialog.tsx` (1274, was 1153),
       `DroneOperatorTask/MapSection/MapSection.tsx` (1186, was 1072),
@@ -590,7 +590,7 @@ inline on the original item.
       Asked; chose "change guidelines, verify using headless browser, add
       a headless testing framework + tests" over skipping the item or
       attempting it unverified.
-      DONE (framework half) — added Playwright (`@playwright/test`,
+      DONE — added Playwright (`@playwright/test`,
       `src/frontend/playwright.config.ts`, tests in `src/frontend/e2e/`,
       `pnpm test:e2e`), distinct from the existing Vitest/Testing-Library
       unit suite (jsdom, no real browser/rendering engine). Chromium
@@ -869,9 +869,13 @@ ASVS in particular haven't been scanned yet).
 
 ### Medium
 
-- [ ] Heading hierarchy: three `<h1>`s in one section
+- [x] Heading hierarchy: three `<h1>`s in one section
       (`components/IndividualProject/ExportSection/index.tsx:16,48,55`).
       Should be one `h1` + `h2`/`h3` for subsections. WCAG 1.3.1, 2.4.6.
+      Stale entry - already fixed by the a11y sweep earlier this session
+      (`todo/61`): confirmed current file has one `<h1>` (section title,
+      line 17) and the two subsection headings are `<h2>` (lines 49, 58).
+      This checkbox was never flipped when that branch landed.
 - [x] `SearchInput`/`Select` rely on `placeholder` only, no
       `<label>`/`aria-label` (`components/common/FormUI/SearchInput/index.tsx:27-34`,
       `components/common/FormUI/Input/index.tsx`,
