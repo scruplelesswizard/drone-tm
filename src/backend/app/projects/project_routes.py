@@ -937,9 +937,10 @@ async def initiate_upload(
     except HTTPException:
         raise
     except Exception as e:
+        log.error(f"Failed to initiate multipart upload: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to initiate multipart upload: {e}",
+            detail="Failed to initiate multipart upload.",
         )
 
 
@@ -970,9 +971,10 @@ async def sign_part_upload(
             "part_number": data.part_number,
         }
     except Exception as e:
+        log.error(f"Failed to generate presigned URL for part: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to generate presigned URL for part: {e}",
+            detail="Failed to generate presigned URL for part.",
         )
 
 
@@ -1089,7 +1091,7 @@ async def complete_upload(
         log.error(f"Failed to complete multipart upload: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to complete multipart upload: {e}",
+            detail="Failed to complete multipart upload.",
         )
 
 
@@ -1117,9 +1119,10 @@ async def abort_upload(
             "message": "Multipart upload aborted successfully",
         }
     except Exception as e:
+        log.error(f"Failed to abort multipart upload: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to abort multipart upload: {e}",
+            detail="Failed to abort multipart upload.",
         )
 
 
@@ -1150,9 +1153,10 @@ async def get_uploaded_parts(
             "upload_id": upload_id,
         }
     except Exception as e:
+        log.error(f"Failed to list parts: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to list parts: {e}",
+            detail="Failed to list parts.",
         )
 
 
@@ -1605,5 +1609,5 @@ async def test(redis_pool: ArqRedis = Depends(get_redis_pool)):
         log.error(f"Error enqueueing sleep_task: {e!s}")
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"Failed to enqueue task: {e!s}",
+            detail="Failed to enqueue task.",
         )

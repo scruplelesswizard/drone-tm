@@ -269,7 +269,7 @@ def merge_multipolygon(features: Feature | FeatCol | MultiPolygon | Polygon):
     except Exception as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Couldn't merge the multipolygon to polygon: {e!s}",
+            detail="Couldn't merge the multipolygon to polygon.",
         ) from e
 
 

@@ -330,11 +330,35 @@ this fast scan, needed before calling this domain complete.
 New items surfaced during backend/frontend work, filed separately rather
 than as inline notes on the item that found them:
 
-- [ ] Fix the ~30 remaining `detail=f"...{e}"` sites in
+- [x] Fix the ~30 remaining `detail=f"...{e}"` sites in
       `classification_routes.py`/`project_routes.py` that leak raw exception
       text into the client-facing response (all already `log.error(...)` the
       real error first, so not urgent — found while adding the RFC 7807
       handlers, which only fixed the 3 sites the original audit named).
+      DONE — 30 sites across 7 files (`project_routes.py` 6,
+      `classification_routes.py` 17, `task_schemas.py` 2, `task_logic.py`
+      2, `waypoint_routes.py` 1, `project_deps.py` 1, `utils.py` 1):
+      dropped the `{e}`/`{e!s}` interpolation from the client-facing
+      `detail=` string, turning each into a plain static message. 3 sites
+      (`task_schemas.py` x2, `waypoint_routes.py` x1) had **no**
+      `log.error(...)` at all — the exception's only use was the leaked
+      `detail=`, so removing that made `except Exception as e` genuinely
+      dead (ruff F841) and would have silently dropped the error
+      entirely; added a proper `log.error(f"...: {e}")` call in each
+      instead of just dropping the binding. 6 more sites (`project_routes.py`
+      x4, `task_logic.py` x2) had the same F841 issue for a different
+      reason — they matched the todo's named f-string pattern but weren't
+      in the original 23-site count from the two named files, so this
+      landed at exactly 30 total once verified against `ruff check`.
+      Verified with `ruff check`/`ruff format --diff` (clean) and the full
+      backend suite (`docker compose -f compose.test.yaml`, 257/257
+      passed).
+      Follow-up **not** attempted this pass (separate pattern, same
+      class of bug, needs individual review not a mechanical regex):
+      14 more sites use `detail=str(e)` directly (not an f-string) across
+      the same files - same client-facing exception leak, but each needs
+      a hand-written generic message since there's no text prefix to
+      extract mechanically.
 - [x] Regenerate `uv.lock` for the mypy dev dependency — ran `uv lock` inside
       a throwaway container built from the backend Dockerfile's build stage
       (has the `libpq-dev`/GDAL headers this sandbox itself lacks). Landed
