@@ -21,19 +21,17 @@ import {
   FlightGapDetectionData,
   getFlightGapDetectionData,
   ImageUrls,
+  TaskImageData,
 } from '@Services/classification';
-import { FlexRow } from '@Components/common/Layouts';
-import { Button } from '@Components/RadixComponents/Button';
-import MapContainer from '@Components/common/MapLibreComponents/MapContainer';
-import VectorLayer from '@Components/common/MapLibreComponents/Layers/VectorLayer';
-import BaseLayerSwitcherUI from '@Components/common/BaseLayerSwitcher';
-import { GeojsonType } from '@Components/common/MapLibreComponents/types';
 import { setProjectState } from '@Store/actions/project';
 import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
 import { TaskStateItem } from '@Services/project';
 import { ProjectInfo, TaskOut } from '@Services/createproject';
 import { m } from '@/paraglide/messages';
-import FlightGapDetectionModal from './FlightGapDetectionModal';
+import FlightGapDetectionModal from '../FlightGapDetectionModal';
+import TaskMapPanel from './TaskMapPanel';
+import ImageSidebar from './ImageSidebar';
+import VerificationFooter from './VerificationFooter';
 
 interface TaskVerificationModalProps {
   isOpen: boolean;
@@ -106,7 +104,7 @@ const TaskVerificationModal = ({
   const sidebarParentRef = useRef<HTMLDivElement>(null);
   const sidebarRows = useMemo(() => {
     const images = verificationData?.images || [];
-    const result: typeof images extends (infer T)[] ? T[][] : never[] = [];
+    const result: TaskImageData[][] = [];
     for (let i = 0; i < images.length; i += SIDEBAR_COLS) {
       result.push(images.slice(i, i + SIDEBAR_COLS));
     }
@@ -580,311 +578,40 @@ const TaskVerificationModal = ({
             </div>
           ) : (
             <>
-              {/* Map Section */}
-              <div className="naxatw-relative naxatw-flex-1">
-                <MapContainer
-                  map={map}
-                  isMapLoaded={isMapLoaded}
-                  containerId="task-verification-map"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                  }}
-                >
-                  <BaseLayerSwitcherUI />
+              <TaskMapPanel
+                map={map}
+                isMapLoaded={isMapLoaded}
+                isStyleReady={isStyleReady}
+                verificationData={verificationData}
+                imageGeoJsonData={imageGeoJsonData}
+                coveragePercentage={coveragePercentage}
+                isLowCoverage={isLowCoverage}
+              />
 
-                  {/* Task polygon */}
-                  {map &&
-                    isMapLoaded &&
-                    isStyleReady &&
-                    verificationData?.task_geometry && (
-                      <VectorLayer
-                        map={map}
-                        isMapLoaded={isMapLoaded}
-                        id="task-polygon"
-                        geojson={
-                          {
-                            type: 'FeatureCollection',
-                            features: [verificationData.task_geometry],
-                          } as GeojsonType
-                        }
-                        visibleOnMap
-                        layerOptions={{
-                          type: 'fill',
-                          paint: {
-                            'fill-color': '#98BBC8',
-                            'fill-outline-color': '#484848',
-                            'fill-opacity': 0.4,
-                          },
-                        }}
-                      />
-                    )}
-
-                  {/* Task polygon outline */}
-                  {map &&
-                    isMapLoaded &&
-                    isStyleReady &&
-                    verificationData?.task_geometry && (
-                      <VectorLayer
-                        map={map}
-                        isMapLoaded={isMapLoaded}
-                        id="task-polygon-outline"
-                        geojson={
-                          {
-                            type: 'FeatureCollection',
-                            features: [verificationData.task_geometry],
-                          } as GeojsonType
-                        }
-                        visibleOnMap
-                        layerOptions={{
-                          type: 'line',
-                          paint: {
-                            'line-color': '#484848',
-                            'line-width': 2,
-                          },
-                        }}
-                      />
-                    )}
-
-                  {/* Image points */}
-                  {map &&
-                    isMapLoaded &&
-                    isStyleReady &&
-                    imageGeoJsonData &&
-                    imageGeoJsonData.features.length > 0 && (
-                      <VectorLayer
-                        map={map}
-                        isMapLoaded={isMapLoaded}
-                        id="task-image-points"
-                        geojson={imageGeoJsonData as GeojsonType}
-                        visibleOnMap
-                        layerOptions={{
-                          type: 'circle',
-                          paint: {
-                            'circle-color': '#22c55e',
-                            'circle-radius': 6,
-                            'circle-stroke-width': 2,
-                            'circle-stroke-color': '#ffffff',
-                            'circle-stroke-opacity': 0.8,
-                          },
-                        }}
-                      />
-                    )}
-                </MapContainer>
-
-                {/* Stats Overlay */}
-                <div className="naxatw-absolute naxatw-left-4 naxatw-top-4 naxatw-z-10 naxatw-rounded-lg naxatw-bg-white naxatw-p-4 naxatw-shadow-lg">
-                  <h4 className="naxatw-mb-2 naxatw-text-sm naxatw-font-semibold naxatw-text-gray-700">
-                    {m.common_task_statistics()}
-                  </h4>
-                  <div className="naxatw-flex naxatw-flex-col naxatw-gap-1 naxatw-text-sm">
-                    <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
-                      <span className="naxatw-text-gray-600">
-                        {m.task_verification_images_label()}
-                      </span>
-                      <span className="naxatw-font-medium">
-                        {verificationData?.image_count || 0}
-                      </span>
-                    </div>
-                    <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
-                      <span className="naxatw-text-gray-600">
-                        {m.task_verification_coverage_label()}
-                      </span>
-                      <span
-                        className={`naxatw-font-medium ${
-                          isLowCoverage
-                            ? 'naxatw-text-yellow-600'
-                            : 'naxatw-text-green-600'
-                        }`}
-                      >
-                        {coveragePercentage.toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Coverage Warning */}
-                {isLowCoverage && (
-                  <div className="naxatw-absolute naxatw-bottom-4 naxatw-left-4 naxatw-right-4 naxatw-z-10 naxatw-rounded-lg naxatw-border naxatw-border-yellow-300 naxatw-bg-yellow-50 naxatw-p-3">
-                    <div className="naxatw-flex naxatw-items-center naxatw-gap-2">
-                      <span className="material-icons naxatw-text-yellow-600">
-                        warning
-                      </span>
-                      <div>
-                        <p className="naxatw-text-sm naxatw-font-medium naxatw-text-yellow-800">
-                          {m.task_verification_low_coverage_warning()}
-                        </p>
-                        <p className="naxatw-text-xs naxatw-text-yellow-700">
-                          {m.task_verification_low_coverage_body({
-                            coverage: coveragePercentage.toFixed(0),
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Sidebar - Virtualized Image List */}
-              <div className="naxatw-flex naxatw-w-80 naxatw-flex-col naxatw-border-l">
-                <div className="naxatw-p-4 naxatw-pb-2">
-                  <h4 className="naxatw-text-sm naxatw-font-semibold naxatw-text-gray-700">
-                    {m.common_images_count({
-                      count: verificationData?.image_count || 0,
-                    })}
-                  </h4>
-                </div>
-                <div
-                  ref={sidebarParentRef}
-                  className="naxatw-flex-1 naxatw-overflow-auto naxatw-px-4 naxatw-pb-4"
-                >
-                  <div
-                    style={{
-                      height: `${sidebarVirtualizer.getTotalSize()}px`,
-                      width: '100%',
-                      position: 'relative',
-                    }}
-                  >
-                    {sidebarVirtualizer.getVirtualItems().map(virtualRow => {
-                      const rowImages = sidebarRows[virtualRow.index];
-                      return (
-                        <div
-                          key={virtualRow.key}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: `${virtualRow.size}px`,
-                            transform: `translateY(${virtualRow.start}px)`,
-                          }}
-                          className="naxatw-grid naxatw-grid-cols-2 naxatw-gap-2"
-                        >
-                          {rowImages.map(image => {
-                            const urls = imageUrlMap[image.id];
-                            const thumbSrc = urls?.thumbnail_url || urls?.url;
-                            return (
-                              <div
-                                key={image.id}
-                                role="button"
-                                tabIndex={0}
-                                ref={el => {
-                                  imageRefs.current[image.id] = el;
-                                }}
-                                className={`naxatw-group naxatw-relative naxatw-aspect-square naxatw-cursor-pointer naxatw-overflow-hidden naxatw-rounded naxatw-border-2 naxatw-transition-all hover:naxatw-shadow-md ${
-                                  selectedImageId === image.id
-                                    ? 'naxatw-border-blue-500 naxatw-ring-2 naxatw-ring-blue-200'
-                                    : 'naxatw-border-gray-200'
-                                }`}
-                                onClick={() =>
-                                  handleSidebarImageClick(image.id)
-                                }
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    handleSidebarImageClick(image.id);
-                                  }
-                                }}
-                              >
-                                {(() => {
-                                  if (thumbSrc)
-                                    return (
-                                      <img
-                                        src={thumbSrc}
-                                        alt={image.filename}
-                                        className="naxatw-h-full naxatw-w-full naxatw-object-cover"
-                                        loading="lazy"
-                                      />
-                                    );
-                                  if (image.status === 'duplicate')
-                                    return (
-                                      <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-center naxatw-bg-gray-100 naxatw-text-gray-400">
-                                        <span className="material-icons naxatw-text-2xl">
-                                          content_copy
-                                        </span>
-                                        <span className="naxatw-mt-0.5 naxatw-text-[9px]">
-                                          {m.common_duplicate()}
-                                        </span>
-                                      </div>
-                                    );
-                                  return (
-                                    <div className="naxatw-flex naxatw-h-full naxatw-w-full naxatw-items-center naxatw-justify-center naxatw-bg-gray-100">
-                                      <div className="naxatw-h-5 naxatw-w-5 naxatw-animate-spin naxatw-rounded-full naxatw-border-2 naxatw-border-gray-300 naxatw-border-t-blue-500" />
-                                    </div>
-                                  );
-                                })()}
-                                <button
-                                  type="button"
-                                  className="naxatw-bg-red-500 hover:naxatw-bg-red-600 naxatw-absolute naxatw-right-1 naxatw-top-1 naxatw-rounded-full naxatw-p-1 naxatw-text-white naxatw-opacity-0 naxatw-transition-opacity group-hover:naxatw-opacity-100"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    deleteMutation.mutate(image.id);
-                                  }}
-                                  title={m.task_verification_delete_image_title()}
-                                >
-                                  <span className="material-icons naxatw-text-sm">
-                                    close
-                                  </span>
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+              <ImageSidebar
+                imageCount={verificationData?.image_count || 0}
+                sidebarParentRef={sidebarParentRef}
+                sidebarVirtualizer={sidebarVirtualizer}
+                sidebarRows={sidebarRows}
+                imageUrlMap={imageUrlMap}
+                selectedImageId={selectedImageId}
+                imageRefs={imageRefs}
+                onImageClick={handleSidebarImageClick}
+                deleteMutation={deleteMutation}
+              />
             </>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="naxatw-flex naxatw-items-center naxatw-justify-between naxatw-border-t naxatw-px-6 naxatw-py-4">
-          <div className="naxatw-text-sm naxatw-text-gray-500">
-            {m.task_verification_footer_help()}
-          </div>
-          <FlexRow className="naxatw-gap-3">
-            <Button
-              variant="ghost"
-              className="naxatw-border naxatw-border-gray-300"
-              onClick={onClose}
-            >
-              {m.common_cancel()}
-            </Button>
-            <Button
-              variant="outline"
-              className="naxatw-border-red-600 naxatw-text-red-700 hover:naxatw-bg-red-50 disabled:naxatw-opacity-50"
-              onClick={() => flightGapAnalysisMutation.mutate()}
-              disabled={
-                flightGapAnalysisMutation.isPending ||
-                !verificationData?.images.length
-              }
-              leftIcon={flightGapAnalysisMutation.isPending ? 'sync' : 'search'}
-            >
-              {flightGapAnalysisMutation.isPending
-                ? m.task_verification_finding_gaps()
-                : m.task_verification_identify_flight_gaps()}
-            </Button>
-            <Button
-              variant="ghost"
-              className="naxatw-bg-green-600 naxatw-text-white hover:naxatw-bg-green-700 disabled:naxatw-opacity-50"
-              onClick={() => verifyMutation.mutate()}
-              disabled={
-                verifyMutation.isPending ||
-                !verificationData?.images.length ||
-                isAlreadyVerified
-              }
-              leftIcon={verifyMutation.isPending ? 'sync' : 'check_circle'}
-            >
-              {(() => {
-                if (verifyMutation.isPending) return m.common_verifying();
-                if (isAlreadyVerified)
-                  return m.task_verification_already_fully_flown();
-                return m.task_verification_mark_fully_flown();
-              })()}
-            </Button>
-          </FlexRow>
-        </div>
+        <VerificationFooter
+          onClose={onClose}
+          onFindFlightGaps={() => flightGapAnalysisMutation.mutate()}
+          isFindingFlightGaps={flightGapAnalysisMutation.isPending}
+          onVerify={() => verifyMutation.mutate()}
+          isVerifying={verifyMutation.isPending}
+          hasImages={Boolean(verificationData?.images.length)}
+          isAlreadyVerified={isAlreadyVerified}
+        />
       </div>
 
       <FlightGapDetectionModal
