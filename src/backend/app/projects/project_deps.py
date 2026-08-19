@@ -120,7 +120,7 @@ async def normalize_aoi(
         log.warning(f"geojson-aoi-parser failed: {e}")
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail=f"Invalid GeoJSON: {e}",
+            detail="Invalid GeoJSON.",
         ) from e
 
     features = featcol.get("features", [])

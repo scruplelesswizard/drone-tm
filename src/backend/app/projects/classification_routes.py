@@ -303,7 +303,7 @@ async def get_project_imagery_status(
         log.error(f"Failed to get project imagery status: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve project imagery status: {e}",
+            detail="Failed to retrieve project imagery status.",
         )
 
 
@@ -333,7 +333,7 @@ async def get_project_images(
         log.error(f"Failed to get project images: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve project images: {e}",
+            detail="Failed to retrieve project images.",
         )
 
 
@@ -358,7 +358,7 @@ async def accept_image(
         log.error(f"Failed to accept image: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to accept image: {e}",
+            detail="Failed to accept image.",
         )
 
 
@@ -384,7 +384,7 @@ async def reject_image(
         log.error(f"Failed to reject image: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to reject image: {e}",
+            detail="Failed to reject image.",
         )
 
 
@@ -419,7 +419,7 @@ async def assign_image_to_task(
         log.error(f"Failed to manually assign image to task: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to assign image to task: {e}",
+            detail="Failed to assign image to task.",
         )
 
 
@@ -459,7 +459,7 @@ async def delete_batch(
         log.error(f"Failed to queue batch deletion: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to delete batch: {e}",
+            detail="Failed to delete batch.",
         )
 
 
@@ -482,7 +482,7 @@ async def delete_image(
         log.error(f"Failed to delete image: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to delete image: {e}",
+            detail="Failed to delete image.",
         )
 
 
@@ -499,7 +499,7 @@ async def delete_invalid_images(
         log.error(f"Failed to delete invalid images: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to delete invalid images: {e}",
+            detail="Failed to delete invalid images.",
         )
 
 
@@ -522,7 +522,7 @@ async def get_project_task_imagery_summary(
         log.error(f"Failed to get project task imagery summary: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve task imagery summary: {e}",
+            detail="Failed to retrieve task imagery summary.",
         )
 
 
@@ -543,7 +543,7 @@ async def get_project_coverage(
         log.error(f"Failed to get project coverage: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to compute project coverage: {e}",
+            detail="Failed to compute project coverage.",
         )
 
 
@@ -560,7 +560,7 @@ async def get_project_review(
         log.error(f"Failed to get project review data: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve project review data: {e}",
+            detail="Failed to retrieve project review data.",
         )
 
 
@@ -577,7 +577,7 @@ async def get_project_map_data(
         log.error(f"Failed to get project map data: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve project map data: {e}",
+            detail="Failed to retrieve project map data.",
         )
 
 
@@ -605,7 +605,7 @@ async def get_task_image_urls(
         log.error(f"Failed to get task image URLs: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve task image URLs: {e}",
+            detail="Failed to retrieve task image URLs.",
         )
 
 
@@ -628,7 +628,7 @@ async def get_image_url(
         log.error(f"Failed to get image URL: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve image URL: {e}",
+            detail="Failed to retrieve image URL.",
         )
 
 
@@ -657,7 +657,7 @@ async def get_bulk_image_urls(
         log.error(f"Failed to get bulk image URLs: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve image URLs: {e}",
+            detail="Failed to retrieve image URLs.",
         )
 
 
@@ -682,7 +682,7 @@ async def get_project_task_verification(
         log.error(f"Failed to get task verification data: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to retrieve task verification data: {e}",
+            detail="Failed to retrieve task verification data.",
         )
 
 
@@ -799,7 +799,7 @@ async def mark_task_verified(
         await db.rollback()
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail=f"Failed to mark task as verified: {e}",
+            detail="Failed to mark task as verified.",
         )
 
 

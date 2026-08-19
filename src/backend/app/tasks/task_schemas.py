@@ -440,9 +440,10 @@ class TaskDetailsOut(BaseModel):
                 return records
 
         except Exception as e:
+            log.error(f"Failed to fetch task details for {task_id}: {e}")
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch task. {e}",
+                detail="Failed to fetch task.",
             )
 
     @staticmethod
@@ -516,9 +517,13 @@ class TaskDetailsOut(BaseModel):
         except HTTPException:
             raise
         except Exception as e:
+            log.error(
+                f"Failed to fetch task for project {project_id}, "
+                f"index {task_index}: {e}"
+            )
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch task. {e}",
+                detail="Failed to fetch task.",
             )
 
 

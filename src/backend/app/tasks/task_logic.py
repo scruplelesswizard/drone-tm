@@ -68,9 +68,10 @@ async def get_task_stats(db: Connection, user_data: AuthUser):
         return db_counts
 
     except Exception as e:
+        log.error(f"Failed to fetch task statistics: {e}")
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch task statistics. {e}",
+            detail="Failed to fetch task statistics.",
         )
 
 
@@ -521,9 +522,10 @@ async def get_task_state(
             result = await cur.fetchone()
             return result
     except Exception as e:
+        log.error(f"Failed to retrieve task state for task {task_id}: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"An error occurred while retrieving the task state: {e!s}",
+            detail="An error occurred while retrieving the task state.",
         )
 
 
