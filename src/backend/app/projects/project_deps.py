@@ -35,8 +35,11 @@ async def get_tasks_by_project_id(project_id: UUID, db: Connection):
                 )
             return data
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        log.error(f"Failed to get tasks for project {project_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get tasks for project.")
 
 
 async def get_project_by_id(

@@ -443,7 +443,10 @@ class DbUser(BaseModel):
                         detail=f"User with this email {user_data.email} already exists.",
                     ) from e
                 else:
-                    raise HTTPException(status_code=400, detail=str(e)) from e
+                    log.error(f"Failed to create user {user_data.id}: {e}")
+                    raise HTTPException(
+                        status_code=400, detail="Failed to create user."
+                    ) from e
 
     @staticmethod
     async def get_or_create_user(db: Connection, user_data: AuthUser):
@@ -473,9 +476,10 @@ class DbUser(BaseModel):
 
                 return result
         except Exception as e:
+            log.error(f"Failed to get user by email {email}: {e}")
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail=str(e),
+                detail="Failed to get user by email.",
             )
 
     @staticmethod

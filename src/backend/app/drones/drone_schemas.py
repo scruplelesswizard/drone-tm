@@ -2,6 +2,7 @@ from datetime import datetime
 
 from app.models.enums import HTTPStatus
 from fastapi import HTTPException
+from loguru import logger as log
 from psycopg import Connection
 from psycopg.rows import class_row
 from pydantic import BaseModel
@@ -153,8 +154,10 @@ class DroneFlightHeight(BaseModel):
                 return await cur.fetchall()
 
         except Exception as e:
+            log.error(f"Failed to list drone flight heights: {e}")
             raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Failed to list drone flight heights.",
             )
 
     @staticmethod
@@ -169,6 +172,8 @@ class DroneFlightHeight(BaseModel):
                 )
                 return await cur.fetchone()
         except Exception as e:
+            log.error(f"Failed to get drone flight height for country {country}: {e}")
             raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Failed to get drone flight height.",
             )

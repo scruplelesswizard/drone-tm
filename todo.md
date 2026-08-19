@@ -505,12 +505,28 @@ than as inline notes on the item that found them:
       Verified with `ruff check`/`ruff format --diff` (clean) and the full
       backend suite (`docker compose -f compose.test.yaml`, 257/257
       passed).
-      Follow-up **not** attempted this pass (separate pattern, same
-      class of bug, needs individual review not a mechanical regex):
-      14 more sites use `detail=str(e)` directly (not an f-string) across
-      the same files - same client-facing exception leak, but each needs
-      a hand-written generic message since there's no text prefix to
-      extract mechanically.
+      Follow-up (`detail=str(e)` sites) - DONE: reviewed all 14 individually
+      rather than mechanically. 7 turned out **not** to be the leak bug at
+      all: `classification_routes.py`'s `except ValueError as e: detail=
+      str(e)` sites (accept/reject/manually-assign/delete image, get image
+      url, get task verification, create-from-exif) all catch a `ValueError`
+      whose message is hand-authored and intentionally user-facing (e.g.
+      `ImageClassifier`'s "Image not found", "Only assigned images can be
+      manually rejected", `validate_s3_access`'s docstring explicitly says
+      "Raises ValueError with a user-readable message") - correctly left
+      alone, this is by-design, not a generic-exception leak. The other 7
+      were real leaks, fixed (static `detail=`, `log.error(...)` added
+      where missing): `public_routes.py` (presign URL), `project_deps.py`
+      (`get_tasks_by_project_id` - also had a real logic bug caught in the
+      same spot: the inner `raise HTTPException(...FORBIDDEN...)` had no
+      `except HTTPException: raise` guard, so the outer generic `except
+      Exception` was silently swallowing it and re-raising as a 500 instead
+      - added the guard), `user_schemas.py` x2 (`DbUser.create`'s
+      `IntegrityError` non-duplicate branch, `get_user_by_email`),
+      `project_logic.py` (`get_centroids`, already had `log.error` -
+      just fixed the leaked `detail=`), `drone_schemas.py` x2
+      (`DroneFlightHeight.all`/`.one`). Verified via `ruff check`/`format
+      --diff` (clean) and full backend suite (257/257 passed).
 - [x] Regenerate `uv.lock` for the mypy dev dependency — ran `uv lock` inside
       a throwaway container built from the backend Dockerfile's build stage
       (has the `libpq-dev`/GDAL headers this sandbox itself lacks). Landed
