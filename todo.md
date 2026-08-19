@@ -682,8 +682,43 @@ inline on the original item.
         clean, Vitest 19/19, Playwright 4/4. Same authenticated-rendering
         caveat as above: not verified live (map + task imagery need a real
         session).
-  - [ ] `DroneImageProcessingWorkflow/ImageReview.tsx` (2559, the largest) -
-        not started this pass.
+  - [x] `DroneImageProcessingWorkflow/ImageReview.tsx` (2559, the largest)
+        → directory `ImageReview/` (2586 total across 3 files - modest
+        reduction, same conservative reasoning as MapSection: the ~2000-
+        line main component's state is a single tightly-coupled block -
+        map lifecycle, box-select, sequence-select, bulk accept/reject,
+        task-matching - not touched). What DID move cleanly, with zero
+        behavioral risk: this file already had 2 self-contained named
+        components living in the wrong place (`TaskAccordionContent`,
+        `VirtualizedAccordionList` - neither closed over the main
+        component's state, both took only props/module-scope helpers) and
+        a cluster of pure, closure-free helper functions
+        (`hasIssueStatus`/`canManuallyMatchImage`/
+        `canOverrideImageRejection`/`canRejectImage`/
+        `getImageTileBorderClass`/`escapeHtml`/`escapeAttr`/
+        `buildPopupHtml`/`runWithConcurrency`/`useTaskImageUrls`).
+        `imageReviewHelpers.ts` (122, the pure functions - `escapeHtml`/
+        `escapeAttr`/`getImageTileBorderClass` stayed module-private,
+        used only by `AccordionList.tsx`), `AccordionList.tsx` (427,
+        `TaskAccordionContent` + `VirtualizedAccordionList` +
+        `useTaskImageUrls`), `index.tsx` (2037, the main component -
+        **verified byte-identical to the original's lines 574-2559 via
+        `diff`**, since a 2000-line component is too large to safely
+        retype by hand: sliced with `sed` instead of using the Write tool,
+        eliminating transcription-error risk entirely for the risky part).
+        `./TaskVerificationModal` import updated to `../TaskVerificationModal`
+        for the new directory depth (that component is itself a directory
+        as of the earlier breakup in this same batch).
+        Verified: `tsc --noEmit` clean on the first attempt (a strong
+        signal the import surgery was correct), `eslint --fix` clean,
+        `pnpm build` clean, Vitest 19/19, Playwright 4/4. Same
+        authenticated-rendering caveat as the other 3 components - not
+        verified live.
+        **This completes the "break up the four largest components" item**
+        - all 4 done (2 substantial pure-JSX-extraction refactors, 2
+        conservative partial extractions where the remaining bulk is
+        genuinely high-risk stateful logic, documented as such rather than
+        forced).
 - [x] Reduce `any` usage starting at the API layer (193 occurrences across
       86 files despite `strict: true`) — DONE, superseded by the full
       `@typescript-eslint/no-explicit-any` triage below (448 → 0 sites
