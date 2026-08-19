@@ -46,18 +46,18 @@ const ExportSection = ({ projectData }: IExportSectionProps) => {
         </div>
         {projectData?.per_task_instructions && (
           <div>
-            <h1 className="naxatw-py-1 naxatw-text-sm naxatw-font-semibold naxatw-leading-4 naxatw-text-red">
+            <h2 className="naxatw-py-1 naxatw-text-sm naxatw-font-semibold naxatw-leading-4 naxatw-text-red">
               {m.export_section_instruction()}
-            </h1>
+            </h2>
             <p className="naxatw-py-1 naxatw-text-sm">
               {projectData?.per_task_instructions || ''}
             </p>
           </div>
         )}
         <div>
-          <h1 className="naxatw-py-3 naxatw-text-sm naxatw-font-semibold naxatw-leading-4 naxatw-text-red">
+          <h2 className="naxatw-py-3 naxatw-text-sm naxatw-font-semibold naxatw-leading-4 naxatw-text-red">
             {m.export_section_map()}
-          </h1>
+          </h2>
           <div className="naxatw-h-[280px] naxatw-w-full naxatw-rounded-lg md:naxatw-h-[375px]">
             <MapSection projectData={projectData} />
           </div>
