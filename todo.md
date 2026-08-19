@@ -72,10 +72,50 @@ inline on the original item.
             (257/257 passed), and a direct `api.openapi()` build to
             confirm the schema actually generates and every touched route
             shows the right `summary`/response schema.
-      - [ ] batch 2+ (78 remaining) — `tasks/task_routes.py` (7),
-            `users/user_routes.py` (11), `drones` deferred N/A (done),
-            `projects/classification_routes.py` (23),
-            `projects/project_routes.py` (37, largest — also has an
+      - [x] batch 2 (18 of 91 routes) — `tasks/task_routes.py` (7),
+            `users/user_routes.py` (11). New schemas: `task_schemas.
+            TaskEventOut` (project_id/task_id/state/comment - the
+            `RETURNING` shape written by `update_task_state()`, used by
+            `manual_override_task_state`), `task_schemas.TaskListOut` and
+            `user_schemas.UserListOut` (paginated envelopes, following the
+            `pagination.py` `PaginationMeta` pattern). Found and documented
+            (not silently fixed) a real shape inconsistency in `handle_event`
+            (`new_event` route): its `REQUEST` branch calls
+            `request_mapping()`, whose `RETURNING` clause omits `state`
+            entirely, while every other branch calls `update_task_state()`,
+            whose `RETURNING` includes it - `response_model=TaskEventOut`
+            would reject the `REQUEST` branch's response. Left
+            `response_model=None` on that route with a comment instead of
+            picking a branch to "fix" without understanding why they
+            diverged. Same `response_model=None` treatment for `/my-info`
+            (a dict built by merging two different models' `.model_dump()`,
+            so the real field set varies by user) and every route that
+            returns a raw `JSONResponse` (`create_user_profile`,
+            `update_user_profile`, `login_url`, `forgot_password`,
+            `reset_password`) - FastAPI passes `Response` instances through
+            untouched regardless of what `response_model` says, so leaving
+            it unset there is the honest state, not a gap.
+            **Caught and fixed a self-inflicted bug before committing**: an
+            `Edit` call meant to insert `UserListOut` after the `DbUser`
+            class instead landed mid-body, splitting `DbUser` in two and
+            silently reparenting 6 of its 7 methods (`.one()`, `.create()`,
+            `get_or_create_user()`, etc.) onto the new class - `ruff`/syntax
+            checks didn't catch it (both halves were valid Python), only
+            the full test suite did (130 setup errors, `AttributeError:
+            get_or_create_user`). Moved the misplaced insertion to the
+            correct location and re-verified structurally with an `ast`
+            walk before re-running tests. Also hit an unrelated ~8-minute/
+            27-failure test run (`urllib3.MaxRetryError` against the `s3`
+            test container) caused by resource contention from concurrent
+            background agent work in the same session - confirmed
+            environmental (none of the failing tests touch any file this
+            batch changed) via a full stack teardown + fresh
+            `docker compose ... up` + rerun, which came back 257/257 in the
+            normal ~33s. Lesson for next time: don't run a heavy `docker
+            compose` test cycle at the same time as another agent is doing
+            unrelated heavy work in the same sandbox.
+      - [ ] batch 3+ (60 remaining) — `projects/classification_routes.py`
+            (23), `projects/project_routes.py` (37, largest — also has an
             existing `response_model` **mismatch** to fix on
             `read_projects`, which sets `ProjectOut` but actually returns
             a paginated envelope dict, plus a `return HTTPException(...)`

@@ -5,6 +5,7 @@ from typing import Any
 import psycopg
 from app.config import encrypt_token, get_password_hash, settings
 from app.models.enums import HTTPStatus, State, UserRole
+from app.pagination import PaginationMeta
 from app.s3 import generate_presigned_put_url, maybe_presign_s3_key
 from fastapi import HTTPException
 from loguru import logger as log
@@ -503,6 +504,11 @@ class DbUser(BaseModel):
             if result is None:
                 raise ValueError("No user requested for flight")
             return result["user_id"]
+
+
+class UserListOut(BaseModel):
+    results: list[DbUser]
+    pagination: PaginationMeta
 
 
 class Base64Request(BaseModel):

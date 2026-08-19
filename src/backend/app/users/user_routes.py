@@ -52,7 +52,11 @@ router = APIRouter(
 )
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    response_model=Token,
+    summary="Log in with username/password, get an access token",
+)
 async def login_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -79,7 +83,12 @@ async def login_access_token(
     return Token(access_token=access_token, refresh_token=refresh_token, role=role)
 
 
-@router.get("", tags=["users"])
+@router.get(
+    "",
+    tags=["users"],
+    response_model=user_schemas.UserListOut,
+    summary="List users",
+)
 async def get_user(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -96,7 +105,14 @@ async def get_user(
     return {"results": results, "pagination": paginate(pagination, total)}
 
 
-@router.post("/{user_id}/profile")
+@router.post(
+    "/{user_id}/profile",
+    # Returns a raw JSONResponse - FastAPI passes Response instances through
+    # untouched, bypassing response_model entirely, so leaving this unset
+    # is the honest state rather than a gap.
+    response_model=None,
+    summary="Create a user profile",
+)
 async def create_user_profile(
     user_id: str,
     profile_update: UserProfileCreate,
@@ -124,7 +140,11 @@ async def create_user_profile(
     )
 
 
-@router.patch("/{user_id}/profile")
+@router.patch(
+    "/{user_id}/profile",
+    response_model=None,  # raw JSONResponse - see create_user_profile above
+    summary="Update a user profile",
+)
 async def update_user_profile(
     user_id: str,
     profile_update: UserProfileUpdate,
@@ -165,7 +185,11 @@ async def update_user_profile(
     )
 
 
-@router.get("/google-login")
+@router.get(
+    "/google-login",
+    response_model=None,  # raw JSONResponse wrapping a bare URL string
+    summary="Get the Google OAuth login URL",
+)
 async def login_url(google_auth=Depends(init_google_auth)):
     """Get Login URL for Google Oauth Application.
 
@@ -185,7 +209,11 @@ async def login_url(google_auth=Depends(init_google_auth)):
     return JSONResponse(content=login_url, status_code=200)
 
 
-@router.get("/callback")
+@router.get(
+    "/callback",
+    response_model=Token,
+    summary="Complete Google OAuth token exchange",
+)
 async def callback(
     request: Request,
     role: str,
@@ -212,7 +240,11 @@ async def callback(
     )
 
 
-@router.get("/refresh-token", response_model=Token)
+@router.get(
+    "/refresh-token",
+    response_model=Token,
+    summary="Refresh an access token",
+)
 async def update_token(user_data: Annotated[AuthUser, Depends(login_required)]):
     """Refresh access token"""
     access_token, refresh_token = await user_logic.create_access_token(
@@ -223,7 +255,14 @@ async def update_token(user_data: Annotated[AuthUser, Depends(login_required)]):
     )
 
 
-@router.get("/my-info")
+@router.get(
+    "/my-info",
+    # user_info.model_dump() merged with an optional profile's
+    # model_dump() plus a bool flag - not modeled as one schema since the
+    # merge means the actual field set genuinely varies by user; needs a
+    # dedicated review pass, not a guessed response_model.
+    summary="Get the current user's info from their access token",
+)
 async def my_data(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -247,7 +286,11 @@ async def my_data(
     return user_info_dict
 
 
-@router.post("/forgot-password")
+@router.post(
+    "/forgot-password",
+    response_model=None,  # raw JSONResponse - see create_user_profile above
+    summary="Request a password reset email",
+)
 async def forgot_password(
     db: Annotated[Connection, Depends(database.get_db)],
     email: Annotated[EmailStr, Form()],
@@ -264,7 +307,11 @@ async def forgot_password(
     )
 
 
-@router.post("/reset-password")
+@router.post(
+    "/reset-password",
+    response_model=None,  # raw JSONResponse - see create_user_profile above
+    summary="Reset a password using a reset token",
+)
 async def reset_password(
     db: Annotated[Connection, Depends(database.get_db)], token: str, new_password: str
 ):
@@ -315,7 +362,12 @@ async def reset_password(
     )
 
 
-@router.post("/regulator", tags=["regulator"])
+@router.post(
+    "/regulator",
+    tags=["regulator"],
+    response_model=Token,
+    summary="Create or update a regulator account and log in",
+)
 async def regulator_create(
     db: Annotated[Connection, Depends(database.get_db)], data: Base64Request
 ):
