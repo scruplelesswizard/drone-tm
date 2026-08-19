@@ -606,6 +606,44 @@ inline on the original item.
       Added `.gitignore` entries for `test-results/`/`playwright-report/`/
       `blob-report/`.
       Breakup itself: see the follow-up items below, one per component.
+  - [x] `ModalContent/ProcessingStatusDialog.tsx` (1274 lines) → directory
+        `ProcessingStatusDialog/` with `index.tsx` (770, container - all
+        state/hooks/handlers unchanged, zero logic edits), `TaskTable.tsx`
+        (312, the per-task table), `FinalProcessingPanel.tsx` (139,
+        coverage/CTA), `GcpStatusCard.tsx` (83), `FinalProcessingResults.tsx`
+        (95, ortho/DSM/DTM/pointcloud downloads), `types.ts` (shared task/
+        project-detail types + `stateColors`). Pure JSX-extraction refactor:
+        every extracted piece takes explicit props, no state moved, no
+        behavior changed. `../TaskOrthoCogViewer` lazy-import path updated
+        for the new directory depth (confirmed via `pnpm build` that it's
+        still its own chunk). `RefObject<HTMLInputElement>` needed to widen
+        to `RefObject<HTMLInputElement | null>` for the GCP file input ref
+        prop (React 19 `useRef(null)` typing) - only non-mechanical change.
+        Verified: `tsc --noEmit` clean, `eslint --fix` clean (only auto-
+        reformatting, no logic diffs), `pnpm build` clean (chunk split
+        intact), Vitest 19/19, Playwright `test:e2e` 4/4 (public-route
+        smoke only - see below).
+        Also fixed a real bug this surfaced in the prior commit: Vitest's
+        default glob was picking up `e2e/*.spec.ts` and crashing trying to
+        run Playwright's `test()` outside Playwright's runner - added
+        `test.exclude: ['e2e/**']` to `vitest.config.ts`.
+        **Not verified**: authenticated rendering with live task/imagery
+        data. This repo's only local auth is Google OAuth (`AUTH_PROVIDER=
+        legacy`) - no seedable local login, so Playwright can't drive a
+        real session without a token-minting/DB-seeding fixture, which
+        wasn't built this pass. The refactor is logic-preserving (pure prop-
+        threaded extraction, not a rewrite), so risk is low, but this is
+        exactly the "what wasn't verified end-to-end" case CLAUDE.md's
+        updated testing-standards note calls for flagging. A proper
+        Playwright auth fixture (seed a user/project/task via the API,
+        mint/inject a session) would unblock deep authenticated e2e
+        coverage for this and the remaining 3 components below.
+  - [ ] `DroneOperatorTask/MapSection/MapSection.tsx` (1186 lines) - not
+        started this pass.
+  - [ ] `DroneImageProcessingWorkflow/TaskVerificationModal.tsx` (902) - not
+        started this pass.
+  - [ ] `DroneImageProcessingWorkflow/ImageReview.tsx` (2559, the largest) -
+        not started this pass.
 - [x] Reduce `any` usage starting at the API layer (193 occurrences across
       86 files despite `strict: true`) — DONE, superseded by the full
       `@typescript-eslint/no-explicit-any` triage below (448 → 0 sites
