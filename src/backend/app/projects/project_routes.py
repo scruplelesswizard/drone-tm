@@ -35,6 +35,7 @@ from app.s3 import (
     list_parts,
     s3_client,
 )
+from app.shared_schemas import MessageResponse
 from app.tasks import task_schemas
 from app.users.permissions import (
     IsProjectCreator,
@@ -101,7 +102,10 @@ def _raise_no_odm_assets() -> None:
 
 
 @router.get(
-    "/centroids", tags=["Projects"], response_model=list[project_schemas.CentroidOut]
+    "/centroids",
+    tags=["Projects"],
+    response_model=list[project_schemas.CentroidOut],
+    summary="Get all project centroids",
 )
 async def read_project_centroids(
     db: Annotated[Connection, Depends(database.get_db)],
@@ -112,7 +116,11 @@ async def read_project_centroids(
     )
 
 
-@router.get("/{project_id}/download-boundaries", tags=["Projects"])
+@router.get(
+    "/{project_id}/download-boundaries",
+    tags=["Projects"],
+    summary="Download the AOI or task boundaries for a project as geojson/kml",
+)
 async def download_boundaries(
     project_id: Annotated[
         UUID,
@@ -203,7 +211,11 @@ async def download_boundaries(
         raise HTTPException(status_code=500, detail="Internal server error.")
 
 
-@router.get("/{project_id}/terrain-dem", tags=["Projects"])
+@router.get(
+    "/{project_id}/terrain-dem",
+    tags=["Projects"],
+    summary="Stream the terrain-follow DEM GeoTIFF used for flight planning",
+)
 async def download_terrain_dem(
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
@@ -249,7 +261,12 @@ async def download_terrain_dem(
     )
 
 
-@router.delete("/{project_id}", tags=["Projects"])
+@router.delete(
+    "/{project_id}",
+    tags=["Projects"],
+    response_model=MessageResponse,
+    summary="Delete a project and best-effort purge its S3 objects",
+)
 async def delete_project_by_id(
     db: Annotated[Connection, Depends(database.get_db)],
     project: Annotated[
@@ -294,7 +311,12 @@ async def delete_project_by_id(
     return {"message": f"Project successfully deleted {project_id}"}
 
 
-@router.post("", tags=["Projects"])
+@router.post(
+    "",
+    tags=["Projects"],
+    response_model=project_schemas.ProjectCreateResponse,
+    summary="Create a project",
+)
 async def create_project(
     project_info: project_schemas.ProjectIn,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -355,7 +377,12 @@ async def create_project(
     return {"message": "Project successfully created", "project_id": project_id}
 
 
-@router.post("/{project_id}/upload-task-boundaries", tags=["Projects"])
+@router.post(
+    "/{project_id}/upload-task-boundaries",
+    tags=["Projects"],
+    response_model=project_schemas.TaskBoundaryUploadResponse,
+    summary="Set project task boundaries from a split GeoJSON",
+)
 async def upload_project_task_boundaries(
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
@@ -392,7 +419,12 @@ async def upload_project_task_boundaries(
     }
 
 
-@router.post("/preview-split-by-square", tags=["Projects"])
+@router.post(
+    "/preview-split-by-square",
+    tags=["Projects"],
+    response_model=None,  # delegates to split_by_square(), shape not locally owned
+    summary="Preview splitting an AOI into square tasks",
+)
 async def preview_split_by_square(
     db: Annotated[Connection, Depends(database.get_db)],
     user: Annotated[AuthUser, Depends(login_required)],
@@ -435,7 +467,12 @@ async def preview_split_by_square(
     return await project_logic.preview_split_by_square(result_geojson, dimension)
 
 
-@router.post("/normalize-aoi", tags=["Projects"])
+@router.post(
+    "/normalize-aoi",
+    tags=["Projects"],
+    response_model=None,  # returns the `geojson` package's FeatureCollection, not a pydantic model
+    summary="Normalise an uploaded AOI into a merged single-polygon FeatureCollection",
+)
 async def normalize_project_aoi(
     user: Annotated[AuthUser, Depends(login_required)],
     aoi: Annotated[geojson.FeatureCollection, Depends(normalize_aoi)],
@@ -444,7 +481,12 @@ async def normalize_project_aoi(
     return aoi
 
 
-@router.get("", tags=["Projects"], response_model=project_schemas.ProjectOut)
+@router.get(
+    "",
+    tags=["Projects"],
+    response_model=project_schemas.ProjectOut,
+    summary="Get all projects with task count (paginated)",
+)
 async def read_projects(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -477,7 +519,10 @@ async def read_projects(
 
 
 @router.get(
-    "/{project_id}", tags=["Projects"], response_model=project_schemas.ProjectInfo
+    "/{project_id}",
+    tags=["Projects"],
+    response_model=project_schemas.ProjectInfo,
+    summary="Get a specific project and all associated tasks by ID",
 )
 async def read_project(
     project: Annotated[
@@ -488,7 +533,12 @@ async def read_project(
     return project
 
 
-@router.post("/process_imagery/{project_id}/{task_id}", tags=["Image Processing"])
+@router.post(
+    "/process_imagery/{project_id}/{task_id}",
+    tags=["Image Processing"],
+    response_model=project_schemas.ImageProcessingStartResponse,
+    summary="Start a queued task to process drone imagery",
+)
 async def process_imagery(
     task_id: uuid.UUID,
     project: Annotated[
@@ -525,7 +575,13 @@ async def process_imagery(
     return {"message": "Processing started", "job_id": job.job_id}
 
 
-@router.post("/retry_transfer/{project_id}/{task_id}", tags=["Image Processing"])
+@router.post(
+    "/retry_transfer/{project_id}/{task_id}",
+    tags=["Image Processing"],
+    response_model=project_schemas.RetryTransferResponse,
+    response_model_exclude_none=True,
+    summary="Resume a stalled imagery transfer",
+)
 async def retry_imagery_transfer(
     task_id: uuid.UUID,
     project: Annotated[
@@ -569,7 +625,12 @@ async def retry_imagery_transfer(
     }
 
 
-@router.post("/process_all_imagery/{project_id}", tags=["Image Processing"])
+@router.post(
+    "/process_all_imagery/{project_id}",
+    tags=["Image Processing"],
+    response_model=project_schemas.ImageProcessingStartResponse,
+    summary="Process all tasks associated with a project in one ScaleODM run",
+)
 async def process_all_imagery(
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
@@ -658,7 +719,14 @@ async def process_all_imagery(
     }
 
 
-@router.post("/regulator/comment/{project_id}", tags=["regulator"])
+@router.post(
+    "/regulator/comment/{project_id}",
+    tags=["regulator"],
+    # Unauthorized branch returns {"details": ...}, success returns
+    # {"message": ...} - inconsistent key, not modeled here.
+    response_model=None,
+    summary="Regulator approves or rejects a project with a comment",
+)
 async def regulator_approval(
     project_id: str,
     data: project_schemas.RegulatorCommentIn,
@@ -723,7 +791,12 @@ async def regulator_approval(
         )
 
 
-@router.post("/waypoints", tags=["Projects"])
+@router.post(
+    "/waypoints",
+    tags=["Projects"],
+    response_model=project_schemas.WaypointsCountOut,
+    summary="Count waypoints and waylines within an AOI",
+)
 async def get_project_waypoints_counts(
     side_overlap: float,
     front_overlap: float,
@@ -755,6 +828,8 @@ async def get_project_waypoints_counts(
 @router.get(
     "/assets/{project_id}",
     tags=["Image Processing"],
+    response_model=list[project_schemas.AssetsInfo] | project_schemas.AssetsInfo | None,
+    summary="Get image counts and asset download URLs for a project's tasks",
 )
 async def get_assets_info(
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -777,7 +852,14 @@ async def get_assets_info(
     return results[0] if results else None
 
 
-@router.post("/assets/{project_id}/reconcile", tags=["Image Processing"])
+@router.post(
+    "/assets/{project_id}/reconcile",
+    tags=["Image Processing"],
+    # Merges reconcile_project_processing()'s dict[str, Any] with the
+    # assets list; shape not locally owned.
+    response_model=None,
+    summary="Reconcile ODM status and return the summary plus refreshed assets",
+)
 async def reconcile_assets_info(
     user_data: Annotated[AuthUser, Depends(login_required)],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -794,7 +876,12 @@ async def reconcile_assets_info(
     return {**summary, "assets": assets}
 
 
-@router.post("/{project_id}/upload-to-oam", tags=["OAM"])
+@router.post(
+    "/{project_id}/upload-to-oam",
+    tags=["OAM"],
+    response_model=project_schemas.OamUploadStartResponse,
+    summary="Upload project orthophoto to OpenAerialMap",
+)
 async def upload_imagery_to_oam(
     user_data: Annotated[AuthUser, Depends(login_required)],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -808,7 +895,7 @@ async def upload_imagery_to_oam(
 ):
     """Upload project orthophoto to OpenAerialMap."""
     if project.author_id != user_data.id:
-        return HTTPException(
+        raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
             detail="User not authorized to do this action",
         )
@@ -818,7 +905,7 @@ async def upload_imagery_to_oam(
         project.oam_upload_status == OAMUploadStatus.UPLOADING
         or project.oam_upload_status == OAMUploadStatus.UPLOADED
     ):
-        return HTTPException(
+        raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail="Upload to OAM already in progress or already done",
         )
@@ -832,7 +919,12 @@ async def upload_imagery_to_oam(
     return {"message": "Uploading to OAM Started", "status": OAMUploadStatus.UPLOADING}
 
 
-@router.post("/{project_id}/generate-qfield-project", tags=["Projects"])
+@router.post(
+    "/{project_id}/generate-qfield-project",
+    tags=["Projects"],
+    response_model=project_schemas.QfieldGenerateResponse,
+    summary="Enqueue a QField project generation job",
+)
 async def generate_qfield_project(
     project_id: Annotated[UUID, Path(description="The project ID in UUID format.")],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -865,7 +957,12 @@ async def generate_qfield_project(
     }
 
 
-@router.get("/{project_id}/qfield-project-status", tags=["Projects"])
+@router.get(
+    "/{project_id}/qfield-project-status",
+    tags=["Projects"],
+    response_model=project_schemas.QfieldStatusResponse,
+    summary="Check if a QField project zip exists in S3",
+)
 async def qfield_project_status(
     project_id: Annotated[UUID, Path(description="The project ID in UUID format.")],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -884,7 +981,12 @@ async def qfield_project_status(
     return {"exists": True, "url": url}
 
 
-@router.post("/initiate-multipart-upload", tags=["Image Upload"])
+@router.post(
+    "/initiate-multipart-upload",
+    tags=["Image Upload"],
+    response_model=project_schemas.InitiateUploadResponse,
+    summary="Initiate a multipart upload for large files",
+)
 async def initiate_upload(
     user: Annotated[AuthUser, Depends(login_required)],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -944,7 +1046,12 @@ async def initiate_upload(
         )
 
 
-@router.post("/sign-part-upload", tags=["Image Upload"])
+@router.post(
+    "/sign-part-upload",
+    tags=["Image Upload"],
+    response_model=project_schemas.SignPartUploadResponse,
+    summary="Generate a presigned URL for uploading a specific part",
+)
 async def sign_part_upload(
     user: Annotated[AuthUser, Depends(login_required)],
     data: project_schemas.SignPartUploadRequest,
@@ -978,7 +1085,12 @@ async def sign_part_upload(
         )
 
 
-@router.post("/complete-multipart-upload", tags=["Image Upload"])
+@router.post(
+    "/complete-multipart-upload",
+    tags=["Image Upload"],
+    response_model=project_schemas.CompleteUploadResponse,
+    summary="Complete a multipart upload and queue image processing",
+)
 async def complete_upload(
     user: Annotated[AuthUser, Depends(login_required)],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -1095,7 +1207,12 @@ async def complete_upload(
         )
 
 
-@router.post("/abort-multipart-upload", tags=["Image Upload"])
+@router.post(
+    "/abort-multipart-upload",
+    tags=["Image Upload"],
+    response_model=MessageResponse,
+    summary="Abort a multipart upload and clean up parts",
+)
 async def abort_upload(
     user: Annotated[AuthUser, Depends(login_required)],
     data: project_schemas.AbortMultipartUploadRequest,
@@ -1126,7 +1243,12 @@ async def abort_upload(
         )
 
 
-@router.get("/list-parts", tags=["Image Upload"])
+@router.get(
+    "/list-parts",
+    tags=["Image Upload"],
+    response_model=project_schemas.UploadPartsListResponse,
+    summary="List all uploaded parts for a multipart upload",
+)
 async def get_uploaded_parts(
     user: Annotated[AuthUser, Depends(login_required)],
     upload_id: str = Query(..., description="The upload ID"),
@@ -1163,10 +1285,12 @@ async def get_uploaded_parts(
 @router.get(
     "/odm/export/{project_id}/{task_id}/orthophoto",
     tags=["Image Processing"],
+    summary="Stream only the orthophoto TIF for a task or project",
 )
 @router.get(
     "/odm/export/{project_id}/orthophoto",
     tags=["Image Processing"],
+    summary="Stream only the orthophoto TIF for a task or project",
 )
 async def export_odm_orthophoto(
     request: Request,
@@ -1255,6 +1379,7 @@ def _stream_s3_object_response(
 @router.get(
     "/odm/export/{project_id}/dsm",
     tags=["Image Processing"],
+    summary="Stream the DSM GeoTIFF",
 )
 async def export_odm_dsm(
     project_id: uuid.UUID,
@@ -1274,6 +1399,7 @@ async def export_odm_dsm(
 @router.get(
     "/odm/export/{project_id}/dtm",
     tags=["Image Processing"],
+    summary="Stream the DTM GeoTIFF",
 )
 async def export_odm_dtm(
     project_id: uuid.UUID,
@@ -1293,6 +1419,7 @@ async def export_odm_dtm(
 @router.get(
     "/odm/export/{project_id}/pointcloud",
     tags=["Image Processing"],
+    summary="Stream the point cloud LAZ file",
 )
 async def export_odm_pointcloud(
     project_id: uuid.UUID,
@@ -1312,10 +1439,12 @@ async def export_odm_pointcloud(
 @router.get(
     "/odm/export/{project_id}/{task_id}",
     tags=["Image Processing"],
+    summary="Stream-zip all ODM assets for a task or project",
 )
 @router.get(
     "/odm/export/{project_id}",
     tags=["Image Processing"],
+    summary="Stream-zip all ODM assets for a task or project",
 )
 async def export_odm_assets(
     request: Request,
@@ -1397,10 +1526,12 @@ async def export_odm_assets(
 @router.head(
     "/odm/export/{project_id}/{task_id}/",
     tags=["Image Processing"],
+    summary="Check whether ODM assets exist without streaming the zip",
 )
 @router.head(
     "/odm/export/{project_id}/",
     tags=["Image Processing"],
+    summary="Check whether ODM assets exist without streaming the zip",
 )
 async def head_odm_assets(
     request: Request,
@@ -1513,6 +1644,8 @@ async def _trigger_cloudnative_job(
     "/{project_id}/cloudnative/orthophoto",
     tags=["Cloudnative"],
     status_code=HTTPStatus.ACCEPTED,
+    response_model=project_schemas.CloudnativeTriggerResponse,
+    summary="Kick off COG generation for this project's orthophoto",
 )
 async def trigger_orthophoto_conversion(
     db: Annotated[Connection, Depends(database.get_db)],
@@ -1553,6 +1686,8 @@ async def trigger_orthophoto_conversion(
     "/{project_id}/cloudnative/mesh",
     tags=["Cloudnative"],
     status_code=HTTPStatus.ACCEPTED,
+    response_model=project_schemas.CloudnativeTriggerResponse,
+    summary="Kick off 3D Tiles generation for this project's textured mesh",
 )
 async def trigger_mesh_conversion(
     db: Annotated[Connection, Depends(database.get_db)],
@@ -1590,7 +1725,11 @@ async def trigger_mesh_conversion(
 
 # Endpoint not used in production but useful to keep around just for testing the
 # queue
-@router.post("/test/arq_task")
+@router.post(
+    "/test/arq_task",
+    response_model=project_schemas.ArqTestTaskResponse,
+    summary="Enqueue a test sleep task (dev/debug only, not used in production)",
+)
 async def test(redis_pool: ArqRedis = Depends(get_redis_pool)):
     try:
         job = await redis_pool.enqueue_job(

@@ -40,7 +40,7 @@ inline on the original item.
 
 ## Backend — P2
 
-- [ ] Set `response_model` + `summary` consistently across routes. Full
+- [x] Set `response_model` + `summary` consistently across routes. Full
       inventory taken (91 routes total across 8 route files; only 6 had
       `response_model` set, 0 had `summary`) — bigger than the original
       estimate (35/~3 was `project_routes.py` alone). Picking this up in
@@ -155,18 +155,47 @@ inline on the original item.
             Verified via `ruff check`/`format --diff` (clean), full backend
             suite (257/257 passed), and `api.openapi()` build + summary
             spot-check on 4 routes.
-      - [ ] batch 4 (37 remaining) — `projects/project_routes.py` (largest —
-            also has an existing `response_model` **mismatch** to fix on
-            `read_projects`, which sets `ProjectOut` but actually returns
-            a paginated envelope dict, plus a `return HTTPException(...)`
-            vs `raise` bug in `upload_imagery_to_oam` worth a look while
-            in that function). Streaming/file-response routes throughout
-            (`odm/export/*`, `terrain-dem`, `download-boundaries`, etc.)
-            should get `summary=` only, matching the `waypoint_routes.py`
-            pattern above — never a guessed `response_model`. Watch for the
-            same `response_model_exclude_none` trap found in batch 3: any
-            new schema with an `Optional` field must have its route checked
-            for branches that omit the key entirely, not just set it `None`.
+      - [x] batch 4 (37 of 91 routes, final batch) — `projects/project_routes.py`.
+            **The `read_projects` mismatch flagged in batch 3's writeup turned
+            out not to be a bug**: `ProjectOut` already is the paginated
+            envelope shape (`results: list[ProjectInfo]`, `pagination:
+            PaginationMeta`), matching what the route returns exactly — just
+            added `summary=`. The `upload_imagery_to_oam` bug was real and
+            fixed: two branches did `return HTTPException(...)` instead of
+            `raise HTTPException(...)`, which would have returned a 200 with
+            an `HTTPException` object serialized as the body instead of an
+            actual 403/409 error response.
+            26 routes got real `response_model` schemas (new schemas added to
+            `project_schemas.py`: `ProjectCreateResponse`,
+            `TaskBoundaryUploadResponse`, `ImageProcessingStartResponse`,
+            `RetryTransferResponse`, `WaypointsCountOut`,
+            `OamUploadStartResponse`, `QfieldGenerateResponse`,
+            `QfieldStatusResponse`, `InitiateUploadResponse`,
+            `SignPartUploadResponse`, `CompleteUploadResponse`,
+            `UploadPartsListResponse`, `CloudnativeTriggerResponse`,
+            `ArqTestTaskResponse`; reused `MessageResponse` from
+            `shared_schemas.py` for the two plain `{"message": ...}` routes).
+            `get_assets_info` got a union response_model
+            (`list[AssetsInfo] | AssetsInfo | None`) since its two branches
+            genuinely return different shapes, both locally known.
+            5 routes got `response_model=None` with a comment: `regulator_approval`
+            (inconsistent `details`/`message` key across branches - a second,
+            separate bug not worth silently papering over with a schema),
+            `preview-split-by-square` and `/assets/{project_id}/reconcile`
+            (delegate to/merge opaque `dict[str, Any]`-typed helpers),
+            `normalize-aoi` (returns the `geojson` package's FeatureCollection
+            object directly, not a pydantic model). 8 streaming/file/HEAD
+            routes (`download-boundaries`, `terrain-dem`, the 5 `odm/export/*`
+            variants, `head_odm_assets`) got `summary=` only, no
+            `response_model`, matching the `waypoint_routes.py` pattern.
+            Applied `response_model_exclude_none=True` to
+            `retry_imagery_transfer` up front (its early-return branch omits
+            `status`/`job_id` entirely, same shape as batch 3's `job_id`
+            regression) rather than finding it via a failing test this time.
+            Verified via `ruff check`/`format --diff` (clean), full backend
+            suite (257/257 passed), and `api.openapi()` build + summary
+            spot-check on 7 routes. **This completes the full 91-route sweep
+            across all 8 backend route files.**
 - [ ] **Needs interaction:** introduce `/api/v1` path versioning. This is a
       breaking-change-shaped decision (URL structure, client migration,
       whether unversioned `/api` keeps working during a transition) that
