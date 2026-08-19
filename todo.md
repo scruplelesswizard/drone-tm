@@ -525,11 +525,29 @@ ASVS in particular haven't been scanned yet).
       since the value cells can also hold unpredictable-length content
       (e.g. `author_name`). Preserves current visual width for English,
       lets the container grow instead of clipping for longer text.
-- [ ] No `prefers-reduced-motion` or `prefers-color-scheme` support
+- [x] No `prefers-reduced-motion` or `prefers-color-scheme` support
       anywhere (confirmed via repo-wide grep - zero matches).
       `tailwind.config.js` defines several transform/scale/opacity
       animations with no reduced-motion variant.  `darkMode: "class"` is
       configured but no toggle mechanism was found using it. WCAG 2.3.3.
+      DONE (motion only, scoped per direction) — added a single global
+      `@media (prefers-reduced-motion: reduce)` rule in `tailwind.css`
+      that forces `animation-duration`/`transition-duration` to `0.01ms`
+      and `scroll-behavior: auto` on `*` - the standard "neutralize
+      everything" snippet, covers every existing and future
+      `animate-*`/`transition` Tailwind utility without touching call
+      sites individually. Hit a real CSS-comment gotcha writing the
+      explanatory comment: `/* ... animate-*/transition ... */` - the
+      `*/` inside "animate-*/transition" closed the comment early,
+      breaking the rest as invalid CSS (caught immediately by `pnpm
+      build` failing with a parse error, not silently). Reworded to
+      avoid a literal `*/` substring.
+      **Not attempted** (per explicit direction - this is a real feature,
+      not a mechanical CSS fix): a `prefers-color-scheme`/dark-mode
+      toggle. `darkMode: "class"` is configured in `tailwind.config.js`
+      but nothing sets the class, and building a real toggle means a UI
+      control, a persisted preference, and auditing every color token
+      for a dark counterpart - out of scope here.
 
 ### Low
 
