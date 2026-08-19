@@ -20,7 +20,6 @@ import {
   getWaypointModeOptions,
   waypointUpperLimit,
   droneModelOptions,
-  gimbalAngleOptions,
 } from '@Constants/taskDescription';
 import {
   setRotationAngle as setFinalRotationAngle,
@@ -38,22 +37,19 @@ import { findNearestCoordinate, swapFirstAndLast } from '@Utils/index';
 import RotatingCircle from '@Components/common/RotationCue';
 import marker from '@Assets/images/marker.png';
 import right from '@Assets/images/rightArrow.png';
-import areaIcon from '@Assets/images/area-icon.png';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import { toggleModal } from '@Store/actions/common';
 import { mapLayerIDs } from '@Constants/droneOperator';
 import { Button } from '@Components/RadixComponents/Button';
 import AsyncPopup from '@Components/common/MapLibreComponents/NewAsyncPopup';
-import SwitchTab from '@Components/common/SwitchTab';
-import Select from '@Components/common/FormUI/Select';
-import ToolTip from '@Components/RadixComponents/ToolTip';
 import LocateUser from '@Components/common/MapLibreComponents/LocateUser';
 import MapContainer from '@Components/common/MapLibreComponents/MapContainer';
-import Modal from '@Components/common/Modal';
 import VectorLayer from '@Components/common/MapLibreComponents/Layers/VectorLayer';
-import Icon from '@Components/common/Icon';
 import GetCoordinatesOnClick from './GetCoordinatesOnClick';
 import ShowInfo from './ShowInfo';
+import MissingDemModal from './MissingDemModal';
+import MapControlsBar from './MapControlsBar';
+import MapToolButtons from './MapToolButtons';
 import { m } from '@/paraglide/messages';
 
 interface ModifiedTaskWayPointsData {
@@ -784,44 +780,17 @@ const MapSection = ({ className }: { className?: string }) => {
     <div
       className={`naxatw-relative naxatw-h-[calc(100vh-180px)] naxatw-w-full naxatw-rounded-xl naxatw-bg-gray-200 ${className}`}
     >
-      <Modal
+      <MissingDemModal
         show={showMissingDemModal}
-        title={m.drone_task_no_dem_found()}
-        className="naxatw-w-[92vw] naxatw-max-w-[32rem]"
-        onClose={() => {
+        onCancel={() => {
           setShowMissingDemModal(false);
           toast.warn(m.drone_task_missing_dem_canceled());
         }}
-      >
-        <div className="naxatw-space-y-4">
-          <p className="naxatw-text-sm naxatw-text-[#7A7676]">
-            {m.drone_task_missing_dem_blocked()}
-          </p>
-          <p className="naxatw-text-sm naxatw-text-[#7A7676]">
-            {m.drone_task_missing_dem_override()}
-          </p>
-          <div className="naxatw-flex naxatw-justify-end naxatw-gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowMissingDemModal(false);
-                toast.warn(m.drone_task_missing_dem_canceled());
-              }}
-            >
-              {m.common_cancel()}
-            </Button>
-            <Button
-              className="naxatw-bg-red"
-              onClick={() => {
-                setShowMissingDemModal(false);
-                setAllowMissingDem(true);
-              }}
-            >
-              {m.drone_task_generate_anyway()}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onGenerateAnyway={() => {
+          setShowMissingDemModal(false);
+          setAllowMissingDem(true);
+        }}
+      />
 
       <MapContainer
         map={map}
@@ -1082,102 +1051,26 @@ const MapSection = ({ className }: { className?: string }) => {
           getCoordOnProperties
         />
 
-        <div className="flex gap-3 lg:gap-6 naxatw-absolute naxatw-right-3 naxatw-top-3 naxatw-z-10 lg:naxatw-right-64">
-          <Select
-            options={droneModelOptions}
-            labelKey="label"
-            valueKey="value"
-            selectedOption={droneModel}
-            onChange={(value: string | number) => {
-              dispatch(setDroneModel(value));
-            }}
-            className="naxatw-w-40 naxatw-bg-[#F4F7FE]"
-            placeholder={m.flight_gap_select_model_placeholder()}
-          />
-
-          <SwitchTab
-            activeClassName="naxatw-bg-red naxatw-text-white"
-            options={gimbalAngleOptions}
-            labelKey="label"
-            valueKey="value"
-            selectedValue={gimbalAngle}
-            onChange={value => {
-              dispatch(setGimbalAngle(value.value));
-            }}
-          />
-
-          <SwitchTab
-            activeClassName="naxatw-bg-red naxatw-text-white"
-            options={modifiedWaypointModeOptions}
-            labelKey="label"
-            valueKey="value"
-            selectedValue={waypointMode}
-            onChange={value => {
-              dispatch(setWaypointMode(value.value));
-            }}
-          />
-        </div>
+        <MapControlsBar
+          droneModel={droneModel}
+          onDroneModelChange={value => dispatch(setDroneModel(value))}
+          gimbalAngle={gimbalAngle}
+          onGimbalAngleChange={value => dispatch(setGimbalAngle(value.value))}
+          waypointMode={waypointMode}
+          waypointModeOptions={modifiedWaypointModeOptions}
+          onWaypointModeChange={value => dispatch(setWaypointMode(value.value))}
+        />
 
         {/* additional controls */}
-        <div className="naxatw-absolute naxatw-left-[0.575rem] naxatw-top-[5.75rem] naxatw-z-30 naxatw-flex naxatw-h-fit naxatw-w-fit naxatw-flex-col naxatw-gap-3">
-          <ToolTip
-            message={m.drone_task_enable_rotation()}
-            className="naxatw-mt-[-4px]"
-          >
-            <Button
-              className={`naxatw-grid naxatw-h-[1.85rem] naxatw-place-items-center naxatw-border !naxatw-p-[0.315rem] ${isRotationEnabled ? 'naxatw-border-red naxatw-bg-[#ffe0e0]' : 'naxatw-border-gray-400 naxatw-bg-[#F5F5F5]'}`}
-              onClick={() => handleRotationToggle()}
-            >
-              <Icon
-                name="rotate_90_degrees_cw"
-                iconSymbolType="material-icons"
-                className="!naxatw-text-xl !naxatw-text-black"
-              />
-            </Button>
-          </ToolTip>
-          <ToolTip
-            message={m.drone_task_show_flight_plan()}
-            className="naxatw-mt-[-4px]"
-          >
-            <Button
-              className={`naxatw-grid naxatw-h-[1.85rem] naxatw-place-items-center naxatw-border !naxatw-p-[0.315rem] ${showFlightPlan ? 'naxatw-border-red naxatw-bg-[#ffe0e0]' : 'naxatw-border-gray-400 naxatw-bg-[#F5F5F5]'}`}
-              onClick={() => handleToggleFlightPlan()}
-            >
-              <Icon
-                name="flight_take_off"
-                iconSymbolType="material-icons"
-                className="naxatw-w-[1.25rem] !naxatw-text-xl !naxatw-text-black"
-              />
-            </Button>
-          </ToolTip>
-
-          <Button
-            variant="ghost"
-            className={`naxatw-flex naxatw-h-[1.85rem] naxatw-w-[] naxatw-items-center naxatw-justify-center naxatw-border !naxatw-px-[0.315rem] ${showTaskArea ? 'naxatw-border-red naxatw-bg-[#ffe0e0]' : 'naxatw-border-gray-400 naxatw-bg-[#F5F5F5]'}`}
-            onClick={() => handleToggleTaskArea()}
-            title={m.map_button_task_area()}
-          >
-            <div className="naxatw-h-4 naxatw-w-4">
-              <img src={areaIcon} alt="area-icon" />
-            </div>
-          </Button>
-
-          <ToolTip
-            message={m.drone_task_zoom_to_task_area()}
-            className="naxatw-mt-[-4px]"
-          >
-            <Button
-              className="naxatw-grid naxatw-h-[1.85rem] naxatw-place-items-center naxatw-border naxatw-border-gray-400 naxatw-bg-[#F5F5F5] !naxatw-p-[0.315rem]"
-              onClick={() => zoomToExtent()}
-            >
-              <Icon
-                name="zoom_out_map"
-                iconSymbolType="material-icons"
-                className="naxatw-w-[1.25rem] !naxatw-text-xl !naxatw-text-black"
-              />
-            </Button>
-          </ToolTip>
-        </div>
+        <MapToolButtons
+          isRotationEnabled={isRotationEnabled}
+          onToggleRotation={() => handleRotationToggle()}
+          showFlightPlan={showFlightPlan}
+          onToggleFlightPlan={() => handleToggleFlightPlan()}
+          showTaskArea={showTaskArea}
+          onToggleTaskArea={() => handleToggleTaskArea()}
+          onZoomToExtent={() => zoomToExtent()}
+        />
       </MapContainer>
     </div>
   );
