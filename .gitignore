@@ -95,3 +95,8 @@ src/backend/frontend_html
 .codex
 plans
 checkpoints
+
+# Playwright e2e artifacts
+src/frontend/test-results/
+src/frontend/playwright-report/
+src/frontend/blob-report/

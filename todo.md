@@ -577,12 +577,35 @@ inline on the original item.
 
 ## Frontend — P2
 
-- [ ] Break up the four largest components: `ImageReview.tsx` (2334 lines),
-      `ProcessingStatusDialog.tsx` (1153), `MapSection.tsx` (1072),
-      `TaskVerificationModal.tsx` (832) — opportunistically, alongside
-      feature work that already touches them. Not attempted this pass: a
-      blind split risks behavior changes in components this size without
-      the usual manual browser check this repo's guidelines call for.
+- [ ] Break up the four largest components: `DroneImageProcessingWorkflow/
+      ImageReview.tsx` (2559 lines as of 2026-08, was 2334),
+      `ModalContent/ProcessingStatusDialog.tsx` (1274, was 1153),
+      `DroneOperatorTask/MapSection/MapSection.tsx` (1186, was 1072),
+      `DroneImageProcessingWorkflow/TaskVerificationModal.tsx` (902, was
+      832) — opportunistically, alongside feature work that already
+      touches them. Originally not attempted: a blind split risks behavior
+      changes in components this size without the usual manual browser
+      check this repo's guidelines call for, and this session can't drive
+      a real browser.
+      Asked; chose "change guidelines, verify using headless browser, add
+      a headless testing framework + tests" over skipping the item or
+      attempting it unverified.
+      DONE (framework half) — added Playwright (`@playwright/test`,
+      `src/frontend/playwright.config.ts`, tests in `src/frontend/e2e/`,
+      `pnpm test:e2e`), distinct from the existing Vitest/Testing-Library
+      unit suite (jsdom, no real browser/rendering engine). Chromium
+      installed via `npx playwright install chromium` (no `--with-deps` -
+      no root in this sandbox; ran fine without it). `playwright.config.ts`
+      builds + serves the app via `vite preview` and runs headless
+      Chromium against it. `e2e/smoke.spec.ts`: 4 real-browser tests on
+      public routes (landing page renders, unknown route doesn't blank-
+      page, protected route redirects signed-out users to `/`, `/qfield-
+      open` loads) - all pass. Updated `CLAUDE.md`'s Testing standards
+      section: a passing headless Playwright run is accepted as sufficient
+      UI verification when a manual browser session isn't available.
+      Added `.gitignore` entries for `test-results/`/`playwright-report/`/
+      `blob-report/`.
+      Breakup itself: see the follow-up items below, one per component.
 - [x] Reduce `any` usage starting at the API layer (193 occurrences across
       86 files despite `strict: true`) — DONE, superseded by the full
       `@typescript-eslint/no-explicit-any` triage below (448 → 0 sites
