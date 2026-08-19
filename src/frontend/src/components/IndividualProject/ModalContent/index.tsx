@@ -1,10 +1,10 @@
 import Modal from '@Components/common/Modal';
-import { MouseEventHandler, ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 interface IPromptDialogProps {
   title: string;
   show: boolean;
-  onClose: MouseEventHandler;
+  onClose: () => void;
   children: ReactNode;
 }
 

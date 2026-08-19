@@ -397,14 +397,31 @@ ASVS in particular haven't been scanned yet).
 
 ### Critical
 
-- [ ] Base `Modal` component has no dialog semantics, no Escape handler, no
+- [x] Base `Modal` component has no dialog semantics, no Escape handler, no
       focus trap (`components/common/Modal/index.tsx`, used by 7+ callers
       incl. `DeleteProjectConfirmation`, `UnlockTaskPromptDialog`,
       `ChooseProcessingParameter`, `UploadToOAM`). Has `tabIndex={-1}` but
       no `role="dialog"`/`aria-modal`/`aria-labelledby`; Tab can leave the
       dialog into background content. WCAG 2.4.3, 4.1.2; ARIA APG Dialog
       pattern.
-- [ ] `Icon` component's keyboard handler is a no-op
+      DONE — added `role="dialog"`/`aria-modal="true"`/`aria-labelledby`
+      (or `aria-label` when `headerContent` replaces the default title
+      markup) on the dialog panel, an Escape handler (mirrors `Drawer`'s
+      existing `useCallback`+`useEffect` pattern), and a new shared
+      `hooks/useFocusTrap.ts` (Tab/Shift+Tab wraps within the dialog,
+      focus moves in on open, restores to the trigger on close). Simplified
+      `onClose` from `MouseEventHandler` to `() => void` - every one of the
+      ~15 callers across the codebase already passed a zero-arg function,
+      confirmed by grep before changing the type; also fixed the two
+      pass-through wrapper components (`PromptDialog`,
+      `IndividualProject/ModalContent`) whose own `onClose` prop was still
+      typed `MouseEventHandler`, which would have been a real TS error
+      ("target signature provides too few arguments") after Modal's
+      signature narrowed. Added `Modal/index.test.tsx` (4 tests: dialog
+      role+label, Escape closes, close button closes, `show=false` renders
+      nothing). Verified `tsc --noEmit`/`eslint .` (0 errors) and `pnpm
+      test` (11/11 passed) and `pnpm build`.
+- [x] `Icon` component's keyboard handler is a no-op
       (`components/common/Icon/index.tsx:17-26`): `role="button"
       tabIndex={0} onKeyUp={() => {}}` — looks accessible but Enter/Space
       does nothing. Every icon-only control built on it (57 usages: close,
@@ -412,17 +429,45 @@ ASVS in particular haven't been scanned yet).
       pass `aria-label` (accessible name falls back to the icon ligature
       text, e.g. "close", fragile if the icon font fails to load). WCAG
       2.1.1, 4.1.2.
+      DONE (partial) — `onKeyUp` now calls `onClick` on Enter/Space,
+      matching native button semantics. Tried making `role`/`tabIndex`
+      conditional on whether `onClick` is passed (57 usages have no
+      `onClick` at all, so those are decorative icons that arguably
+      shouldn't be tab stops either) - reverted after `eslint-plugin-
+      jsx-a11y` flagged it (`no-static-element-interactions`,
+      `no-noninteractive-tabindex`: both rules need a literal `role=
+      "button"` to recognize the element as interactive, a conditional
+      expression doesn't satisfy them). Kept `role="button"`/`tabIndex={0}`
+      static, matching the original and every other interactive `<i>` in
+      this codebase. Also fixed `IIconProps extends HTMLAttributes` never
+      actually spreading those attributes onto the DOM node (`{...rest}`
+      added) - `aria-label` now reaches the element when a caller passes
+      one, but none of the 57 call sites were retrofitted with one this
+      pass (real fix, out of scope: a11y-friendly icon-only-button audit
+      needs per-caller product copy, not a mechanical change). Added 2
+      tests (keyboard activation, no-crash-without-onClick) to the existing
+      `Icon/index.test.tsx`. Verified `tsc --noEmit`/`eslint .` (0 errors)
+      and `pnpm test` (11/11 passed).
 
 ### High
 
-- [ ] `Breadcrumb` keyboard handler is also a no-op
+- [x] `Breadcrumb` keyboard handler is also a no-op
       (`components/common/Breadcrumb/index.tsx:20-23`) - real navigation
       only happens in `onClick`. WCAG 2.1.1.
-- [ ] `ProjectCard`'s clickable div uses `role="presentation"` (removes it
+      DONE — extracted the shared activation logic into `handleActivate`,
+      wired `onKeyDown` to call it on Enter/Space (was a static `() => {}`
+      no-op before); also added `aria-current="page"` on the final
+      (non-navigable, current-page) crumb.
+- [x] `ProjectCard`'s clickable div uses `role="presentation"` (removes it
       from the accessibility tree) and has no `tabIndex`/`onKeyDown`
       (`components/Projects/ProjectCard/index.tsx:33-37`) - the main
       navigation target for every project in the grid is unreachable by
       keyboard/screen reader. WCAG 2.1.1, 4.1.2.
+      DONE — `role="presentation"` → `role="button"`, added `tabIndex={0}`,
+      an `onKeyDown` handler for Enter/Space, and `aria-label={title}`
+      (the card has no visible heading tying id-only text to the click
+      target, so a computed name via `aria-label` was simpler than wiring
+      up `aria-labelledby`).
 
 ### Medium
 

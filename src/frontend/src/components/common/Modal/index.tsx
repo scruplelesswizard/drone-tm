@@ -1,12 +1,13 @@
-import React, { MouseEventHandler, ReactNode, useRef } from 'react';
+import React, { ReactNode, useCallback, useEffect, useId, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 import { m } from '@/paraglide/messages';
+import useFocusTrap from '@/hooks/useFocusTrap';
 
 interface IModalProps {
   title: string;
   subtitle?: string;
   show: boolean;
-  onClose: MouseEventHandler;
+  onClose: () => void;
   children: ReactNode;
   className?: string;
   bodyClassName?: string;
@@ -30,6 +31,23 @@ export default function Modal({
   bodyScrollable = true,
 }: IModalProps) {
   const nodeRef = useRef(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+
+  useFocusTrap(dialogRef, show);
+
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose],
+  );
+
+  useEffect(() => {
+    if (!show) return undefined;
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [show, handleEscape]);
 
   return (
     <CSSTransition
@@ -60,6 +78,12 @@ export default function Modal({
           <div className="naxatw-flex naxatw-min-h-full naxatw-items-center naxatw-justify-center naxatw-p-4">
             <div className="naxatw-relative naxatw-flex naxatw-h-full naxatw-w-full naxatw-max-w-2xl naxatw-flex-col naxatw-items-center naxatw-justify-center md:naxatw-h-auto">
               <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label={headerContent ? title : undefined}
+                aria-labelledby={headerContent ? undefined : titleId}
+                tabIndex={-1}
                 className={`naxatw-relative naxatw-max-h-[calc(100vh-4rem)] naxatw-w-[42rem] naxatw-overflow-hidden naxatw-rounded-[20px] naxatw-bg-white naxatw-shadow ${className}`}
               >
                 <div
@@ -69,7 +93,9 @@ export default function Modal({
                 >
                   {headerContent || (
                     <div className="naxatw-space-y-1">
-                      <h3 className="naxatw-font-bold">{title}</h3>
+                      <h3 id={titleId} className="naxatw-font-bold">
+                        {title}
+                      </h3>
                       <p className="naxatw-text-body-lg">{subtitle}</p>
                     </div>
                   )}

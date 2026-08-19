@@ -31,8 +31,16 @@ export default function ProjectCard({
 
   return (
     <div
-      role="presentation"
+      role="button"
+      tabIndex={0}
+      aria-label={title}
       onClick={onProjectCardClick}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onProjectCardClick();
+        }
+      }}
       className="naxatw-relative !naxatw-col-span-1 naxatw-cursor-pointer naxatw-rounded-md naxatw-border naxatw-border-grey-400 naxatw-p-[0.625rem] naxatw-transition-all naxatw-duration-300 naxatw-ease-in-out hover:-naxatw-translate-y-1 hover:naxatw-scale-100 hover:naxatw-shadow-xl"
     >
       <p className="naxatw-flex naxatw-h-[10rem] naxatw-w-full naxatw-items-center naxatw-justify-center naxatw-overflow-hidden naxatw-rounded-lg naxatw-bg-grey-50">
