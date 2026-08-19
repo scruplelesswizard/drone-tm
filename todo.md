@@ -40,10 +40,50 @@ inline on the original item.
 
 ## Backend — P2
 
-- [ ] Set `response_model` + `summary` consistently across routes (only ~3 of
-      35 routes in `project_routes.py` set `response_model`; no route
-      anywhere sets `summary`). Large mechanical sweep (~32 routes), not
-      attempted this pass - safe to pick up in reviewable batches.
+- [ ] Set `response_model` + `summary` consistently across routes. Full
+      inventory taken (91 routes total across 8 route files; only 6 had
+      `response_model` set, 0 had `summary`) — bigger than the original
+      estimate (35/~3 was `project_routes.py` alone). Picking this up in
+      reviewable per-file batches, smallest first:
+      - [x] batch 1 (13 of 91 routes) — `drones/drone_routes.py` (6),
+            `gcp/gcp_routes.py` (2), `public_routes.py` (2),
+            `waypoints/waypoint_routes.py` (3). Added a shared
+            `app/shared_schemas.py::MessageResponse` (same rationale as
+            `pagination.py` — several routes across domains reinvented the
+            bare `{"message": str}` shape) plus small one-off response
+            schemas per route where the shape was route-specific
+            (`DroneCreateResponse`, `GcpSaveResponse`,
+            `ScaleOdmWebhookResponse`, `PresignedUrlResponse`). Found and
+            fixed a real inconsistency in `get_drone_altitude_by_country`:
+            it normalized "not found" to `[]` instead of `None`, which
+            would have made `response_model=DroneFlightHeight | None`
+            reject the empty-list case — checked the one frontend caller
+            (`KeyParameters/index.tsx`, uses `?.` throughout) confirms `[]`
+            vs `null` are handled identically, so this is safe.
+            `waypoint_routes.py`'s 2 dual-shape routes (file-download vs.
+            JSON depending on a runtime flag) got `response_model=None`
+            explicitly rather than a guessed schema — the JSON branch's
+            shape is owned by the `drone_flightplan` package, not modeled
+            locally, and FastAPI already bypasses `response_model` when a
+            route returns a `Response` instance directly, so this is a
+            correctness no-op for the download branch and an honest
+            "unvalidated" marker for the JSON branch. Verified via
+            `ruff check`/`format --diff` (clean), full backend suite
+            (257/257 passed), and a direct `api.openapi()` build to
+            confirm the schema actually generates and every touched route
+            shows the right `summary`/response schema.
+      - [ ] batch 2+ (78 remaining) — `tasks/task_routes.py` (7),
+            `users/user_routes.py` (11), `drones` deferred N/A (done),
+            `projects/classification_routes.py` (23),
+            `projects/project_routes.py` (37, largest — also has an
+            existing `response_model` **mismatch** to fix on
+            `read_projects`, which sets `ProjectOut` but actually returns
+            a paginated envelope dict, plus a `return HTTPException(...)`
+            vs `raise` bug in `upload_imagery_to_oam` worth a look while
+            in that function). Streaming/file-response routes throughout
+            (`odm/export/*`, `terrain-dem`, `download-boundaries`, etc.)
+            should get `summary=` only, matching the `waypoint_routes.py`
+            pattern above — never a guessed `response_model`.
 - [ ] **Needs interaction:** introduce `/api/v1` path versioning. This is a
       breaking-change-shaped decision (URL structure, client migration,
       whether unversioned `/api` keeps working during a transition) that

@@ -31,6 +31,11 @@ class DroneOut(BaseModel):
     model: str
 
 
+class DroneCreateResponse(BaseModel):
+    message: str
+    drone_id: int
+
+
 class DbDrone(BaseDrone):
     id: int
 

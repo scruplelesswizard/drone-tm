@@ -3,6 +3,7 @@ from typing import Annotated
 from app.db import database
 from app.drones import drone_deps, drone_schemas
 from app.models.enums import HTTPStatus
+from app.shared_schemas import MessageResponse
 from app.users.permissions import (
     IsSuperUser,
     check_permissions,
@@ -19,7 +20,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[drone_schemas.DroneOut])
+@router.get(
+    "",
+    response_model=list[drone_schemas.DroneOut],
+    summary="List all drones",
+)
 async def read_drones(
     db: Annotated[Connection, Depends(database.get_db)],
 ):
@@ -30,7 +35,11 @@ async def read_drones(
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND) from e
 
 
-@router.post("/create-drone")
+@router.post(
+    "/create-drone",
+    response_model=drone_schemas.DroneCreateResponse,
+    summary="Create a new drone",
+)
 async def create_drone(
     drone_info: drone_schemas.DroneIn,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -41,7 +50,11 @@ async def create_drone(
     return {"message": "Drone created successfully", "drone_id": drone_id}
 
 
-@router.delete("/{drone_id}")
+@router.delete(
+    "/{drone_id}",
+    response_model=MessageResponse,
+    summary="Delete a drone",
+)
 async def delete_drone(
     drone: Annotated[drone_schemas.DbDrone, Depends(drone_deps.get_drone_by_id)],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -61,7 +74,11 @@ async def delete_drone(
     return {"message": f"Drone successfully deleted {drone_id}"}
 
 
-@router.get("/{drone_id}", response_model=drone_schemas.DbDrone)
+@router.get(
+    "/{drone_id}",
+    response_model=drone_schemas.DbDrone,
+    summary="Get a drone by ID",
+)
 async def read_drone(
     drone: Annotated[drone_schemas.DbDrone, Depends(drone_deps.get_drone_by_id)],
     db: Annotated[Connection, Depends(database.get_db)],
@@ -80,7 +97,11 @@ async def read_drone(
     return drone
 
 
-@router.get("/drone-altitude")
+@router.get(
+    "/drone-altitude",
+    response_model=list[drone_schemas.DroneFlightHeight],
+    summary="List drone altitude regulations for all countries",
+)
 async def get_all_altitudes(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -92,16 +113,18 @@ async def get_all_altitudes(
     return altitudes
 
 
-@router.get("/drone-altitude/{country}")
+@router.get(
+    "/drone-altitude/{country}",
+    response_model=drone_schemas.DroneFlightHeight | None,
+    summary="Get drone altitude regulations for a country",
+)
 async def get_drone_altitude_by_country(
     country: str,
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
 ):
     """Get drone altitude details by country."""
-    result = await drone_schemas.DroneFlightHeight.one(db, country)
-
-    if not result:
-        return []
-
-    return result
+    # DroneFlightHeight.one() already returns None (not []) on no match -
+    # response_model=DroneFlightHeight | None handles that directly, so no
+    # not-found normalization is needed here.
+    return await drone_schemas.DroneFlightHeight.one(db, country)
