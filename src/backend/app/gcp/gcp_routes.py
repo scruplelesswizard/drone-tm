@@ -13,6 +13,7 @@ from app.waypoints import waypoint_schemas
 from fastapi import APIRouter, Depends, File, UploadFile
 from loguru import logger as log
 from psycopg import Connection
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/gcp",
@@ -21,7 +22,16 @@ router = APIRouter(
 )
 
 
-@router.post("/find-project-images")
+class GcpSaveResponse(BaseModel):
+    message: str
+    project_id: str
+
+
+@router.post(
+    "/find-project-images",
+    response_model=list[str],
+    summary="Find images near a GCP point",
+)
 async def find_images_for_a_project(
     project_id: uuid.UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -44,7 +54,11 @@ async def find_images_for_a_project(
     )
 
 
-@router.post("/save/{project_id}")
+@router.post(
+    "/save/{project_id}",
+    response_model=GcpSaveResponse,
+    summary="Save a GCP file for a project",
+)
 async def save_gcp_file(
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)

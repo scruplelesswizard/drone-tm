@@ -16,7 +16,21 @@ class ScaleOdmWebhookPayload(BaseModel):
     statusCode: int | None = None
 
 
-@router.post("/integrations/scaleodm/webhook", tags=["Integrations"])
+class ScaleOdmWebhookResponse(BaseModel):
+    status: str
+    uuid: str
+
+
+class PresignedUrlResponse(BaseModel):
+    url: str | None
+
+
+@router.post(
+    "/integrations/scaleodm/webhook",
+    tags=["Integrations"],
+    response_model=ScaleOdmWebhookResponse,
+    summary="Receive a ScaleODM status webhook",
+)
 async def scaleodm_webhook(
     payload: ScaleOdmWebhookPayload,
     redis_pool: ArqRedis = Depends(get_redis_pool),
@@ -44,7 +58,11 @@ async def scaleodm_webhook(
     return {"status": "accepted", "uuid": payload.uuid}
 
 
-@router.get("/public/presigned-url")
+@router.get(
+    "/public/presigned-url",
+    response_model=PresignedUrlResponse,
+    summary="Get a presigned URL for a public S3 object",
+)
 async def get_public_presigned_url(
     key: str = Query(..., description="S3 object key (e.g. tutorials/Foo.mp4)"),
     expires_hours: int = Query(2, ge=1, le=24),

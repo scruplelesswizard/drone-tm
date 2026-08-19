@@ -45,7 +45,15 @@ router = APIRouter(
 )
 
 
-@router.post("/task/{task_id}")
+@router.post(
+    "/task/{task_id}",
+    # `download=True` returns a file Response (bypasses response_model
+    # entirely); `download=False` returns a JSON dict wrapping the
+    # generated placemarks/flight_data - shapes owned by drone_flightplan,
+    # not modeled locally, so left unvalidated rather than guessed at.
+    response_model=None,
+    summary="Generate or download a task's flight plan",
+)
 async def get_task_flightplan(
     db: Annotated[Connection, Depends(database.get_db)],
     project_id: uuid.UUID,
@@ -205,7 +213,12 @@ async def get_task_flightplan(
     }
 
 
-@router.post("")
+@router.post(
+    "",
+    # Same dual-shape situation as get_task_flightplan above.
+    response_model=None,
+    summary="Generate a WPML/KMZ flight plan from an uploaded AOI",
+)
 async def generate_wmpl_kmz(
     project_geojson: UploadFile = File(
         ...,
@@ -323,7 +336,10 @@ async def generate_wmpl_kmz(
         )
 
 
-@router.post("/{task_id}/generate-kmz")
+@router.post(
+    "/{task_id}/generate-kmz",
+    summary="Generate a KMZ file from a set of placemarks",
+)
 async def generate_kmz_with_placemarks(
     task_id: uuid.UUID, data: waypoint_schemas.PlacemarksFeature
 ):
