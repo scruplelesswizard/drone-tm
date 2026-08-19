@@ -238,19 +238,31 @@ export function findNearestCoordinate(
 
 /**
  * Builds a download URL for assets. Presigned S3 URLs (https://) are used
- * as-is. Relative API paths, including legacy /api/... paths, get the API
- * base URL prepended and an auth token appended as a query parameter so
- * that browser <a> tag downloads work without custom headers.
+ * as-is. Relative API paths, including legacy /api/... (pre-versioning)
+ * paths, get the API base URL prepended and an auth token appended as a
+ * query parameter so that browser <a> tag downloads work without custom
+ * headers.
  */
 export function buildDownloadUrl(assetsUrl: string): string {
   if (assetsUrl.startsWith('http')) return assetsUrl;
 
-  const apiBase = getRuntimeConfig('VITE_API_URL', '/api').replace(/\/+$/, '');
+  const apiBase = getRuntimeConfig('VITE_API_URL', '/api/v1').replace(
+    /\/+$/,
+    '',
+  );
+  // Path-only portion of apiBase (strip scheme://host if apiBase is a full
+  // URL), so a versioned prefix (e.g. /api/v1) baked into assetsUrl by the
+  // backend is stripped by its actual length, not a hardcoded 4 chars -
+  // otherwise prepending apiBase would double it (/api/v1/v1/...).
+  const apiBasePath = apiBase.replace(/^[a-z]+:\/\/[^/]+/i, '');
   const relativePath = assetsUrl.startsWith('/') ? assetsUrl : `/${assetsUrl}`;
-  const apiPath =
-    relativePath === '/api' || relativePath.startsWith('/api/')
-      ? relativePath.slice(4)
-      : relativePath;
+
+  let apiPath = relativePath;
+  if (apiBasePath && relativePath.startsWith(apiBasePath)) {
+    apiPath = relativePath.slice(apiBasePath.length);
+  } else if (relativePath === '/api' || relativePath.startsWith('/api/')) {
+    apiPath = relativePath.slice(4);
+  }
   const base = `${apiBase}${apiPath}`;
 
   const token = localStorage.getItem('token');

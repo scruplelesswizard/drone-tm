@@ -8,7 +8,7 @@ def _make_request() -> Request:
         scope={
             "type": "http",
             "method": "GET",
-            "path": "/api/whatever",
+            "path": "/api/v1/whatever",
             "headers": [],
             "query_string": b"",
         }
@@ -19,7 +19,7 @@ def _make_request() -> Request:
 async def test_http_exception_returns_problem_json_shape(client):
     """An HTTPException raised deep in a dependency (unknown project slug)
     comes back as an RFC 7807 problem+json body, not a bare {"detail": ...}."""
-    response = await client.get("/api/projects/does-not-exist-slug")
+    response = await client.get("/api/v1/projects/does-not-exist-slug")
     assert response.headers["content-type"].startswith("application/problem+json")
     body = response.json()
     assert body["status"] == response.status_code
@@ -33,7 +33,7 @@ async def test_validation_error_includes_field_errors(client, create_test_projec
     not just a generic message."""
     project_id = create_test_project
     response = await client.post(
-        f"/api/projects/regulator/comment/{project_id}",
+        f"/api/v1/projects/regulator/comment/{project_id}",
         json={"regulator_comment": "x", "regulator_approval_status": "NOT_A_STATUS"},
     )
     assert response.status_code == 422

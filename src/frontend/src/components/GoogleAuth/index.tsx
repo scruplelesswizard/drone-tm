@@ -6,7 +6,7 @@ import { UserProfileDetailsType } from './types';
 import { getRuntimeConfig } from '@/runtimeConfig';
 import { m } from '@/paraglide/messages';
 
-const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 
 function GoogleAuth() {
   const navigate = useNavigate();

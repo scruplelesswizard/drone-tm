@@ -7,7 +7,7 @@ from loguru import logger as log
 @pytest.mark.asyncio
 async def test_my_info(client):
     """Test the /my-info/ endpoint to ensure a logged-in user can fetch their data."""
-    response = await client.get("/api/users/my-info")
+    response = await client.get("/api/v1/users/my-info")
     assert response.status_code == 200
     user_info = response.json()
 
@@ -17,7 +17,7 @@ async def test_my_info(client):
 @pytest.mark.asyncio
 async def test_refresh_token(client):
     """Test the /refresh-token endpoint to ensure a new access token can be obtained."""
-    response = await client.get("/api/users/refresh-token")
+    response = await client.get("/api/v1/users/refresh-token")
     assert response.status_code == 200
     token_data = response.json()
     assert "access_token" in token_data
@@ -31,7 +31,7 @@ async def test_reset_password_success(client, auth_user):
     new_password = "QPassword@12334"
 
     response = await client.post(
-        f"/api/users/reset-password?token={token}&new_password={new_password}"
+        f"/api/v1/users/reset-password?token={token}&new_password={new_password}"
     )
 
     if response.status_code != 200:
@@ -43,7 +43,7 @@ async def test_reset_password_success(client, auth_user):
 @pytest.mark.asyncio
 async def test_get_users_default_returns_envelope(client):
     """GET /users now returns {results, pagination}, not a bare list."""
-    response = await client.get("/api/users")
+    response = await client.get("/api/v1/users")
     assert response.status_code == 200
     body = response.json()
     assert "results" in body
@@ -64,7 +64,7 @@ async def test_get_users_respects_per_page(client, db, auth_user):
             ),
         )
 
-    response = await client.get("/api/users?per_page=2")
+    response = await client.get("/api/v1/users?per_page=2")
     assert response.status_code == 200
     body = response.json()
     assert len(body["results"]) == 2
@@ -76,17 +76,17 @@ async def test_get_users_respects_per_page(client, db, auth_user):
 async def test_get_users_rejects_invalid_per_page(client):
     """per_page is bounded (1-100, the shared pagination_params() default);
     out-of-range values are a validation error, not a silent clamp."""
-    response = await client.get("/api/users?per_page=0")
+    response = await client.get("/api/v1/users?per_page=0")
     assert response.status_code == 422
 
-    response = await client.get("/api/users?per_page=101")
+    response = await client.get("/api/v1/users?per_page=101")
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_get_users_rejects_invalid_page(client):
     """page must be >= 1 (1-indexed, unlike the old skip/limit params)."""
-    response = await client.get("/api/users?page=0")
+    response = await client.get("/api/v1/users?page=0")
     assert response.status_code == 422
 
 
@@ -104,7 +104,7 @@ async def test_get_mentionable_users_returns_all_unpaginated(client, db, auth_us
             ),
         )
 
-    response = await client.get("/api/users/mentionable")
+    response = await client.get("/api/v1/users/mentionable")
     assert response.status_code == 200
     body = response.json()
     assert "results" in body
@@ -120,7 +120,7 @@ async def test_create_profile_for_another_user_forbidden(client):
     """The IsSelf permission check must still block creating another user's
     profile, matching the behavior of the inline check it replaced."""
     response = await client.post(
-        "/api/users/some-other-user-id/profile",
+        "/api/v1/users/some-other-user-id/profile",
         json={"password": "SomePassword123!"},
     )
     assert response.status_code == 403
@@ -130,7 +130,7 @@ async def test_create_profile_for_another_user_forbidden(client):
 async def test_create_own_profile_allowed(client, auth_user):
     """A user creating their own profile passes the IsSelf check."""
     response = await client.post(
-        f"/api/users/{auth_user.id}/profile",
+        f"/api/v1/users/{auth_user.id}/profile",
         json={"password": "SomePassword123!"},
     )
     assert response.status_code == 200
@@ -140,7 +140,7 @@ async def test_create_own_profile_allowed(client, auth_user):
 async def test_update_profile_for_another_user_forbidden(client):
     """Same IsSelf gate on the PATCH route."""
     response = await client.patch(
-        "/api/users/some-other-user-id/profile",
+        "/api/v1/users/some-other-user-id/profile",
         json={"city": "Kathmandu"},
     )
     assert response.status_code == 403

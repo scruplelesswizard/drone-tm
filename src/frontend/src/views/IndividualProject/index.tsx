@@ -45,7 +45,7 @@ import {
 import { getRuntimeConfig } from '@/runtimeConfig';
 import { m } from '@/paraglide/messages';
 
-const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 
 // function to render the content based on active tab
 const getActiveTabContent = (

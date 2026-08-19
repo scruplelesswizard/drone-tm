@@ -27,7 +27,7 @@ import {
 import ScrollToTop from '@Components/common/ScrollToTop';
 import { getRuntimeConfig } from '@/runtimeConfig';
 
-const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 
 export default function App() {
   const dispatch = useTypedDispatch();

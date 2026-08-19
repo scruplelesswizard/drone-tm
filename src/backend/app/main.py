@@ -269,10 +269,10 @@ def get_application() -> FastAPI:
             user_name_column="name",
             user_email_column="email_address",
         )
-        _app.include_router(admin_router, prefix="/api")
+        _app.include_router(admin_router, prefix=api_prefix)
 
         # OSM OAuth router for account linking
-        _app.include_router(osm_router, prefix="/api")
+        _app.include_router(osm_router, prefix=api_prefix)
 
     # RFC 7807 (application/problem+json) handlers. Registered here (not at
     # module scope on the `api` singleton below) so every app instance this

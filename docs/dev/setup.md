@@ -37,7 +37,7 @@ Just is required too:
   configured for you.
 - The current setup expects:
   - `DOMAIN` for public URLs (backend derives its public base URL automatically)
-  - `VITE_API_URL` for the frontend to reach the backend API (must include `/api`)
+  - `VITE_API_URL` for the frontend to reach the backend API (must include `/api/v1`)
 - S3 endpoints:
   - `S3_ENDPOINT_UPLOAD`: used by browser presigned uploads (often `http://localhost:9000` in dev)
   - `S3_ENDPOINT_DOWNLOAD`: used by browser downloads/display

@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { getRuntimeConfig } from '@/runtimeConfig';
 import { m } from '@/paraglide/messages';
 
-const BASE_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const BASE_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 
 /**
  * HankoAuth - Callback component after Portal SSO login

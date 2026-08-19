@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { m } from '@/paraglide/messages';
 import { getRuntimeConfig } from '@/runtimeConfig';
 
-const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 
 export const api = axios.create({
   baseURL: API_URL,

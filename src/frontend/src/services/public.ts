@@ -1,6 +1,6 @@
 import { getRuntimeConfig } from '../runtimeConfig';
 
-const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 
 export default async function getPublicPresignedUrl(
   key: string,
