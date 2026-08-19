@@ -500,10 +500,18 @@ ASVS in particular haven't been scanned yet).
       navigation) - a materially bigger change than this item's scope,
       and one that needs the manual keyboard-testing this repo's
       guidelines call for on UI changes of this size.
-- [ ] `Drawer` has `role="dialog"`/`aria-modal`/Escape handling (good) but
+- [x] `Drawer` has `role="dialog"`/`aria-modal`/Escape handling (good) but
       no focus trap or initial focus on open
       (`components/common/Drawer/index.tsx`) - Tab can still leave the
       panel. WCAG 2.4.3.
+      DONE — reused the `useFocusTrap` hook built for the `Modal` fix
+      (same session, different item). Drawer stays mounted in the DOM at
+      all times (visibility toggled via CSS, unlike `Modal`'s
+      `unmountOnExit`), which the hook handles fine since it only attaches
+      its keydown listener while `open` is true. Added
+      `Drawer/index.test.tsx` (3 tests: dialog semantics, Escape closes,
+      overlay click closes). Verified `tsc --noEmit`/`eslint` (0 errors)
+      and `pnpm test` (14/14 passed).
 - [ ] Fixed-width label containers risk text clipping on longer-language
       translations:
       `components/RegulatorsApprovalPage/Description/DescriptionSection.tsx:156,168,183`
