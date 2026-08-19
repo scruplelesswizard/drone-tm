@@ -65,7 +65,7 @@ chunks directly to S3 via presigned URLs.
 - Staging: `projects/{project_id}/user-uploads/{filename}`
 - Direct to task: `projects/{project_id}/{task_id}/images/{filename}`
 
-**API flow** (all under `/api/projects/`):
+**API flow** (all under `/api/v1/projects/`):
 
 1. `POST /initiate-multipart-upload/` → get `upload_id` + `file_key`
 2. `POST /sign-part-upload/` (per chunk) → get presigned URL

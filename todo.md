@@ -196,10 +196,47 @@ inline on the original item.
             suite (257/257 passed), and `api.openapi()` build + summary
             spot-check on 7 routes. **This completes the full 91-route sweep
             across all 8 backend route files.**
-- [ ] **Needs interaction:** introduce `/api/v1` path versioning. This is a
+- [x] **Needs interaction:** introduce `/api/v1` path versioning. This is a
       breaking-change-shaped decision (URL structure, client migration,
       whether unversioned `/api` keeps working during a transition) that
       needs a rollout plan, not a drive-by route mount.
+      Asked; chose "break it and fix it" over an additive/dual-mount
+      transition period — `settings.API_PREFIX` default changed from `/api`
+      to `/api/v1` outright, no back-compat redirect.
+      DONE — since every backend route was already mounted via
+      `prefix=api_prefix` / `settings.API_PREFIX` (only 2 exceptions: the
+      Hanko admin/OSM routers in `main.py` hardcoded `prefix="/api"`, fixed
+      to use the same `api_prefix` var), the prefix bump was a one-line
+      `app/config.py` change. Everything downstream that breaks:
+      - Frontend: 10 call sites doing
+        `getRuntimeConfig('VITE_API_URL', '/api')` (App.tsx, services/
+        index.ts, services/public.ts, views/IndividualProject/index.tsx,
+        components/HankoAuth, GoogleAuth, DroneOperatorTask/
+        DescriptionSection, modules/user-auth-module's Login,
+        routes/ProtectedRoute) → fallback bumped to `/api/v1`.
+      - `utils/index.ts`'s `buildDownloadUrl()` had a **real bug** here: it
+        stripped a hardcoded literal `/api` (4 chars) off asset paths the
+        backend already prefixes with `API_PREFIX`, to avoid doubling when
+        re-prepending the API base. With prefix `/api/v1` that hardcoded
+        slice(4) would produce `/api/v1/v1/...`. Rewrote to strip by the
+        *actual* configured base's path length (falling back to the old
+        literal-`/api` strip only for truly legacy unversioned paths).
+        Added `src/utils/buildDownloadUrl.test.ts` (5 cases, incl. a
+        regression test for the doubling bug) - this file had no prior test
+        coverage.
+      - `docker-entrypoint.sh`, `compose.yaml`, `chart/values.yaml` (+
+        `chart/README.md`), `.env.example`, `docs/dev/setup.md`,
+        `docs/dev/imagery-upload.md`, `src/gcp-editor/README.md`: updated
+        `/api` defaults/examples to `/api/v1`.
+      - Backend tests: 103 hardcoded `/api/...` literals across 13 test
+        files → `/api/v1/...` (mechanical `sed`, verified no doubling, no
+        stray un-migrated `/api/` left).
+      Verified: full backend suite 265/265 + coverage report clean;
+      confirmed live via `curl` inside the test container that `/api/v1/
+      docs` returns 200 and the old `/api/docs` now 404s; frontend `tsc`
+      + `vite build` + `eslint --fix` (caught and fixed one `no-nested-
+      ternary` from the buildDownloadUrl rewrite) + `vitest run` (19/19,
+      up from 14) all clean.
 
 ## CI/CD & Delivery — P0
 

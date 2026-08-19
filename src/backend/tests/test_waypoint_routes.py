@@ -50,7 +50,7 @@ async def test_terrain_follow_missing_dem_returns_409(
     monkeypatch.setattr(waypoint_routes, "check_file_exists", lambda *args: False)
 
     response = await client.post(
-        f"/api/waypoint/task/{task_id}?project_id={project_id}&download=true"
+        f"/api/v1/waypoint/task/{task_id}?project_id={project_id}&download=true"
     )
 
     assert response.status_code == 409
@@ -88,7 +88,7 @@ async def test_terrain_follow_missing_dem_can_override(
     )
 
     response = await client.post(
-        f"/api/waypoint/task/{task_id}?project_id={project_id}&download=true&allow_missing_dem=true"
+        f"/api/v1/waypoint/task/{task_id}?project_id={project_id}&download=true&allow_missing_dem=true"
     )
 
     assert response.status_code == 200
@@ -135,7 +135,7 @@ async def test_terrain_follow_dem_present_in_s3_downloads_before_generation(
     )
 
     response = await client.post(
-        f"/api/waypoint/task/{task_id}?project_id={project_id}&download=true"
+        f"/api/v1/waypoint/task/{task_id}?project_id={project_id}&download=true"
     )
 
     assert response.status_code == 200
@@ -178,7 +178,7 @@ async def test_terrain_follow_preview_passes_dem_to_placemarks(
     monkeypatch.setattr(waypoint_routes, "build_placemarks", fake_build_placemarks)
 
     response = await client.post(
-        f"/api/waypoint/task/{task_id}?project_id={project_id}&download=false"
+        f"/api/v1/waypoint/task/{task_id}?project_id={project_id}&download=false"
     )
 
     assert response.status_code == 200

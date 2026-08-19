@@ -68,6 +68,6 @@ async def test_presigned_url_enforces_limit_over_real_http(client, monkeypatch):
         lambda key, expires_hours=1: f"signed:{key}",
     )
     response = await client.get(
-        "/api/public/presigned-url", params={"key": "tutorials/x.mp4"}
+        "/api/v1/public/presigned-url", params={"key": "tutorials/x.mp4"}
     )
     assert response.status_code == 200

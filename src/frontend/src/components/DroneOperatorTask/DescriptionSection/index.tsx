@@ -12,7 +12,7 @@ import { m } from '@/paraglide/messages';
 import MapSection from '../MapSection/MapSection';
 import DescriptionBox from './DescriptionBox';
 
-const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 
 const DroneOperatorDescriptionBox = () => {
   const {

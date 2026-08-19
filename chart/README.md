@@ -74,7 +74,7 @@ drone.hotosm.org       → CloudFront → S3 (frontend)
 api.drone.hotosm.org   → K8s Ingress → backend
 ```
 
-Set `API_PREFIX: ""` so the backend serves routes at root instead of `/api`,
+Set `API_PREFIX: ""` so the backend serves routes at root instead of `/api/v1`,
 and configure CORS so the frontend can call the API cross-origin.
 
 #### Frontend Configuration Reference
@@ -349,7 +349,7 @@ frontend:
 
 A dynamic `config.js` is injected at runtime (no rebuild needed):
 
-- **bundleWithBackend**: defaults to `/api` (same-origin), works out of the box.
+- **bundleWithBackend**: defaults to `/api/v1` (same-origin), works out of the box.
 - **cloudfront**: set `frontend.runtimeEnv.VITE_API_URL` to the backend URL (e.g. `https://api.drone.hotosm.org`).
 
 ## Environment Variables

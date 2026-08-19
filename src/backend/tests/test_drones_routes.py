@@ -6,7 +6,7 @@ from app.models.enums import HTTPStatus
 async def test_get_drone_altitude_by_country(client):
     """Test getting drone altitude by country."""
     country = "canada"
-    response = await client.get(f"/api/drones/drone-altitude/{country}")
+    response = await client.get(f"/api/v1/drones/drone-altitude/{country}")
     assert response.status_code == HTTPStatus.OK
 
     return response.json()

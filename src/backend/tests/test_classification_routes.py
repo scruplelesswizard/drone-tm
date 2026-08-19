@@ -156,7 +156,7 @@ async def test_start_project_classification_returns_no_job_when_no_staged_images
     fake_redis = FakeRedis()
     app.dependency_overrides[get_redis_pool] = lambda: fake_redis
 
-    resp = await client.post(f"/api/projects/{project_id}/classify")
+    resp = await client.post(f"/api/v1/projects/{project_id}/classify")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -194,7 +194,7 @@ async def test_start_project_classification_enqueues_job_for_staged_images(
     fake_redis = FakeRedis()
     app.dependency_overrides[get_redis_pool] = lambda: fake_redis
 
-    resp = await client.post(f"/api/projects/{project_id}/classify")
+    resp = await client.post(f"/api/v1/projects/{project_id}/classify")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -220,13 +220,13 @@ async def test_ingest_existing_uploads_route_deduplicates_top_level_job(
 ):
     project_id = create_test_project
 
-    resp1 = await client.post(f"/api/projects/{project_id}/ingest-uploads")
+    resp1 = await client.post(f"/api/v1/projects/{project_id}/ingest-uploads")
     assert resp1.status_code == 200
     body1 = resp1.json()
     assert body1["message"] == "Ingestion job queued"
     assert body1["job_id"] == f"ingest-uploads:{project_id}"
 
-    resp2 = await client.post(f"/api/projects/{project_id}/ingest-uploads")
+    resp2 = await client.post(f"/api/v1/projects/{project_id}/ingest-uploads")
     assert resp2.status_code == 200
     body2 = resp2.json()
     assert body2["message"] == "Ingestion job already queued"
@@ -249,7 +249,7 @@ async def test_ingest_existing_uploads_route_deduplicates_top_level_job(
 @pytest.mark.asyncio
 async def test_imagery_status_empty_project(client, create_test_project):
     project_id = create_test_project
-    resp = await client.get(f"/api/projects/{project_id}/imagery/status")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/status")
     assert resp.status_code == 200
     body = resp.json()
     assert body["total"] == 0
@@ -363,7 +363,7 @@ async def test_imagery_status_counts_by_status(
         db, project_id=project_id, uploaded_by=auth_user.id, status="rejected"
     )
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/status")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/status")
     assert resp.status_code == 200
     body = resp.json()
     assert body["total"] == 3
@@ -385,7 +385,7 @@ async def test_imagery_images_returns_all(client, db, auth_user, create_test_pro
         db, project_id=project_id, uploaded_by=auth_user.id, status="rejected"
     )
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/images")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/images")
     assert resp.status_code == 200
     body = resp.json()
     assert body["count"] == 2
@@ -411,7 +411,7 @@ async def test_imagery_images_incremental_polling(
     # Polling with a timestamp after the classified_at should return nothing
     future = datetime(2099, 1, 1, tzinfo=timezone.utc).isoformat()
     resp = await client.get(
-        f"/api/projects/{project_id}/imagery/images",
+        f"/api/v1/projects/{project_id}/imagery/images",
         params={"last_timestamp": future},
     )
     assert resp.status_code == 200
@@ -420,7 +420,7 @@ async def test_imagery_images_incremental_polling(
     # Polling with a timestamp before the classified_at should return the image
     before = datetime(2019, 1, 1, tzinfo=timezone.utc).isoformat()
     resp = await client.get(
-        f"/api/projects/{project_id}/imagery/images",
+        f"/api/v1/projects/{project_id}/imagery/images",
         params={"last_timestamp": before},
     )
     assert resp.status_code == 200
@@ -451,7 +451,7 @@ async def test_task_image_urls_variant_thumb_only(
     )
 
     resp = await client.get(
-        f"/api/projects/{project_id}/imagery/task/{task_id}/image-urls",
+        f"/api/v1/projects/{project_id}/imagery/task/{task_id}/image-urls",
         params={"variant": "thumb"},
     )
 
@@ -496,7 +496,7 @@ async def test_bulk_image_urls_returns_requested_variant_only(
     )
 
     resp = await client.post(
-        f"/api/projects/{project_id}/imagery/image-urls",
+        f"/api/v1/projects/{project_id}/imagery/image-urls",
         json={"image_ids": [image_id], "variant": "full"},
     )
 
@@ -516,7 +516,7 @@ async def test_bulk_image_urls_rejects_invalid_variant(client, create_test_proje
     project_id = create_test_project
 
     resp = await client.post(
-        f"/api/projects/{project_id}/imagery/image-urls",
+        f"/api/v1/projects/{project_id}/imagery/image-urls",
         json={"image_ids": [], "variant": "bad"},
     )
 
@@ -541,7 +541,7 @@ async def test_review_includes_unmatched_images(
         lat=OUTSIDE_LAT,
     )
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/review")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/review")
     assert resp.status_code == 200
     body = resp.json()
     assert body["total_images"] == 1
@@ -571,7 +571,7 @@ async def test_review_groups_by_task(client, db, auth_user, create_test_project)
         task_id=None,
     )
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/review")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/review")
     assert resp.status_code == 200
     body = resp.json()
     assert body["total_images"] == 2
@@ -589,7 +589,7 @@ async def test_map_data_returns_all_tasks(client, db, auth_user, create_test_pro
     await _insert_task(db, project_id=project_id, task_index=1)
     await _insert_task(db, project_id=project_id, task_index=2)
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/map-data")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/map-data")
     assert resp.status_code == 200
     body = resp.json()
     assert body["total_tasks"] == 2
@@ -613,7 +613,7 @@ async def test_map_data_includes_unmatched_images(
         lat=OUTSIDE_LAT,
     )
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/map-data")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/map-data")
     assert resp.status_code == 200
     body = resp.json()
     assert body["total_images"] == 1
@@ -635,7 +635,7 @@ async def test_map_data_has_imagery_flag(client, db, auth_user, create_test_proj
         lat=INSIDE_LAT,
     )
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/map-data")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/map-data")
     assert resp.status_code == 200
     body = resp.json()
     features = body["tasks"]["features"]
@@ -668,7 +668,7 @@ async def test_map_data_mixed_gps_and_unlocated_images(
         filename="no-gps.jpg",
     )
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/map-data")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/map-data")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -743,7 +743,7 @@ async def test_task_verification_aggregates_assigned_images_across_batches(
     )
 
     resp = await client.get(
-        f"/api/projects/{project_id}/imagery/task/{task_id}/verification"
+        f"/api/v1/projects/{project_id}/imagery/task/{task_id}/verification"
     )
 
     assert resp.status_code == 200
@@ -766,7 +766,7 @@ async def test_task_verification_returns_404_for_missing_task(
     fake_task_id = str(uuid.uuid4())
 
     resp = await client.get(
-        f"/api/projects/{project_id}/imagery/task/{fake_task_id}/verification"
+        f"/api/v1/projects/{project_id}/imagery/task/{fake_task_id}/verification"
     )
 
     assert resp.status_code == 404
@@ -794,7 +794,7 @@ async def test_mark_task_verified_enqueues_background_move_job(
     app.dependency_overrides[get_redis_pool] = lambda: fake_redis
 
     resp = await client.post(
-        f"/api/projects/{project_id}/tasks/{task_id}/mark-verified"
+        f"/api/v1/projects/{project_id}/tasks/{task_id}/mark-verified"
     )
 
     assert resp.status_code == 200
@@ -856,7 +856,7 @@ async def test_mark_task_verified_reports_already_queued_job(
     app.dependency_overrides[get_redis_pool] = lambda: FakeRedis()
 
     resp = await client.post(
-        f"/api/projects/{project_id}/tasks/{task_id}/mark-verified"
+        f"/api/v1/projects/{project_id}/tasks/{task_id}/mark-verified"
     )
 
     assert resp.status_code == 200
@@ -901,7 +901,7 @@ async def test_mark_task_verified_requeues_when_existing_job_is_complete(
     app.dependency_overrides[get_redis_pool] = lambda: fake_redis
 
     resp = await client.post(
-        f"/api/projects/{project_id}/tasks/{task_id}/mark-verified"
+        f"/api/v1/projects/{project_id}/tasks/{task_id}/mark-verified"
     )
 
     assert resp.status_code == 200
@@ -934,7 +934,7 @@ async def test_mark_task_verified_rolls_back_ready_event_if_enqueue_returns_none
     app.dependency_overrides[get_redis_pool] = lambda: FakeRedis()
 
     resp = await client.post(
-        f"/api/projects/{project_id}/tasks/{task_id}/mark-verified"
+        f"/api/v1/projects/{project_id}/tasks/{task_id}/mark-verified"
     )
 
     assert resp.status_code == 500
@@ -989,7 +989,7 @@ async def test_mark_task_verified_rolls_back_ready_event_if_retry_enqueue_raises
     app.dependency_overrides[get_redis_pool] = lambda: FakeRedis()
 
     resp = await client.post(
-        f"/api/projects/{project_id}/tasks/{task_id}/mark-verified"
+        f"/api/v1/projects/{project_id}/tasks/{task_id}/mark-verified"
     )
 
     assert resp.status_code == 500
@@ -1031,7 +1031,7 @@ async def test_mark_task_verified_rolls_back_ready_event_if_enqueue_fails(
     app.dependency_overrides[get_redis_pool] = lambda: FakeRedis()
 
     resp = await client.post(
-        f"/api/projects/{project_id}/tasks/{task_id}/mark-verified"
+        f"/api/v1/projects/{project_id}/tasks/{task_id}/mark-verified"
     )
 
     assert resp.status_code == 500
@@ -1074,7 +1074,7 @@ async def test_accept_image_assigns_to_task(client, db, auth_user, create_test_p
         rejection_reason="Blurry",
     )
 
-    resp = await client.post(f"/api/projects/{project_id}/images/{image_id}/accept")
+    resp = await client.post(f"/api/v1/projects/{project_id}/images/{image_id}/accept")
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "assigned"
@@ -1108,7 +1108,7 @@ async def test_accept_image_unmatched_when_outside_tasks(
         rejection_reason="Bad quality",
     )
 
-    resp = await client.post(f"/api/projects/{project_id}/images/{image_id}/accept")
+    resp = await client.post(f"/api/v1/projects/{project_id}/images/{image_id}/accept")
     assert resp.status_code == 200
     assert resp.json()["status"] == "unmatched"
 
@@ -1126,7 +1126,7 @@ async def test_accept_image_fails_without_gps(
         status="invalid_exif",
     )
 
-    resp = await client.post(f"/api/projects/{project_id}/images/{image_id}/accept")
+    resp = await client.post(f"/api/v1/projects/{project_id}/images/{image_id}/accept")
     assert resp.status_code == 400
 
 
@@ -1146,7 +1146,7 @@ async def test_assign_task_persists_to_db(client, db, auth_user, create_test_pro
     )
 
     resp = await client.post(
-        f"/api/projects/{project_id}/images/{image_id}/assign-task",
+        f"/api/v1/projects/{project_id}/images/{image_id}/assign-task",
         json={"task_id": task_id},
     )
     assert resp.status_code == 200
@@ -1178,7 +1178,7 @@ async def test_assign_task_rejects_already_assigned(
     )
 
     resp = await client.post(
-        f"/api/projects/{project_id}/images/{image_id}/assign-task",
+        f"/api/v1/projects/{project_id}/images/{image_id}/assign-task",
         json={"task_id": task_id},
     )
     assert resp.status_code == 400
@@ -1198,7 +1198,7 @@ async def test_assign_task_rejects_non_unmatched(
     )
 
     resp = await client.post(
-        f"/api/projects/{project_id}/images/{image_id}/assign-task",
+        f"/api/v1/projects/{project_id}/images/{image_id}/assign-task",
         json={"task_id": task_id},
     )
     assert resp.status_code == 400
@@ -1219,7 +1219,7 @@ async def test_assign_task_rejects_invalid_task_id(
     fake_task_id = str(uuid.uuid4())
 
     resp = await client.post(
-        f"/api/projects/{project_id}/images/{image_id}/assign-task",
+        f"/api/v1/projects/{project_id}/images/{image_id}/assign-task",
         json={"task_id": fake_task_id},
     )
     assert resp.status_code == 400
@@ -1239,7 +1239,7 @@ async def test_delete_image_persists(client, db, auth_user, create_test_project)
         status="rejected",
     )
 
-    resp = await client.delete(f"/api/projects/{project_id}/images/{image_id}")
+    resp = await client.delete(f"/api/v1/projects/{project_id}/images/{image_id}")
     assert resp.status_code == 200
 
     async with db.cursor() as cur:
@@ -1262,7 +1262,7 @@ async def test_delete_image_404_wrong_project(
     )
     fake_project = str(uuid.uuid4())
 
-    resp = await client.delete(f"/api/projects/{fake_project}/images/{image_id}")
+    resp = await client.delete(f"/api/v1/projects/{fake_project}/images/{image_id}")
     assert resp.status_code == 404
 
 
@@ -1289,7 +1289,7 @@ async def test_task_imagery_summary(client, db, auth_user, create_test_project):
         task_id=task_id,
     )
 
-    resp = await client.get(f"/api/projects/{project_id}/imagery/tasks")
+    resp = await client.get(f"/api/v1/projects/{project_id}/imagery/tasks")
     assert resp.status_code == 200
     body = resp.json()
     assert len(body) == 1

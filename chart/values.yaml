@@ -147,9 +147,9 @@ frontend:
     tag: ""
     pullPolicy: IfNotPresent
   # Runtime config injected into `/config.js` at pod start.
-  # VITE_API_URL defaults to `/api` (same-origin, path-based).
+  # VITE_API_URL defaults to `/api/v1` (same-origin, path-based).
   runtimeEnv: {}
-  #   VITE_API_URL: "/api"
+  #   VITE_API_URL: "/api/v1"
 
   mode: "bundleWithBackend"
 

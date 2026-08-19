@@ -34,7 +34,7 @@ async def test_create_project_with_files(
     }
 
     files = {k: v for k, v in files.items() if v is not None}
-    response = await client.post("/api/projects", files=files)
+    response = await client.post("/api/v1/projects", files=files)
     assert response.status_code == 200
     return response.json()
 
@@ -108,7 +108,7 @@ async def test_upload_project_task_boundaries(client, create_test_project):
         "geojson": ("file.geojson", BytesIO(task_geojson), "application/geo+json")
     }
     response = await client.post(
-        f"/api/projects/{project_id}/upload-task-boundaries", files=geojson_files
+        f"/api/v1/projects/{project_id}/upload-task-boundaries", files=geojson_files
     )
     assert response.status_code == 200
     return response.json()
@@ -117,7 +117,7 @@ async def test_upload_project_task_boundaries(client, create_test_project):
 @pytest.mark.asyncio
 async def test_read_projects(client):
     """Test reading all projects."""
-    response = await client.get("/api/projects")
+    response = await client.get("/api/v1/projects")
     assert response.status_code == 200
     assert "results" in response.json()
 
@@ -126,8 +126,8 @@ async def test_read_projects(client):
 async def test_trailing_slash_no_longer_matches(client):
     """redirect_slashes=False means a trailing-slash URL is a 404, not a
     redirect - routes were standardized on no trailing slash, so the old
-    "/api/projects/" form must not silently keep working."""
-    response = await client.get("/api/projects/")
+    "/api/v1/projects/" form must not silently keep working."""
+    response = await client.get("/api/v1/projects/")
     assert response.status_code == 404
 
 
@@ -139,7 +139,7 @@ async def test_regulator_comment_rejects_invalid_approval_status(
     422 validation error instead of being accepted as an arbitrary string."""
     project_id = create_test_project
     response = await client.post(
-        f"/api/projects/regulator/comment/{project_id}",
+        f"/api/v1/projects/regulator/comment/{project_id}",
         json={"regulator_comment": "looks fine", "regulator_approval_status": "MAYBE"},
     )
     assert response.status_code == 422
@@ -150,7 +150,7 @@ async def test_regulator_comment_rejects_missing_comment(client, create_test_pro
     """regulator_comment is required; omitting it is a 422, not a KeyError."""
     project_id = create_test_project
     response = await client.post(
-        f"/api/projects/regulator/comment/{project_id}",
+        f"/api/v1/projects/regulator/comment/{project_id}",
         json={"regulator_approval_status": "APPROVED"},
     )
     assert response.status_code == 422
@@ -165,7 +165,7 @@ async def test_regulator_comment_valid_body_reaches_authorization_check(
     the boundary this endpoint's typed schema is responsible for."""
     project_id = create_test_project
     response = await client.post(
-        f"/api/projects/regulator/comment/{project_id}",
+        f"/api/v1/projects/regulator/comment/{project_id}",
         json={
             "regulator_comment": "looks fine",
             "regulator_approval_status": "APPROVED",
@@ -181,7 +181,7 @@ async def test_oam_upload_tags_rejects_wrong_shape(client, create_test_project):
     unvalidated dict shape reaching the OAM upload task."""
     project_id = create_test_project
     response = await client.post(
-        f"/api/projects/{project_id}/upload-to-oam",
+        f"/api/v1/projects/{project_id}/upload-to-oam",
         json={"tags": "not-a-list"},
     )
     assert response.status_code == 422
@@ -193,7 +193,7 @@ async def test_oam_upload_tags_defaults_to_empty_list(client, create_test_projec
     failing body validation - whatever happens next is the route's own
     business logic, not a 422."""
     project_id = create_test_project
-    response = await client.post(f"/api/projects/{project_id}/upload-to-oam")
+    response = await client.post(f"/api/v1/projects/{project_id}/upload-to-oam")
     assert response.status_code != 422
 
 
@@ -201,7 +201,7 @@ async def test_oam_upload_tags_defaults_to_empty_list(client, create_test_projec
 async def test_read_project(client, create_test_project):
     """Test reading a single project."""
     project_id = create_test_project
-    response = await client.get(f"/api/projects/{project_id}")
+    response = await client.get(f"/api/v1/projects/{project_id}")
     assert response.status_code == 200
     assert response.json()["id"] == project_id
 
@@ -211,7 +211,7 @@ async def test_read_project_by_slug(client, db, create_test_project):
     """Project detail endpoint should accept the stored slug."""
     project = await project_schemas.DbProject.one(db, create_test_project)
 
-    response = await client.get(f"/api/projects/{project.slug}")
+    response = await client.get(f"/api/v1/projects/{project.slug}")
 
     assert response.status_code == 200
     assert response.json()["id"] == create_test_project
@@ -289,7 +289,7 @@ async def test_read_project_includes_has_gcp_flag(
     project_id = create_test_project
     monkeypatch.setattr(project_schemas, "check_file_exists", lambda *_args: True)
 
-    response = await client.get(f"/api/projects/{project_id}")
+    response = await client.get(f"/api/v1/projects/{project_id}")
 
     assert response.status_code == 200
     assert response.json()["has_gcp"] is True
@@ -301,7 +301,7 @@ async def test_read_project_includes_project_planning_metadata(
 ):
     project_id = create_test_project
 
-    response = await client.get(f"/api/projects/{project_id}")
+    response = await client.get(f"/api/v1/projects/{project_id}")
 
     assert response.status_code == 200
     data = response.json()
@@ -337,7 +337,7 @@ async def test_head_project_odm_assets_returns_available(app, monkeypatch):
             transport=ASGITransport(app=app),
             base_url="http://test",
         ) as test_client:
-            response = await test_client.head(f"/api/projects/odm/export/{project_id}/")
+            response = await test_client.head(f"/api/v1/projects/odm/export/{project_id}/")
     finally:
         app.dependency_overrides.pop(project_deps.get_project_by_id, None)
 
@@ -368,7 +368,7 @@ async def test_head_project_odm_assets_returns_404_when_missing(app, monkeypatch
             transport=ASGITransport(app=app),
             base_url="http://test",
         ) as test_client:
-            response = await test_client.head(f"/api/projects/odm/export/{project_id}/")
+            response = await test_client.head(f"/api/v1/projects/odm/export/{project_id}/")
     finally:
         app.dependency_overrides.pop(project_deps.get_project_by_id, None)
 
@@ -378,7 +378,7 @@ async def test_head_project_odm_assets_returns_404_when_missing(app, monkeypatch
 @pytest.mark.asyncio
 async def test_read_project_centroids(client):
     """Test reading project centroids."""
-    response = await client.get("/api/projects/centroids")
+    response = await client.get("/api/v1/projects/centroids")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -396,7 +396,7 @@ async def test_create_terrain_follow_project_succeeds_when_redis_unavailable(
     monkeypatch.setattr(project_routes, "get_redis_pool", fake_get_redis_pool)
 
     response = await client.post(
-        "/api/projects",
+        "/api/v1/projects",
         files={"project_info": (None, project_info_json, "application/json")},
     )
     assert response.status_code == 200
@@ -443,7 +443,7 @@ async def test_preview_split_by_square_returns_422_for_invalid_geometry(
     ).encode("utf-8")
 
     response = await client.post(
-        "/api/projects/preview-split-by-square",
+        "/api/v1/projects/preview-split-by-square",
         files={
             "project_geojson": (
                 "aoi.geojson",
@@ -515,7 +515,7 @@ async def test_preview_split_multi_feature(client):
         ),
     }
     response = await client.post(
-        "/api/projects/preview-split-by-square",
+        "/api/v1/projects/preview-split-by-square",
         files=files,
         data={"dimension": 100},
     )
@@ -575,7 +575,7 @@ async def test_normalize_aoi_merges_multi_feature_upload(client):
             "application/geo+json",
         ),
     }
-    response = await client.post("/api/projects/normalize-aoi", files=files)
+    response = await client.post("/api/v1/projects/normalize-aoi", files=files)
 
     assert response.status_code == 200
     body = response.json()
@@ -629,7 +629,7 @@ async def test_normalize_aoi_converts_multipolygon_upload(client):
             "application/geo+json",
         ),
     }
-    response = await client.post("/api/projects/normalize-aoi", files=files)
+    response = await client.post("/api/v1/projects/normalize-aoi", files=files)
 
     assert response.status_code == 200
     body = response.json()
@@ -796,7 +796,7 @@ async def test_reconcile_assets_finishes_started_task_when_ortho_exists(
 
     monkeypatch.setattr(project_logic, "get_object_metadata", fake_get_object_metadata)
 
-    response = await client.post(f"/api/projects/assets/{project_id}/reconcile")
+    response = await client.post(f"/api/v1/projects/assets/{project_id}/reconcile")
 
     assert response.status_code == 200
     body = response.json()
@@ -848,7 +848,7 @@ async def test_reconcile_assets_leaves_started_task_when_ortho_missing(
 
     monkeypatch.setattr(project_logic, "get_object_metadata", fake_get_object_metadata)
 
-    response = await client.post(f"/api/projects/assets/{project_id}/reconcile")
+    response = await client.post(f"/api/v1/projects/assets/{project_id}/reconcile")
 
     assert response.status_code == 200
     body = response.json()
@@ -876,7 +876,7 @@ async def test_assign_task_accepts_unmatched_image(
     )
 
     response = await client.post(
-        f"/api/projects/{project_id}/images/{image_id}/assign-task",
+        f"/api/v1/projects/{project_id}/images/{image_id}/assign-task",
         json={"task_id": task_id},
     )
 
@@ -899,7 +899,7 @@ async def test_assign_task_rejects_non_unmatched_image(
     )
 
     response = await client.post(
-        f"/api/projects/{project_id}/images/{image_id}/assign-task",
+        f"/api/v1/projects/{project_id}/images/{image_id}/assign-task",
         json={"task_id": task_id},
     )
 
@@ -927,7 +927,7 @@ async def test_process_imagery_blocks_while_task_images_transfer(
     )
 
     response = await client.post(
-        f"/api/projects/process_imagery/{project_id}/{task_id}"
+        f"/api/v1/projects/process_imagery/{project_id}/{task_id}"
     )
 
     assert response.status_code == 409
@@ -968,7 +968,7 @@ async def test_process_imagery_enqueues_when_transfer_complete(
     app.dependency_overrides[get_redis_pool] = lambda: fake_redis
 
     response = await client.post(
-        f"/api/projects/process_imagery/{project_id}/{task_id}"
+        f"/api/v1/projects/process_imagery/{project_id}/{task_id}"
     )
 
     assert response.status_code == 200
@@ -1025,7 +1025,7 @@ async def test_process_all_imagery_blocks_when_all_ready_tasks_transferring(
         )
     await db.commit()
 
-    response = await client.post(f"/api/projects/process_all_imagery/{project_id}")
+    response = await client.post(f"/api/v1/projects/process_all_imagery/{project_id}")
 
     assert response.status_code == 409
     assert response.json()["detail"] == (
@@ -1094,7 +1094,7 @@ async def test_process_all_imagery_blocks_when_ready_tasks_are_mixed_transfer_st
     fake_redis = FakeRedis()
     app.dependency_overrides[get_redis_pool] = lambda: fake_redis
 
-    response = await client.post(f"/api/projects/process_all_imagery/{project_id}")
+    response = await client.post(f"/api/v1/projects/process_all_imagery/{project_id}")
 
     assert response.status_code == 409
     assert response.json()["detail"] == (
