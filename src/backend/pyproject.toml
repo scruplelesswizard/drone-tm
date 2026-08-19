@@ -108,6 +108,23 @@ write-changes = true
 [tool.pytest.ini_options]
 markers = ["integration: marks tests that exercise integrated services or workflows"]
 
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/migrations/*", "app/scripts/2026/*"]
+
+[tool.coverage.report]
+# Set just below the real measured baseline (60% at the time this was
+# added, via `coverage run -m pytest && coverage report`), not guessed -
+# see todo.md's Backend/CI-CD coverage-threshold entry. Small margin so
+# this gates real regressions, not noise from coverage.py's line-count
+# rounding between runs.
+fail_under = 58
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+]
+
 [tool.mypy]
 python_version = "3.11"
 plugins = ["pydantic.mypy"]

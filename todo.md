@@ -229,28 +229,77 @@ inline on the original item.
       specific PostGIS major versions as upgrade-path steps, not a
       normal deployed image. CodeQL not covered by this item — no code-
       scanning config added.
-- [ ] Turn on container image scanning (`tag_build.yml:19` explicitly sets
+- [x] Turn on container image scanning (`tag_build.yml:19` explicitly sets
       `scan_image: false` for the backend image)
+      DONE — flipped to `scan_image: true` (`tag_build.yml:19`). Verified
+      the workflow still passes `actionlint`.
 
 ## CI/CD & Delivery — P1
 
-- [ ] Add a secret-scanning CI gate (today: local pre-commit only)
+- [x] Add a secret-scanning CI gate (today: local pre-commit only)
+      DONE — new `.github/workflows/secret_scan.yml`, `gitleaks/gitleaks-
+      action@v2` on push to `main`/`dev`, `pull_request`, and manual
+      `workflow_dispatch`. `actions/checkout@v4` with `fetch-depth: 0`
+      (gitleaks needs full history to scan commits, not just the tip).
+      Verified via `actionlint`.
 - [ ] Confirm/enable branch protection on `main`/`dev` (branch-protection API
       returned 404 for both — status unconfirmed, likely absent)
+      Asked; explicitly out of scope for the "mechanical + secret-scanning +
+      lint-staged" CI/CD batch (2026-08 session) — not a code change, needs
+      live GitHub admin API access this session doesn't have. Still open.
 - [ ] Build & push images on every merge to `dev`, not just on release —
       tag by git-sha, keep semver tagging for releases
+      Asked; explicitly out of scope for the same batch (deploy-cadence
+      change, not mechanical). Still open. Note: this is also what blocks
+      the OpenAPI doc-gen item below — see its writeup.
 
 ## CI/CD & Delivery — P2
 
-- [ ] Enforce a coverage threshold in backend CI (`coverage`/`coverage-badge`
+- [x] Enforce a coverage threshold in backend CI (`coverage`/`coverage-badge`
       installed but unconfigured; `pytest` invocation has no `--cov`)
-- [ ] Wire up the dormant `lint-staged` config (declared in `package.json`,
+      DONE — `pytest-cov` is NOT installed in this repo (only plain
+      `coverage`), so `--cov` was never going to work here; switched
+      `tasks/test`'s pytest invocation to `coverage run -m pytest &&
+      coverage report`. Added `[tool.coverage.run]` (source=app, omits
+      migrations/scripts) and `[tool.coverage.report]` with `fail_under=58`
+      to `src/backend/pyproject.toml`. Measured actual baseline inside the
+      test container: 60% (8299 stmts, 3287 miss) — threshold set a small
+      margin below to gate real regressions, not line-count rounding noise.
+      Verified `fail_under=58` passes at the real 60%, and correctly fails
+      when tested against an artificially high threshold.
+- [x] Wire up the dormant `lint-staged` config (declared in `package.json`,
       but no `husky`/`.husky/` exists to invoke it)
+      DONE — rather than adding a second git-hook manager (`husky`) next to
+      this repo's existing `pre-commit`, added a `- repo: local` hook to
+      `.pre-commit-config.yaml` (`language: system`, matching the existing
+      `mypy` hook) that runs `pnpm exec lint-staged` from `src/frontend`,
+      scoped via `files:` to staged `.js/.jsx/.ts/.tsx`. Added `lint-staged`
+      to `package.json` devDependencies, `pnpm-lock.yaml` regenerated.
+      Verified functionally: staged a trivial change, ran the hook's
+      `entry:` command manually (confirmed `eslint --fix` ran and re-staged
+      the result), reverted the trivial change. `pre-commit` CLI itself
+      isn't installed in this sandbox so couldn't run a literal
+      `pre-commit run` end-to-end.
 
 ## CI/CD & Delivery — P3
 
-- [ ] Add OCI image labels + re-enable OpenAPI doc generation
+- [x] Add OCI image labels + re-enable OpenAPI doc generation
       (`build_openapi_json` in `docs.yml` is fully commented out)
+      Split: OCI labels DONE, OpenAPI doc-gen still blocked.
+      Labels — added `org.opencontainers.image.{title,description,source,
+      licenses,vendor}` `LABEL` instructions to `src/backend/Dockerfile`
+      (`service` stage) and `src/frontend/Dockerfile` (`prod` stage).
+      Verified via `docker inspect ... --format '{{json .Config.Labels}}'`
+      on a built backend image; both images still build cleanly.
+      OpenAPI doc-gen — still blocked, not attempted. `docs.yml`'s commented
+      -out `build_openapi_json` job references image tag
+      `ghcr.io/${{ github.repository }}/backend:ci-${{ github.ref_name }}`,
+      which nothing in the current workflow set builds or pushes — only
+      `tag_build.yml` (release-triggered, semver tags) produces images.
+      Re-enabling this depends on the "build & push images on every merge
+      to dev" P1 item above, which was explicitly excluded from this
+      session's CI/CD scope (deploy-cadence change). Left `docs.yml`
+      unedited; revisit once that item is picked up.
 
 ## Kubernetes & Infra — P0
 

@@ -16,7 +16,7 @@ jobs:
       image_name: ghcr.io/${{ github.repository }}/backend
       dockerfile: backend/Dockerfile
       extra_build_args: MONITORING=sentry
-      scan_image: false
+      scan_image: true
       multi_arch: true
 
   frontend-build:
