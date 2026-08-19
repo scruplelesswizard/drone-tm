@@ -20,26 +20,26 @@ const ExportSection = ({ projectData }: IExportSectionProps) => {
         <p className="naxatw-pb-3 naxatw-text-sm">{projectData?.description}</p>
         <div className="naxatw-mb-6 naxatw-w-fit naxatw-rounded-xl naxatw-border naxatw-px-4 naxatw-py-1 naxatw-text-gray-600">
           <div className="naxatw-flex naxatw-gap-1 naxatw-border-b naxatw-py-1">
-            <p className="naxatw-w-28 naxatw-text-xs md:naxatw-w-36">
+            <p className="naxatw-min-w-28 naxatw-text-xs md:naxatw-min-w-36">
               {m.export_section_total_project_area()}
             </p>
-            <p className="naxatw-w-28 naxatw-text-xs naxatw-font-semibold">
+            <p className="naxatw-min-w-28 naxatw-text-xs naxatw-font-semibold">
               {projectData?.project_area?.toFixed(3)} km²
             </p>
           </div>
           <div className="naxatw-flex naxatw-gap-1 naxatw-border-b naxatw-py-1">
-            <p className="naxatw-w-28 naxatw-text-xs md:naxatw-w-36">
+            <p className="naxatw-min-w-28 naxatw-text-xs md:naxatw-min-w-36">
               {m.export_section_project_created_by()}
             </p>
-            <p className="naxatw-w-28 naxatw-text-xs naxatw-font-semibold">
+            <p className="naxatw-min-w-28 naxatw-text-xs naxatw-font-semibold">
               {projectData?.author_name || ''}
             </p>
           </div>
           <div className="naxatw-flex naxatw-gap-1 naxatw-py-1">
-            <p className="naxatw-w-28 naxatw-text-xs md:naxatw-w-36">
+            <p className="naxatw-min-w-28 naxatw-text-xs md:naxatw-min-w-36">
               {m.export_section_total_tasks()}
             </p>
-            <p className="naxatw-w-28 naxatw-text-xs naxatw-font-semibold">
+            <p className="naxatw-min-w-28 naxatw-text-xs naxatw-font-semibold">
               {projectData?.tasks?.length || ''}
             </p>
           </div>

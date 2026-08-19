@@ -167,7 +167,7 @@ const DescriptionSection = ({
         <div className="naxatw-flex naxatw-flex-col naxatw-gap-1">
           {projectData?.id && (
             <div className="naxatw-flex naxatw-gap-2">
-              <p className="naxatw-w-[146px]">{m.proj_desc_project_id()}</p>
+              <p className="naxatw-min-w-[146px]">{m.proj_desc_project_id()}</p>
               <p>:</p>
               <p className="naxatw-font-semibold">{projectData.id}</p>
             </div>
@@ -183,7 +183,9 @@ const DescriptionSection = ({
                   className="naxatw-flex naxatw-gap-2"
                   key={descriptionItem.key}
                 >
-                  <p className="naxatw-w-[146px]">{descriptionItem.label}</p>
+                  <p className="naxatw-min-w-[146px]">
+                    {descriptionItem.label}
+                  </p>
                   <p>:</p>
                   <p className="naxatw-font-semibold">
                     {formatDescriptionValue(value, dataType)} {unit}
@@ -198,7 +200,7 @@ const DescriptionSection = ({
             projectData?.oam_upload_status === 'FAILED' ||
             projectData?.oam_upload_status === 'UPLOADED') && (
             <div className="naxatw-flex naxatw-gap-2">
-              <p className="naxatw-w-[146px]">
+              <p className="naxatw-min-w-[146px]">
                 {m.proj_desc_uploaded_to_oam()}
               </p>
               <p>:</p>
