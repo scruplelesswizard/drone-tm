@@ -638,8 +638,30 @@ inline on the original item.
         Playwright auth fixture (seed a user/project/task via the API,
         mint/inject a session) would unblock deep authenticated e2e
         coverage for this and the remaining 3 components below.
-  - [ ] `DroneOperatorTask/MapSection/MapSection.tsx` (1186 lines) - not
-        started this pass.
+  - [x] `DroneOperatorTask/MapSection/MapSection.tsx` (1186 → 1079 lines) -
+        deliberately conservative pass, unlike the two components above.
+        This file's ~700-line state section (map lifecycle, drag-rotation,
+        take-off-point selection, DEM checks) is far more tightly coupled
+        than ProcessingStatusDialog/TaskVerificationModal's - left entirely
+        untouched rather than risk a subtle behavior regression in a live
+        map *editing* tool (not just a viewer) for a mechanical line-count
+        win. Only extracted the genuinely decoupled, prop-driven UI pieces:
+        `MissingDemModal.tsx` (44), `MapControlsBar.tsx` (62, drone-model/
+        gimbal/waypoint-mode selectors), `MapToolButtons.tsx` (90,
+        rotation/flight-plan/task-area/zoom toggle buttons) - all take
+        explicit props/callbacks, zero state moved.
+        One real lint interaction found: passing `handleRotationToggle`
+        (a hoisted `function` declaration, the one handler of its group not
+        written as a `const ... = () =>` arrow) as a bare prop reference
+        tripped `react/jsx-no-bind`, while the sibling arrow-declared
+        handlers didn't - root cause not fully chased down (likely an
+        eslint-plugin-react quirk around hoisted function declarations).
+        Fixed by wrapping all four handler props in inline arrows at the
+        call site, matching the original code's own pattern exactly (it
+        already wrapped these in arrows before the extraction).
+        Verified: `tsc --noEmit`, `eslint --fix` clean, `pnpm build` clean,
+        Vitest 19/19, Playwright 4/4. Same authenticated/live-map
+        verification caveat as the other two components.
   - [x] `DroneImageProcessingWorkflow/TaskVerificationModal.tsx` (902) →
         directory `TaskVerificationModal/` with `index.tsx` (629, container
         - all map-lifecycle useEffects/mutations/handlers unchanged),
