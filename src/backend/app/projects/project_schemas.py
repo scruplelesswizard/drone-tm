@@ -10,6 +10,7 @@ from app.models.enums import (
     FinalOutput,
     HTTPStatus,
     IntEnum,
+    OAMUploadStatus,
     ProjectCompletionStatus,
     ProjectStatus,
     ProjectVisibility,
@@ -1016,6 +1017,85 @@ class CompleteMultipartUploadRequest(BaseModel):
 class AbortMultipartUploadRequest(BaseModel):
     upload_id: str
     file_key: str
+
+
+class ProjectCreateResponse(BaseModel):
+    message: str
+    project_id: uuid.UUID
+
+
+class TaskBoundaryUploadResponse(BaseModel):
+    message: str
+    project_id: str
+
+
+class ImageProcessingStartResponse(BaseModel):
+    message: str
+    job_id: str
+
+
+class RetryTransferResponse(BaseModel):
+    """Optional fields are omitted (never null) when no transfer was pending -
+    response_model_exclude_none=True on the route keeps that branch's shape intact.
+    """
+
+    message: str
+    pending_transfer_count: int
+    enqueued: bool
+    status: str | None = None
+    job_id: str | None = None
+
+
+class WaypointsCountOut(BaseModel):
+    waypoints: int
+    waylines: int
+
+
+class OamUploadStartResponse(BaseModel):
+    message: str
+    status: OAMUploadStatus
+
+
+class QfieldGenerateResponse(BaseModel):
+    message: str
+    job_id: str
+    project_id: str
+
+
+class QfieldStatusResponse(BaseModel):
+    exists: bool
+    url: str | None = None
+
+
+class InitiateUploadResponse(BaseModel):
+    upload_id: str
+    file_key: str
+
+
+class SignPartUploadResponse(BaseModel):
+    url: str
+    part_number: int
+
+
+class CompleteUploadResponse(BaseModel):
+    message: str
+    file_key: str
+    job_id: str
+
+
+class UploadPartsListResponse(BaseModel):
+    parts: list[dict]
+    upload_id: str
+
+
+class CloudnativeTriggerResponse(BaseModel):
+    status: str
+
+
+class ArqTestTaskResponse(BaseModel):
+    status: str
+    job_id: str
+    message: str
 
 
 class RegulatorCommentIn(BaseModel):
