@@ -114,16 +114,59 @@ inline on the original item.
             normal ~33s. Lesson for next time: don't run a heavy `docker
             compose` test cycle at the same time as another agent is doing
             unrelated heavy work in the same sandbox.
-      - [ ] batch 3+ (60 remaining) — `projects/classification_routes.py`
-            (23), `projects/project_routes.py` (37, largest — also has an
-            existing `response_model` **mismatch** to fix on
+      - [x] batch 3 (23 of 91 routes) — `projects/classification_routes.py`,
+            all 23 routes. Categorized as: (A) routes that build their own
+            dict locally with a known, stable shape → real `response_model`
+            schema (`ClassifyResetStaleResponse`, `ClassifyStartResponse`,
+            `IngestUploadsResponse`, `CreateProjectFromExifResponse`,
+            `ProjectImageryStatusOut`, `ProjectImagesOut`,
+            `TaskImageUrlsOut`, `BulkImageUrlsOut`,
+            `MarkTaskVerifiedResponse`, `FlightGapDetectionResponse`); (B)
+            routes that delegate to `ImageClassifier`'s opaque dict-returning
+            methods (`accept_image`, `reject_image`, `assign_image_to_task`,
+            `delete_batch`, `delete_image`, `delete_invalid_images`, plus a
+            few summary/coverage/review/map-data endpoints) →
+            `response_model=None` with a comment, shape not locally owned;
+            (C) `download_reflight_plan` always returns a file-download
+            `Response` → `summary=` only, no `response_model` kwarg, same as
+            the `waypoint_routes.py` pattern.
+            **Caught and fixed a real regression before committing** (not
+            environmental this time): adding `response_model=
+            ClassifyStartResponse` to `POST /{project_id}/classify` broke
+            `test_start_project_classification_returns_no_job_when_no_staged_images`
+            — the route's "no images" branch returns a 3-key dict (no
+            `job_id`), but FastAPI's `response_model` serialization adds
+            *every* declared schema field, so the optional `job_id: str |
+            None = None` field started appearing as an explicit `"job_id":
+            null` in the response even when the route never set it,
+            breaking the test's exact-dict equality check. Fixed with
+            `response_model_exclude_none=True` on that route decorator.
+            **Lesson**: any route where `response_model` declares an
+            `Optional` field that the route sometimes omits entirely from
+            its returned dict (rather than explicitly setting it to `None`)
+            needs `response_model_exclude_none=True`, or the optional field
+            leaks into responses that didn't have it before. Checked the
+            other new schemas with optional fields in this file
+            (`MarkTaskVerifiedResponse.image_move_job_id`,
+            `FlightGapDetectionResponse`'s several `| None` fields) — both
+            routes always include those keys in their returned dict
+            (via `.get()` or a computed value, never omitted), so no
+            `exclude_none` needed there; confirmed via full-suite pass.
+            Verified via `ruff check`/`format --diff` (clean), full backend
+            suite (257/257 passed), and `api.openapi()` build + summary
+            spot-check on 4 routes.
+      - [ ] batch 4 (37 remaining) — `projects/project_routes.py` (largest —
+            also has an existing `response_model` **mismatch** to fix on
             `read_projects`, which sets `ProjectOut` but actually returns
             a paginated envelope dict, plus a `return HTTPException(...)`
             vs `raise` bug in `upload_imagery_to_oam` worth a look while
             in that function). Streaming/file-response routes throughout
             (`odm/export/*`, `terrain-dem`, `download-boundaries`, etc.)
             should get `summary=` only, matching the `waypoint_routes.py`
-            pattern above — never a guessed `response_model`.
+            pattern above — never a guessed `response_model`. Watch for the
+            same `response_model_exclude_none` trap found in batch 3: any
+            new schema with an `Optional` field must have its route checked
+            for branches that omit the key entirely, not just set it `None`.
 - [ ] **Needs interaction:** introduce `/api/v1` path versioning. This is a
       breaking-change-shaped decision (URL structure, client migration,
       whether unversioned `/api` keeps working during a transition) that

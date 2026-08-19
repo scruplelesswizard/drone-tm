@@ -55,7 +55,91 @@ class FlightGapDownloadPlanRequest(BaseModel):
     overlap: float | None = None
 
 
-@router.post("/{project_id}/classify/reset-stale", tags=["Image Classification"])
+# Response schemas for routes that build their own dict directly (as
+# opposed to passing through an ImageClassifier method's return value,
+# which is typed as a bare `dict`/`list[dict]` at the source and left
+# unvalidated here rather than guessed at - see todo.md).
+
+
+class ClassifyResetStaleResponse(BaseModel):
+    message: str
+    project_id: str
+    reset_count: int
+
+
+class ClassifyStartResponse(BaseModel):
+    message: str
+    project_id: str
+    image_count: int
+    job_id: str | None = None
+
+
+class IngestUploadsResponse(BaseModel):
+    message: str
+    job_id: str
+    project_id: str
+    batch_id: str
+
+
+class CreateProjectFromExifResponse(BaseModel):
+    message: str
+
+
+class ProjectImageryStatusOut(BaseModel):
+    project_id: str
+    total: int
+    staged: int
+    uploaded: int
+    classifying: int
+    assigned: int
+    rejected: int
+    unmatched: int
+    invalid_exif: int
+    duplicate: int
+
+
+class ProjectImagesOut(BaseModel):
+    project_id: str
+    images: list[dict]
+    count: int
+
+
+class TaskImageUrlsOut(BaseModel):
+    task_id: str
+    images: list[dict]
+
+
+class BulkImageUrlsOut(BaseModel):
+    images: list[dict]
+
+
+class MarkTaskVerifiedResponse(BaseModel):
+    message: str
+    task_id: str
+    state: str
+    image_move_job_id: str | None = None
+    image_move_already_queued: bool
+
+
+class FlightGapDetectionResponse(BaseModel):
+    task_id: str
+    message: str | None = None
+    task_geometry: dict | None = None
+    gap_polygons: dict | None = None
+    gap_type: str | None = None
+    drone_type: str | None = None
+    images: list | None = None
+    altitude: float | None = None
+    rotation: float | None = None
+    overlap: float | None = None
+
+
+@router.post(
+    "/{project_id}/classify/reset-stale",
+    tags=["Image Classification"],
+    response_model=ClassifyResetStaleResponse,
+    summary="Reset stuck 'classifying' images back to 'uploaded'",
+)
 async def reset_stale_classification(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -101,7 +185,13 @@ async def reset_stale_classification(
     }
 
 
-@router.post("/{project_id}/classify", tags=["Image Classification"])
+@router.post(
+    "/{project_id}/classify",
+    tags=["Image Classification"],
+    response_model=ClassifyStartResponse,
+    response_model_exclude_none=True,
+    summary="Classify all staged/uploaded images in a project",
+)
 async def start_project_classification(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -163,7 +253,12 @@ async def start_project_classification(
     }
 
 
-@router.post("/{project_id}/ingest-uploads", tags=["Image Classification"])
+@router.post(
+    "/{project_id}/ingest-uploads",
+    tags=["Image Classification"],
+    response_model=IngestUploadsResponse,
+    summary="Enqueue a scan of user-uploads/ for untracked files",
+)
 async def ingest_existing_uploads(
     project_id: UUID,
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
@@ -215,7 +310,12 @@ async def ingest_existing_uploads(
     }
 
 
-@router.post("/project-from-imagery-exif", tags=["Image Classification"])
+@router.post(
+    "/project-from-imagery-exif",
+    tags=["Image Classification"],
+    response_model=CreateProjectFromExifResponse,
+    summary="Create a project by scanning EXIF GPS from a remote S3 path",
+)
 async def create_project_from_imagery_exif(
     body: project_schemas.ProjectFromImageryExifIn,
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
@@ -263,7 +363,12 @@ async def create_project_from_imagery_exif(
     }
 
 
-@router.get("/{project_id}/imagery/status", tags=["Image Classification"])
+@router.get(
+    "/{project_id}/imagery/status",
+    tags=["Image Classification"],
+    response_model=ProjectImageryStatusOut,
+    summary="Get imagery status counts for a project",
+)
 async def get_project_imagery_status(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -307,7 +412,12 @@ async def get_project_imagery_status(
         )
 
 
-@router.get("/{project_id}/imagery/images", tags=["Image Classification"])
+@router.get(
+    "/{project_id}/imagery/images",
+    tags=["Image Classification"],
+    response_model=ProjectImagesOut,
+    summary="Get images for a project across all batches",
+)
 async def get_project_images(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -337,7 +447,12 @@ async def get_project_images(
         )
 
 
-@router.post("/{project_id}/images/{image_id}/accept", tags=["Image Classification"])
+@router.post(
+    "/{project_id}/images/{image_id}/accept",
+    tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.accept_image() -> dict (opaque)
+    summary="Accept an unmatched/duplicate image into a task",
+)
 async def accept_image(
     project_id: UUID,
     image_id: UUID,
@@ -362,7 +477,12 @@ async def accept_image(
         )
 
 
-@router.post("/{project_id}/images/{image_id}/reject", tags=["Image Classification"])
+@router.post(
+    "/{project_id}/images/{image_id}/reject",
+    tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.reject_image() -> dict (opaque)
+    summary="Manually reject an assigned image",
+)
 async def reject_image(
     project_id: UUID,
     image_id: UUID,
@@ -395,6 +515,8 @@ class ManualTaskAssignRequest(BaseModel):
 @router.post(
     "/{project_id}/images/{image_id}/assign-task",
     tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.manual_assign_to_task() -> dict (opaque)
+    summary="Manually assign an image to a task",
 )
 async def assign_image_to_task(
     project_id: UUID,
@@ -423,7 +545,14 @@ async def assign_image_to_task(
         )
 
 
-@router.delete("/{project_id}/batch/{batch_id}", tags=["Image Classification"])
+@router.delete(
+    "/{project_id}/batch/{batch_id}",
+    tags=["Image Classification"],
+    # Dual shape: wait_for_cleanup=True returns ImageClassifier.delete_batch()'s
+    # opaque dict directly; the enqueue branch returns a locally-built dict.
+    response_model=None,
+    summary="Delete a batch of images",
+)
 async def delete_batch(
     project_id: UUID,
     batch_id: UUID,
@@ -463,7 +592,12 @@ async def delete_batch(
         )
 
 
-@router.delete("/{project_id}/images/{image_id}", tags=["Image Classification"])
+@router.delete(
+    "/{project_id}/images/{image_id}",
+    tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.delete_image() -> dict (opaque)
+    summary="Delete a single image from a project",
+)
 async def delete_image(
     project_id: UUID,
     image_id: UUID,
@@ -486,7 +620,12 @@ async def delete_image(
         )
 
 
-@router.delete("/{project_id}/imagery/invalid", tags=["Image Classification"])
+@router.delete(
+    "/{project_id}/imagery/invalid",
+    tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.delete_invalid_images() -> dict (opaque)
+    summary="Delete all invalid/unmatched images for a project",
+)
 async def delete_invalid_images(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -506,7 +645,13 @@ async def delete_invalid_images(
 # ─── Project-level (task-centric) endpoints ──────────────────────────────────
 
 
-@router.get("/{project_id}/imagery/tasks", tags=["Image Classification"])
+@router.get(
+    "/{project_id}/imagery/tasks",
+    tags=["Image Classification"],
+    # ImageClassifier.get_project_task_imagery_summary() -> list[dict] (opaque)
+    response_model=None,
+    summary="Get per-task imagery summary for a project",
+)
 async def get_project_task_imagery_summary(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -526,7 +671,12 @@ async def get_project_task_imagery_summary(
         )
 
 
-@router.get("/{project_id}/imagery/coverage", tags=["Image Classification"])
+@router.get(
+    "/{project_id}/imagery/coverage",
+    tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.get_project_coverage() -> dict (opaque)
+    summary="Get spatial imagery coverage percentage for a project",
+)
 async def get_project_coverage(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -547,7 +697,12 @@ async def get_project_coverage(
         )
 
 
-@router.get("/{project_id}/imagery/review", tags=["Image Classification"])
+@router.get(
+    "/{project_id}/imagery/review",
+    tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.get_project_review_data() -> dict (opaque)
+    summary="Get project-level review data grouped by task",
+)
 async def get_project_review(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -564,7 +719,12 @@ async def get_project_review(
         )
 
 
-@router.get("/{project_id}/imagery/map-data", tags=["Image Classification"])
+@router.get(
+    "/{project_id}/imagery/map-data",
+    tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.get_project_map_data() -> dict (opaque)
+    summary="Get project-level map data (task geometries + image points)",
+)
 async def get_project_map_data(
     project_id: UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -584,6 +744,8 @@ async def get_project_map_data(
 @router.get(
     "/{project_id}/imagery/task/{task_id}/image-urls",
     tags=["Image Classification"],
+    response_model=TaskImageUrlsOut,
+    summary="Get presigned URLs for all images in a task",
 )
 async def get_task_image_urls(
     project_id: UUID,
@@ -612,6 +774,8 @@ async def get_task_image_urls(
 @router.get(
     "/{project_id}/images/{image_id}/url",
     tags=["Image Classification"],
+    response_model=None,  # ImageClassifier.get_single_image_url() -> dict (opaque)
+    summary="Get a presigned URL for a single image",
 )
 async def get_image_url(
     project_id: UUID,
@@ -640,6 +804,8 @@ class BulkImageUrlsRequest(BaseModel):
 @router.post(
     "/{project_id}/imagery/image-urls",
     tags=["Image Classification"],
+    response_model=BulkImageUrlsOut,
+    summary="Get presigned URLs for a list of image IDs",
 )
 async def get_bulk_image_urls(
     project_id: UUID,
@@ -664,6 +830,9 @@ async def get_bulk_image_urls(
 @router.get(
     "/{project_id}/imagery/task/{task_id}/verification",
     tags=["Image Classification"],
+    # ImageClassifier.get_task_verification_data_project() -> dict (opaque)
+    response_model=None,
+    summary="Get task verification data aggregated across all batches",
 )
 async def get_project_task_verification(
     project_id: UUID,
@@ -687,7 +856,10 @@ async def get_project_task_verification(
 
 
 @router.post(
-    "/{project_id}/tasks/{task_id}/mark-verified", tags=["Image Classification"]
+    "/{project_id}/tasks/{task_id}/mark-verified",
+    tags=["Image Classification"],
+    response_model=MarkTaskVerifiedResponse,
+    summary="Mark a task as verified/fully flown after visual inspection",
 )
 async def mark_task_verified(
     project_id: UUID,
@@ -806,6 +978,8 @@ async def mark_task_verified(
 @router.post(
     "/{project_id}/imagery/task/{task_id}/find-gaps",
     tags=["Image Classification"],
+    response_model=FlightGapDetectionResponse,
+    summary="Detect flight coverage gaps for a task's uploaded imagery",
 )
 async def detect_task_flight_gaps(
     project_id: UUID,
@@ -849,6 +1023,7 @@ async def detect_task_flight_gaps(
 @router.post(
     "/{project_id}/imagery/task/{task_id}/generate-flightplan",
     tags=["Image Classification"],
+    summary="Download a reconstructed flight plan for identified gaps",
 )
 async def download_reflight_plan(
     project_id: UUID,
