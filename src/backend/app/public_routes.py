@@ -4,6 +4,7 @@ from app.models.enums import HTTPStatus
 from app.s3 import maybe_presign_s3_key
 from arq import ArqRedis
 from fastapi import APIRouter, Depends, HTTPException, Query
+from loguru import logger as log
 from pydantic import BaseModel
 
 router = APIRouter(tags=["Public"])
@@ -82,7 +83,8 @@ async def get_public_presigned_url(
     try:
         return {"url": maybe_presign_s3_key(key, expires_hours=expires_hours)}
     except Exception as e:
+        log.error(f"Failed to presign URL for key {key}: {e}")
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail="Failed to generate presigned URL.",
         )
