@@ -39,7 +39,11 @@ async def _resolve_project_id(db: Connection, project_id: str) -> uuid.UUID:
         return row["id"]
 
 
-@router.get("/project/{project_id}/{task_index}")
+@router.get(
+    "/project/{project_id}/{task_index}",
+    response_model=task_schemas.TaskDetailsOut,
+    summary="Get task details by project and index",
+)
 async def read_task_by_index(
     project_id: str,
     task_index: int,
@@ -53,7 +57,11 @@ async def read_task_by_index(
     )
 
 
-@router.get("/{task_id}")
+@router.get(
+    "/{task_id}",
+    response_model=task_schemas.TaskDetailsOut,
+    summary="Get task details by ID",
+)
 async def read_task(
     task_id: uuid.UUID,
     db: Annotated[Connection, Depends(database.get_db)],
@@ -63,7 +71,11 @@ async def read_task(
     return await task_schemas.TaskDetailsOut.get_task_details(db, task_id)
 
 
-@router.get("/statistics")
+@router.get(
+    "/statistics",
+    response_model=task_schemas.TaskStats,
+    summary="Get task statistics for the current user",
+)
 async def get_task_stats(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: AuthUser = Depends(login_required),
@@ -72,7 +84,11 @@ async def get_task_stats(
     return await task_logic.get_task_stats(db, user_data)
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=task_schemas.TaskListOut,
+    summary="List tasks visible to the current user",
+)
 async def list_tasks(
     db: Annotated[Connection, Depends(database.get_db)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -86,7 +102,11 @@ async def list_tasks(
     return {"results": results, "pagination": paginate(pagination, total)}
 
 
-@router.get("/states/{project_id}")
+@router.get(
+    "/states/{project_id}",
+    response_model=list[task_schemas.Task],
+    summary="Get all task states for a project",
+)
 async def task_states(
     db: Annotated[Connection, Depends(database.get_db)], project_id: str
 ):
@@ -95,7 +115,15 @@ async def task_states(
     return await task_schemas.Task.all(db, resolved_id)
 
 
-@router.post("/event/{project_id}/{task_id}")
+@router.post(
+    "/event/{project_id}/{task_id}",
+    # handle_event()'s branches don't return a consistent shape - the
+    # REQUEST case (request_mapping()) RETURNING-s project_id/task_id/
+    # comment with no `state`, while every other case (update_task_state())
+    # RETURNING-s project_id/task_id/state/comment. See todo.md.
+    response_model=None,
+    summary="Record an event transitioning a task's state",
+)
 async def new_event(
     db: Annotated[Connection, Depends(database.get_db)],
     background_tasks: BackgroundTasks,
@@ -124,7 +152,11 @@ async def new_event(
     )
 
 
-@router.post("/manual-override/{project_id}/{task_id}")
+@router.post(
+    "/manual-override/{project_id}/{task_id}",
+    response_model=task_schemas.TaskEventOut,
+    summary="Admin failsafe: force a task into an arbitrary state",
+)
 async def manual_override_task_state(
     db: Annotated[Connection, Depends(database.get_db)],
     project_id: str,

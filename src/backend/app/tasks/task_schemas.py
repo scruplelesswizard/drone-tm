@@ -4,6 +4,7 @@ from typing import Literal
 
 from app.config import settings
 from app.models.enums import EventType, HTTPStatus, State
+from app.pagination import PaginationMeta
 from app.s3 import maybe_presign_s3_key
 from fastapi import HTTPException
 from loguru import logger as log
@@ -532,3 +533,24 @@ class TaskStats(BaseModel):
     ongoing_tasks: int
     completed_tasks: int
     unflyable_tasks: int
+
+
+class TaskEventOut(BaseModel):
+    """RETURNING shape from an INSERT into task_events with a state change.
+
+    Only fits update_task_state()'s call sites - request_mapping() (used by
+    handle_event's REQUEST case) RETURNING-s project_id/task_id/comment
+    without state, so it's not a fit for every task_logic function that
+    writes a task_events row. See todo.md for the state-field inconsistency
+    this surfaced.
+    """
+
+    project_id: uuid.UUID
+    task_id: uuid.UUID
+    state: str
+    comment: str | None = None
+
+
+class TaskListOut(BaseModel):
+    results: list[UserTasksOut]
+    pagination: PaginationMeta
