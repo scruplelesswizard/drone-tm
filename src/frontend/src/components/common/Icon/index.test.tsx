@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import Icon from '.';
 
@@ -18,5 +18,23 @@ describe('Icon', () => {
     screen.getByRole('button', { name: 'close' }).click();
 
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onClick on Enter and Space (keyboard activation)', () => {
+    const onClick = vi.fn();
+    render(<Icon name="close" onClick={onClick} />);
+
+    const icon = screen.getByRole('button', { name: 'close' });
+    fireEvent.keyUp(icon, { key: 'Enter' });
+    fireEvent.keyUp(icon, { key: ' ' });
+
+    expect(onClick).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not throw on keyup when no onClick is provided', () => {
+    render(<Icon name="close" />);
+
+    const icon = screen.getByRole('button', { name: 'close' });
+    expect(() => fireEvent.keyUp(icon, { key: 'Enter' })).not.toThrow();
   });
 });
