@@ -1857,16 +1857,16 @@ async def create_project_from_imagery_exif(
 
     # Detect and discard GPS outliers using median ± threshold.
     # Drone surveys never span more than a few dozen km; anything beyond
-    # _OUTLIER_THRESHOLD_DEG (~222 km) from the median is a bad reading.
-    _OUTLIER_THRESHOLD_DEG = 2.0
+    # outlier_threshold_deg (~222 km) from the median is a bad reading.
+    outlier_threshold_deg = 2.0
     if len(key_coords) >= 3:
         median_lat = statistics.median(lat for _, lat, _ in key_coords)
         median_lon = statistics.median(lon for _, _, lon in key_coords)
         filtered: list[tuple[str, float, float]] = []
         for key, lat, lon in key_coords:
             if (
-                abs(lat - median_lat) > _OUTLIER_THRESHOLD_DEG
-                or abs(lon - median_lon) > _OUTLIER_THRESHOLD_DEG
+                abs(lat - median_lat) > outlier_threshold_deg
+                or abs(lon - median_lon) > outlier_threshold_deg
             ):
                 log.warning(
                     f"GPS outlier discarded: {key} "

@@ -31,6 +31,11 @@ class GeometryTopologyError(ValueError):
     """Raised when geometry operations fail due to topology issues."""
 
 
+# Safety limit for split_by_square(): above this cell count, a huge grid
+# almost always means invalid GPS coordinates in the imagery, not a real AOI.
+MAX_SPLIT_GRID_CELLS = 50_000
+
+
 class TaskSplitter:
     """A class to split polygons."""
 
@@ -223,8 +228,7 @@ class TaskSplitter:
         log.debug(
             f"splitBySquare: AOI bounds {xmin:.0f},{ymin:.0f} → {xmax:.0f},{ymax:.0f} (~{est_cols}×{est_rows} grid)"
         )
-        _MAX_CELLS = 50_000
-        if est_cols * est_rows > _MAX_CELLS:
+        if est_cols * est_rows > MAX_SPLIT_GRID_CELLS:
             raise GeometryValidationError(
                 f"AOI grid would require {est_cols * est_rows:,} cells at {meters}m - "
                 "this is almost certainly caused by invalid GPS coordinates in the imagery. "

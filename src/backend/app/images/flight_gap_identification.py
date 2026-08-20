@@ -35,6 +35,15 @@ inverse_projector = pyproj.Transformer.from_crs(
     "EPSG:3857", "EPSG:4326", always_xy=True
 )
 
+# Tuning constants for identify_flight_gaps()'s gap-detection algorithm.
+MIN_DISTANCE_METERS = 5.0
+LEG_SAMPLE_COUNT = 3  # Ensures enough into the trajectory to compare azimuths'
+MIN_GAP_IMAGES = 3  # Minimum missing imagery to create a suggested flightplan
+GAP_EXCEED_BASELINE = 1.5  # Threshold when to detect a missing 'gap'
+MIN_SEGMENT_SIZE = 10  # Main gap analysis
+SPARSE_SEGMENT_MAX_IMAGES = 5  # Sparse gap analysis
+MINIMUM_ALTITUDE = 60  # Fallback altitude value
+
 
 def _geometry_to_feature(geom) -> dict:
     """Wrap a Shapely geometry as a GeoJSON Feature."""
@@ -540,15 +549,6 @@ async def identify_flight_gaps(
         FROM trajectory_data
         ORDER BY sort_ts ASC;
     """
-
-    # Setting all global and tracking variables
-    MIN_DISTANCE_METERS = 5.0
-    LEG_SAMPLE_COUNT = 3  # Ensures enough into the trajectory to compare azimuths'
-    MIN_GAP_IMAGES = 3  # Minimum missing imagery to create a suggested flightplan
-    GAP_EXCEED_BASELINE = 1.5  # Threshold when to detect a missing 'gap'
-    MIN_SEGMENT_SIZE = 10  # Main gap analysis
-    SPARSE_SEGMENT_MAX_IMAGES = 5  # Sparse gap analysis
-    MINIMUM_ALTITUDE = 60  # Fallback altitude value
 
     all_potential_gaps = []
     all_side_overlap_medians = []

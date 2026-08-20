@@ -11,6 +11,22 @@ from loguru import logger as log
 from psycopg import Connection
 from psycopg.rows import dict_row
 
+# Tuning constants shared by _confirm_stable_heading() and
+# mark_and_remove_flight_tail_imagery()'s tail-detection algorithm.
+MIN_DISTANCE_METERS = 5.0
+BASELINE_SAMPLE_COUNT = 5  # Increased from 3 for more stable baseline
+ALT_RATE_THRESHOLD_MPS = 2.0
+LOW_LATERAL_FOR_VERTICAL_METERS = 10.0
+MAX_TAIL_FRACTION = 0.25
+MIN_SEGMENT_SIZE = 10  # Minimum segment size so the baseline heading estimate is stable
+MIN_SEARCH_IMAGES = 30  # Minimum images to search for tails
+MIN_TAIL_LENGTH = (
+    5  # Minimum images to constitute a tail (avoids waypoint turn false positives)
+)
+MAX_BASELINE_SPREAD_DEG = (
+    30.0  # Max angular spread among baseline samples (transit tails are straight)
+)
+
 
 def _confirm_stable_heading(project_list: list, image_index: int, steps: int) -> bool:
     """
@@ -28,7 +44,6 @@ def _confirm_stable_heading(project_list: list, image_index: int, steps: int) ->
         bool: True if the path is stable, False if otherwise.
     """
     # Optional robustness: some callers attach per-row flags/metrics.
-    MIN_DISTANCE_METERS = 5.0
     set_image_azimuth = project_list[image_index]["azimuth"]
     list_length = len(project_list)
 
@@ -237,21 +252,6 @@ async def mark_and_remove_flight_tail_imagery(
     log.info(
         f"Tail detection for task {task_id}: "
         f"Split into {len(segments)} time-contiguous segments"
-    )
-
-    MIN_DISTANCE_METERS = 5.0
-    BASELINE_SAMPLE_COUNT = 5  # Increased from 3 for more stable baseline
-    ALT_RATE_THRESHOLD_MPS = 2.0
-    LOW_LATERAL_FOR_VERTICAL_METERS = 10.0
-    MAX_TAIL_FRACTION = 0.25
-    # We require a minimum segment size so the baseline heading estimate is stable.
-    MIN_SEGMENT_SIZE = 10
-    MIN_SEARCH_IMAGES = 30  # Minimum images to search for tails
-    MIN_TAIL_LENGTH = (
-        5  # Minimum images to constitute a tail (avoids waypoint turn false positives)
-    )
-    MAX_BASELINE_SPREAD_DEG = (
-        30.0  # Max angular spread among baseline samples (transit tails are straight)
     )
 
     for idx, segment in enumerate(segments):

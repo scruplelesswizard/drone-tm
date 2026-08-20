@@ -158,16 +158,16 @@ def get_logger():
     # - psycopg.pool / psycopg_pool: very noisy INFO connection lifecycle
     # - urllib3(.connectionpool): DEBUG request/response lines from Sentry OTLP
     #   trace exports, hammering every ~10s
-    SILENCED_LOGGERS = {
+    silenced_loggers = {
         "psycopg.pool",
         "psycopg_pool",
         "urllib3",
         "urllib3.connectionpool",
     }
-    SKIPPED_LOGGERS = {"sqlalchemy"}
-    FRAMEWORK_LOGGERS = {"uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"}
+    skipped_loggers = {"sqlalchemy"}
+    framework_loggers = {"uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"}
 
-    for logger_name in SILENCED_LOGGERS:
+    for logger_name in silenced_loggers:
         silenced = logging.getLogger(logger_name)
         silenced.handlers = []
         silenced.setLevel(logging.WARNING)
@@ -175,7 +175,7 @@ def get_logger():
 
     # Hook all other known loggers into loguru via InterceptHandler
     for logger_name in set(logging.root.manager.loggerDict):
-        if logger_name in SILENCED_LOGGERS or logger_name in SKIPPED_LOGGERS:
+        if logger_name in silenced_loggers or logger_name in skipped_loggers:
             continue
 
         stdlib_log = logging.getLogger(logger_name)
@@ -183,7 +183,7 @@ def get_logger():
         stdlib_log.setLevel(logging.DEBUG)
 
         is_top_level = "." not in logger_name
-        is_framework = logger_name in FRAMEWORK_LOGGERS
+        is_framework = logger_name in framework_loggers
 
         if is_top_level or is_framework:
             stdlib_log.addHandler(InterceptHandler())

@@ -800,6 +800,33 @@ than as inline notes on the item that found them:
             check` (clean, 0 N805 findings) and full backend suite
             (257/257 - critically, the Pydantic deprecation warning is
             gone from the test output too, confirming the fix is live).
+      - [x] `N806` (22 sites) — DONE. All 22 were genuinely
+            SCREAMING_SNAKE_CASE local "constants" declared inside a
+            function body - no Pydantic/SQLAlchemy false positives
+            actually turned up here (that concern in the original comment
+            seems to have been about `N805`, not this rule). Two different
+            fixes depending on the file:
+            - `flight_gap_identification.py` (7), `flight_tail_removal.py`
+              (9, across 2 functions - `MIN_DISTANCE_METERS` was
+              duplicated identically in both, merged into one shared
+              constant), `task_splitter.py` (1) - these are small,
+              single-algorithm-per-file modules, so hoisted the tuning
+              constants to module level (`task_splitter.py`'s got renamed
+              `MAX_SPLIT_GRID_CELLS` from the underscore-prefixed
+              `_MAX_CELLS` for clarity, matching the sibling
+              `MATCHER_NEIGHBORS`/`LARGE_DATASET_IMAGE_THRESHOLD` pattern
+              already used elsewhere in this codebase for the same kind of
+              value).
+            - `arq/tasks.py` (1), `main.py` (3) - these are large,
+              multi-purpose files where the constant is used by exactly
+              one small function; hoisting to the top would separate the
+              value from its only usage in a big file. Lowercased in place
+              instead (`_OUTLIER_THRESHOLD_DEG` → `outlier_threshold_deg`,
+              `SILENCED_LOGGERS`/`SKIPPED_LOGGERS`/`FRAMEWORK_LOGGERS` →
+              lowercase).
+            Removed `N806` from the config-level `ignore` entirely.
+            Verified `ruff check`/`format --diff` (clean) and full backend
+            suite (257/257 passed).
 - [ ] Give `GET /users` a real paged UI/UX instead of the large
       default/max page size (200/500) it currently uses to avoid breaking
       the user-mention picker, which expects "all users" back in one page.

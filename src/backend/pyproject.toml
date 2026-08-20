@@ -148,9 +148,6 @@ ignore = [
   # rather than done as a drive-by part of enabling the rule. ---
   "B904",  # raise-without-from-inside-except (51 sites): needs per-site
   # decision between `from err` and `from None`.
-  "N806",  # non-lowercase-variable-in-function (22 sites): mix of real
-  # violations and Pydantic/SQLAlchemy conventions that look like violations;
-  # needs per-site review, not a blind rename.
   "SIM105",  # suppressible-exception (7 sites): stylistic
   # (try/except/pass vs contextlib.suppress), not worth the churn.
   "S105",  # hardcoded-password-string / "S106" hardcoded-password-func-arg
