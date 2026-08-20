@@ -232,14 +232,14 @@ class UserTasksOut(BaseModel):
     certificate_url: str | None = None
 
     @model_validator(mode="after")
-    def set_urls(cls, values):
+    def set_urls(self):
         """Set and format certificate and registration URLs."""
-        values.certificate_url = maybe_presign_s3_key(values.certificate_url, 2)
-        values.registration_certificate_url = maybe_presign_s3_key(
-            values.registration_certificate_url, 2
+        self.certificate_url = maybe_presign_s3_key(self.certificate_url, 2)
+        self.registration_certificate_url = maybe_presign_s3_key(
+            self.registration_certificate_url, 2
         )
 
-        return values
+        return self
 
     @staticmethod
     async def get_tasks_by_user(
@@ -344,9 +344,9 @@ class TaskDetailsOut(BaseModel):
     centroid: dict
 
     @model_validator(mode="after")
-    def set_assets_url(cls, values):
+    def set_assets_url(self):
         """Set assets_url to a browser-usable URL."""
-        assets_url = values.assets_url
+        assets_url = self.assets_url
         if assets_url:
             # New ODM layout stores an S3 prefix ending in odm/ - convert to
             # the streaming export endpoint URL so the frontend gets a
@@ -354,11 +354,11 @@ class TaskDetailsOut(BaseModel):
             if assets_url.startswith("projects/") and assets_url.endswith("/odm/"):
                 parts = assets_url.split("/")
                 if len(parts) >= 4:
-                    values.assets_url = f"{settings.API_PREFIX}/projects/odm/export/{parts[1]}/{parts[2]}/"
+                    self.assets_url = f"{settings.API_PREFIX}/projects/odm/export/{parts[1]}/{parts[2]}/"
             elif not assets_url.startswith("http"):
-                values.assets_url = maybe_presign_s3_key(assets_url, 2)
+                self.assets_url = maybe_presign_s3_key(assets_url, 2)
 
-        return values
+        return self
 
     @field_validator("state", mode="after")
     @classmethod
