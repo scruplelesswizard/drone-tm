@@ -47,6 +47,11 @@ COPY --from=mesh-build /app/drone-mesh/dist /app/frontend/dist/mesh
 
 # Copy generated static files to docker volume at start
 FROM docker.io/rclone/rclone:1 AS prod
+LABEL org.opencontainers.image.title="DroneTM Frontend" \
+      org.opencontainers.image.description="HOTOSM Drone Tasking Manager - React SPA static build" \
+      org.opencontainers.image.source="https://github.com/hotosm/drone-tm" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.vendor="Humanitarian OpenStreetMap Team"
 VOLUME /frontend_html
 COPY ./frontend/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh

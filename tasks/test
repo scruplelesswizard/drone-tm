@@ -32,8 +32,11 @@ backend:
     {{docker}} compose -f compose.test.yaml run --rm s3-init
     {{docker}} compose -f compose.test.yaml up --detach --wait backend arq-worker \
         || (echo "--- Backend logs ---"; {{docker}} compose -f compose.test.yaml logs backend --tail=80; exit 1)
-    # We run like this to ensure correct cleanup after tests done (or early exit)
-    sh -c 'trap "just test backend-cleanup || true" EXIT; {{docker}} compose -f compose.test.yaml exec -T backend pytest'
+    # We run like this to ensure correct cleanup after tests done (or early exit).
+    # coverage run wraps pytest instead of pytest-cov (not an installed
+    # dependency) - `coverage report` then enforces [tool.coverage.report]'s
+    # fail_under from pyproject.toml.
+    sh -c 'trap "just test backend-cleanup || true" EXIT; {{docker}} compose -f compose.test.yaml exec -T backend sh -c "coverage run -m pytest && coverage report"'
 
 # Cleanup orphan backend tests
 [no-cd]

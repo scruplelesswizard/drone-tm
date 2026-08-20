@@ -78,6 +78,12 @@ EOT
 # Run stage (final stage)
 FROM python:$PYTHON_IMG_TAG-slim-trixie AS service
 
+LABEL org.opencontainers.image.title="DroneTM Backend" \
+      org.opencontainers.image.description="HOTOSM Drone Tasking Manager - FastAPI backend + arq worker" \
+      org.opencontainers.image.source="https://github.com/hotosm/drone-tm" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.vendor="Humanitarian OpenStreetMap Team"
+
 ARG PYTHON_IMG_TAG
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
