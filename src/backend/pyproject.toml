@@ -152,9 +152,6 @@ ignore = [
   "N806",  # non-lowercase-variable-in-function (22 sites): mix of real
   # violations and Pydantic/SQLAlchemy conventions that look like violations;
   # needs per-site review, not a blind rename.
-  "ASYNC240",  # blocking-path-method-in-async-function (11 sites): needs
-  # per-site review of actual hot-path impact before wrapping in
-  # asyncio.to_thread.
   "SIM105",  # suppressible-exception (7 sites): stylistic
   # (try/except/pass vs contextlib.suppress), not worth the churn.
   "S105",  # hardcoded-password-string / "S106" hardcoded-password-func-arg

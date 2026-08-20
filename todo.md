@@ -718,6 +718,30 @@ than as inline notes on the item that found them:
       documented `ignore` entries: `B904` (51 sites, exception chaining),
       `N805`/`N806` (43 sites, naming), `ASYNC240` (11 sites, blocking calls
       in async functions). Each needs individual review, not a blind fix.
+      - [x] `ASYNC240` (11 sites) — DONE. Reviewed each: all 11 are
+            `os.path.exists`/`.isfile`/`.getsize` calls on small local/temp
+            files (DEM download cleanup, static frontend asset checks,
+            flightplan temp-file writes), not network paths. None are on a
+            genuinely hot, high-concurrency path - and in the one file
+            that comes closest (`waypoint_routes.py`, a live route), the
+            `os.path.exists` calls sit next to a synchronous S3 download
+            (`get_file_from_bucket`) and CPU-bound flight-plan generation
+            in the same function - both far more blocking than a stat()
+            call, and neither flagged by `ASYNC240` or fixable by wrapping
+            just the path checks in `asyncio.to_thread`. Concluded that
+            per-site `asyncio.to_thread` wrapping would add real overhead
+            (thread-pool dispatch, ~100µs-1ms) for a call that's already
+            sub-microsecond, likely net negative, while leaving the actual
+            blocking cost in that route untouched - not a real fix.
+            Used `ruff check --add-noqa` to generate the 11 inline
+            suppressions, then added a one-line reason to each (`# noqa:
+            ASYNC240 -- stat() on a small local/temp file, not a hot
+            path`), and removed the config-level `ignore` entry entirely -
+            the rule now stays **active** for any new code, these 11
+            known/reviewed sites are just grandfathered explicitly rather
+            than invisibly exempted repo-wide. Verified `ruff check`/
+            `format --diff` (clean) and full backend suite (257/257,
+            comment-only diff so no functional change expected or found).
 - [ ] Give `GET /users` a real paged UI/UX instead of the large
       default/max page size (200/500) it currently uses to avoid breaking
       the user-mention picker, which expects "all users" back in one page.

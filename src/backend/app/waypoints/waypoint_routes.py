@@ -155,10 +155,10 @@ async def get_task_flightplan(
             )
             if (
                 dem_downloaded is False
-                or not os.path.exists(dem_path)
-                or os.path.getsize(dem_path) <= 0
+                or not os.path.exists(dem_path)  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
+                or os.path.getsize(dem_path) <= 0  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
             ):
-                if os.path.exists(dem_path):
+                if os.path.exists(dem_path):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
                     os.remove(dem_path)
                 raise HTTPException(
                     status_code=500,
@@ -186,7 +186,7 @@ async def get_task_flightplan(
             gimbal_angle=gimbal_angle,
         )
     finally:
-        if dem_path and os.path.exists(dem_path):
+        if dem_path and os.path.exists(dem_path):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
             os.remove(dem_path)
 
     # If the user needs a download, wrap in correct response
@@ -347,7 +347,7 @@ async def generate_kmz_with_placemarks(
         outfile = os.path.join(tempfile.gettempdir(), f"{task_id}_flight_plan.kmz")
 
         kmz_file = create_wpml(data.model_dump(), outfile)
-        if not os.path.exists(kmz_file):
+        if not os.path.exists(kmz_file):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
             raise HTTPException(status_code=500, detail="Failed to generate KMZ file.")
         return FileResponse(
             kmz_file,
