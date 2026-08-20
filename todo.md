@@ -409,10 +409,27 @@ inline on the original item.
 
 ## Frontend — P3
 
-- [ ] **Needs interaction:** investigate dropping one of two map libraries
-      (MapLibre GL vs OpenLayers). Explicitly named as a spike in the
-      original audit, not a direct change - needs the spike's findings
-      before any removal.
+- [x] Investigate dropping one of two map libraries (MapLibre GL vs
+      OpenLayers). Explicitly named as a spike in the original audit, not
+      a direct change - needs the spike's findings before any removal.
+      DONE (spike only, no removal - per direction) — findings written to
+      `docs/decisions/map-library-spike-findings.md`. Top line: MapLibre
+      GL is used in 25 files, `ol` in exactly 1
+      (`TaskOrthoCogViewer.tsx`); the sibling `@hotosm/gcp-editor` package
+      independently depends on `maplibre-gl`, so it stays in the tree
+      regardless. Real functional overlap exists - both render COG
+      orthophotos, just in different UI contexts (MapLibre inline in the
+      main map via `@geomatico/maplibre-cog-protocol`, already proven
+      elsewhere in `COGOrthophotoViewer`; OL in a standalone modal via
+      `ol/source/GeoTIFF`). Recommendation: consolidate onto MapLibre
+      long-term, but `TaskOrthoCogViewer` carries several hard-won
+      OL-specific workarounds (band auto-detect, an async-view-config
+      race, a resolutions-array zoom-clamp bug) that a MapLibre port would
+      need to rediscover equivalents for - a real feature-parity rewrite
+      needing its own manual verification pass, not a mechanical swap.
+      Bundle cost (~232 KB gzip) is real but already isolated to a
+      lazy-loaded chunk, so no urgency forcing this ahead of other work.
+      Not actioned further this pass (spike explicitly ends at findings).
 
 ## Accessibility & Design System (WCAG 2.2 AA)
 
