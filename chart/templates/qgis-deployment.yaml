@@ -37,7 +37,7 @@ spec:
       {{- end }}
       containers:
         - name: qgis
-          image: "{{ .Values.qgis.image.repository }}:{{ .Values.qgis.image.tag }}"
+          image: "{{ .Values.qgis.image.repository }}:{{ .Values.qgis.image.tag }}{{ if .Values.qgis.image.digest }}@{{ .Values.qgis.image.digest }}{{ end }}"
           imagePullPolicy: {{ .Values.qgis.image.pullPolicy }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}

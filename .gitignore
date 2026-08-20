@@ -89,6 +89,7 @@ src/backend/frontend_html
 !**/tsconfig.json
 !src/frontend/messages/**.json
 !chart/values.schema.json
+!renovate.json
 
 # LLM tools
 .claude

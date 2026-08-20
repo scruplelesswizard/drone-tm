@@ -253,6 +253,8 @@ qgis:
   image:
     repository: ghcr.io/hotosm/qfield-project-packager
     tag: "26.3"
+    # Digest-pinned; Renovate keeps this in sync with `tag` (docker datasource).
+    digest: sha256:579d77cf93c7544e3c8db44eaaa9c4a39ca0780e4c0f1c6c213940b8d38f8492
     pullPolicy: IfNotPresent
 
   service:

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "dependencyDashboard": true,
+  "packageRules": [
+    {
+      "description": "Digest-pin all Docker base images (Dockerfiles) and Helm chart image references - keeps the pins from todo.md's Kubernetes & Infra P2 item current instead of letting them rot.",
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    }
+  ]
+}
