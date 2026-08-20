@@ -80,13 +80,18 @@ backend:
     type: ClusterIP
     port: 8000
 
-  resources: {}
-    # limits:
-    #   cpu: 9000m
-    #   memory: 1.5Gi
-    # requests:
-    #   cpu: 100m
-    #   memory: 256Mi
+  # Conservative placeholder defaults, not tuned against real usage data -
+  # revisit once there's a target cluster's actual node sizing/traffic to
+  # measure against. Generous enough to avoid throttling ODM-adjacent
+  # request spikes (image uploads, flightplan generation) without
+  # requesting so much that a small cluster can't schedule the pod.
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 
   # Covers slow startup (migrations, DB pool warm-up) so liveness doesn't
   # trip before the app is actually up. Once this succeeds once, kubelet
@@ -120,7 +125,7 @@ backend:
     failureThreshold: 3
 
   autoscaling:
-    enabled: false
+    enabled: true
     minReplicas: 1
     maxReplicas: 10
     targetCPUUtilizationPercentage: 80
@@ -183,13 +188,15 @@ worker:
 
   replicaCount: 1
 
-  resources: {}
-    # limits:
-    #   cpu: 2000m
-    #   memory: 2Gi
-    # requests:
-    #   cpu: 500m
-    #   memory: 512Mi
+  # Conservative placeholder defaults - see backend.resources' comment.
+  # Higher than the backend's since ODM/image-processing jobs run here.
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
 
   # Covers slow startup (job queue connection, DB pool warm-up) so liveness
   # doesn't trip before the worker is actually up.
@@ -228,7 +235,7 @@ worker:
     failureThreshold: 3
 
   autoscaling:
-    enabled: false
+    enabled: true
     minReplicas: 1
     maxReplicas: 10
     targetCPUUtilizationPercentage: 80
@@ -254,7 +261,14 @@ qgis:
 
   env: {}
 
-  resources: {}
+  # Conservative placeholder default - see backend.resources' comment.
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 
   livenessProbe:
     tcpSocket:
@@ -269,12 +283,21 @@ qgis:
     initialDelaySeconds: 10
     periodSeconds: 10
 
+# Default-deny NetworkPolicy, disabled by default and not force-enabled -
+# wrong from a sandbox with no real cluster to validate against. A
+# too-strict policy silently breaks Postgres/Dragonfly/RustFS connectivity
+# in a way only visible at runtime. The template
+# (templates/networkpolicy.yaml) is written and ready for a deploy-owner
+# with a real cluster to enable and validate.
+networkPolicy:
+  enabled: false
+
 podDisruptionBudget:
   backend:
-    enabled: false
+    enabled: true
     minAvailable: 1
   worker:
-    enabled: false
+    enabled: true
     minAvailable: 1
 
 # Subchart configurations
@@ -341,6 +364,15 @@ podSecurityContext: {}
 securityContext:
   runAsNonRoot: true
   runAsUser: 1001
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  # Deliberately NOT set here: readOnlyRootFilesystem. Both the backend
+  # and worker write local temp files at runtime (tempfile.mkstemp() /
+  # tempfile.gettempdir() usage in app/arq/tasks.py, app/waypoints/,
+  # DEM/flightplan processing) - turning this on would need those paths
+  # backed by an explicit emptyDir volume first, verified against a real
+  # deploy, not guessed from a chart-only change.
 
 nodeSelector: {}
 tolerations: []
