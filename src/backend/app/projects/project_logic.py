@@ -1634,7 +1634,7 @@ async def process_waypoints_and_waylines(
 
         finally:
             # Cleanup temporary files and directory
-            if os.path.exists(temp_dir):
+            if os.path.exists(temp_dir):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
                 shutil.rmtree(temp_dir)
         return count_data
 

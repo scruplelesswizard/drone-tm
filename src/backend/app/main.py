@@ -353,7 +353,7 @@ async def home(request: Request):
 async def runtime_config_js():
     """Return runtime-injected frontend config (written by frontend initContainer)."""
     config_path = os.path.join(FRONTEND_DIR, "config.js")
-    if os.path.isfile(config_path):
+    if os.path.isfile(config_path):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
         return FileResponse(config_path, media_type="application/javascript")
     return JSONResponse(status_code=404, content={"detail": "Not found"})
 
@@ -362,7 +362,7 @@ async def runtime_config_js():
 async def favicon():
     """Serve favicon if present in the built frontend."""
     favicon_path = os.path.join(FRONTEND_DIR, "favicon.ico")
-    if os.path.isfile(favicon_path):
+    if os.path.isfile(favicon_path):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
         return FileResponse(favicon_path)
     return JSONResponse(status_code=404, content={"detail": "Not found"})
 

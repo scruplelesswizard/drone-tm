@@ -1559,7 +1559,7 @@ async def process_imported_odm_assets(
         raise
 
     finally:
-        if os.path.exists(temp_dir):
+        if os.path.exists(temp_dir):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
             shutil.rmtree(temp_dir)
 
 

@@ -86,7 +86,7 @@ async def upload_dem_file_s3_sync(tif_file_path: str, project_id: str):
     """Uploads the DEM file to S3 and updates the database."""
     try:
         # Check if file exists
-        if not os.path.exists(tif_file_path):
+        if not os.path.exists(tif_file_path):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
             raise FileNotFoundError(f"DEM file not found at {tif_file_path}")
 
         log.info(
@@ -208,7 +208,7 @@ async def download_and_upload_dem(
         )
 
         # Clean up on failure
-        if os.path.exists(tif_file_path):
+        if os.path.exists(tif_file_path):  # noqa: ASYNC240 -- stat() on a small local/temp file, not a hot path
             os.remove(tif_file_path)
             log.info(f"Cleaned up partial file: {tif_file_path}")
 
