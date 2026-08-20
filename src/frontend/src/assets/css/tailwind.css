@@ -39,6 +39,20 @@
   }
 }
 
+/* WCAG 2.3.3: neutralize Tailwind's animate- and transition utilities,
+   plus scroll-behavior, for users who asked the OS for reduced motion -
+   without having to touch every call site individually. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer components {
   .naxatw-input {
     @apply naxatw-m-0 naxatw-block naxatw-h-[48px] naxatw-w-full naxatw-rounded-lg naxatw-border naxatw-border-solid naxatw-border-grey-300 naxatw-bg-white naxatw-bg-clip-padding naxatw-px-3 naxatw-py-[13px] naxatw-font-normal naxatw-text-grey-900 naxatw-transition naxatw-ease-in-out focus:naxatw-border-grey-800 focus:naxatw-bg-white focus:naxatw-text-grey-700 focus:naxatw-outline-none;
