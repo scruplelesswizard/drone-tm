@@ -196,10 +196,47 @@ inline on the original item.
             suite (257/257 passed), and `api.openapi()` build + summary
             spot-check on 7 routes. **This completes the full 91-route sweep
             across all 8 backend route files.**
-- [ ] **Needs interaction:** introduce `/api/v1` path versioning. This is a
+- [x] **Needs interaction:** introduce `/api/v1` path versioning. This is a
       breaking-change-shaped decision (URL structure, client migration,
       whether unversioned `/api` keeps working during a transition) that
       needs a rollout plan, not a drive-by route mount.
+      Asked; chose "break it and fix it" over an additive/dual-mount
+      transition period — `settings.API_PREFIX` default changed from `/api`
+      to `/api/v1` outright, no back-compat redirect.
+      DONE — since every backend route was already mounted via
+      `prefix=api_prefix` / `settings.API_PREFIX` (only 2 exceptions: the
+      Hanko admin/OSM routers in `main.py` hardcoded `prefix="/api"`, fixed
+      to use the same `api_prefix` var), the prefix bump was a one-line
+      `app/config.py` change. Everything downstream that breaks:
+      - Frontend: 10 call sites doing
+        `getRuntimeConfig('VITE_API_URL', '/api')` (App.tsx, services/
+        index.ts, services/public.ts, views/IndividualProject/index.tsx,
+        components/HankoAuth, GoogleAuth, DroneOperatorTask/
+        DescriptionSection, modules/user-auth-module's Login,
+        routes/ProtectedRoute) → fallback bumped to `/api/v1`.
+      - `utils/index.ts`'s `buildDownloadUrl()` had a **real bug** here: it
+        stripped a hardcoded literal `/api` (4 chars) off asset paths the
+        backend already prefixes with `API_PREFIX`, to avoid doubling when
+        re-prepending the API base. With prefix `/api/v1` that hardcoded
+        slice(4) would produce `/api/v1/v1/...`. Rewrote to strip by the
+        *actual* configured base's path length (falling back to the old
+        literal-`/api` strip only for truly legacy unversioned paths).
+        Added `src/utils/buildDownloadUrl.test.ts` (5 cases, incl. a
+        regression test for the doubling bug) - this file had no prior test
+        coverage.
+      - `docker-entrypoint.sh`, `compose.yaml`, `chart/values.yaml` (+
+        `chart/README.md`), `.env.example`, `docs/dev/setup.md`,
+        `docs/dev/imagery-upload.md`, `src/gcp-editor/README.md`: updated
+        `/api` defaults/examples to `/api/v1`.
+      - Backend tests: 103 hardcoded `/api/...` literals across 13 test
+        files → `/api/v1/...` (mechanical `sed`, verified no doubling, no
+        stray un-migrated `/api/` left).
+      Verified: full backend suite 265/265 + coverage report clean;
+      confirmed live via `curl` inside the test container that `/api/v1/
+      docs` returns 200 and the old `/api/docs` now 404s; frontend `tsc`
+      + `vite build` + `eslint --fix` (caught and fixed one `no-nested-
+      ternary` from the buildDownloadUrl rewrite) + `vitest run` (19/19,
+      up from 14) all clean.
 
 ## CI/CD & Delivery — P0
 
@@ -540,12 +577,35 @@ inline on the original item.
 
 ## Frontend — P2
 
-- [ ] Break up the four largest components: `ImageReview.tsx` (2334 lines),
-      `ProcessingStatusDialog.tsx` (1153), `MapSection.tsx` (1072),
-      `TaskVerificationModal.tsx` (832) — opportunistically, alongside
-      feature work that already touches them. Not attempted this pass: a
-      blind split risks behavior changes in components this size without
-      the usual manual browser check this repo's guidelines call for.
+- [ ] Break up the four largest components: `DroneImageProcessingWorkflow/
+      ImageReview.tsx` (2559 lines as of 2026-08, was 2334),
+      `ModalContent/ProcessingStatusDialog.tsx` (1274, was 1153),
+      `DroneOperatorTask/MapSection/MapSection.tsx` (1186, was 1072),
+      `DroneImageProcessingWorkflow/TaskVerificationModal.tsx` (902, was
+      832) — opportunistically, alongside feature work that already
+      touches them. Originally not attempted: a blind split risks behavior
+      changes in components this size without the usual manual browser
+      check this repo's guidelines call for, and this session can't drive
+      a real browser.
+      Asked; chose "change guidelines, verify using headless browser, add
+      a headless testing framework + tests" over skipping the item or
+      attempting it unverified.
+      DONE (framework half) — added Playwright (`@playwright/test`,
+      `src/frontend/playwright.config.ts`, tests in `src/frontend/e2e/`,
+      `pnpm test:e2e`), distinct from the existing Vitest/Testing-Library
+      unit suite (jsdom, no real browser/rendering engine). Chromium
+      installed via `npx playwright install chromium` (no `--with-deps` -
+      no root in this sandbox; ran fine without it). `playwright.config.ts`
+      builds + serves the app via `vite preview` and runs headless
+      Chromium against it. `e2e/smoke.spec.ts`: 4 real-browser tests on
+      public routes (landing page renders, unknown route doesn't blank-
+      page, protected route redirects signed-out users to `/`, `/qfield-
+      open` loads) - all pass. Updated `CLAUDE.md`'s Testing standards
+      section: a passing headless Playwright run is accepted as sufficient
+      UI verification when a manual browser session isn't available.
+      Added `.gitignore` entries for `test-results/`/`playwright-report/`/
+      `blob-report/`.
+      Breakup itself: see the follow-up items below, one per component.
 - [x] Reduce `any` usage starting at the API layer (193 occurrences across
       86 files despite `strict: true`) — DONE, superseded by the full
       `@typescript-eslint/no-explicit-any` triage below (448 → 0 sites

@@ -2,7 +2,7 @@ import { ReactElement, useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { getRuntimeConfig } from '@/runtimeConfig';
 
-const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 const AUTH_PROVIDER = getRuntimeConfig('VITE_AUTH_PROVIDER', 'legacy');
 
 interface IProtectedRoute {

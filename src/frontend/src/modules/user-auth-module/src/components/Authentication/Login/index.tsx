@@ -21,7 +21,7 @@ import isSafeRedirect from '@Utils/url';
 import { getRuntimeConfig } from '@/runtimeConfig';
 import { m } from '@/paraglide/messages';
 
-const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
+const API_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
 
 // Auth provider configuration
 const AUTH_PROVIDER = getRuntimeConfig('VITE_AUTH_PROVIDER', 'legacy');

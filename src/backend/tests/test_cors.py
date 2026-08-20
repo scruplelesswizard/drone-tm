@@ -32,7 +32,7 @@ async def test_preflight_rejects_disallowed_method(client):
     """A CORS preflight for a method outside the scoped list must not be
     granted (no Access-Control-Allow-Methods echoing it back)."""
     response = await client.options(
-        "/api/users/",
+        "/api/v1/users/",
         headers={
             "Origin": "http://localhost:3040",
             "Access-Control-Request-Method": "PUT",
@@ -46,7 +46,7 @@ async def test_preflight_rejects_disallowed_method(client):
 async def test_preflight_allows_scoped_method(client):
     """A preflight for a method that's actually in use is granted."""
     response = await client.options(
-        "/api/users/",
+        "/api/v1/users/",
         headers={
             "Origin": "http://localhost:3040",
             "Access-Control-Request-Method": "GET",

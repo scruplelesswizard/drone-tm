@@ -517,7 +517,7 @@ async def test_delete_batch_route_waits_for_cleanup(
     )
 
     response = await client.delete(
-        f"/api/projects/{project_id}/batch/{batch_id}",
+        f"/api/v1/projects/{project_id}/batch/{batch_id}",
         params={"wait_for_cleanup": "true"},
     )
 
@@ -554,7 +554,7 @@ async def test_delete_batch_route_enqueues_cleanup_job(
         image_count=1,
     )
 
-    response = await client.delete(f"/api/projects/{project_id}/batch/{batch_id}")
+    response = await client.delete(f"/api/v1/projects/{project_id}/batch/{batch_id}")
 
     assert response.status_code == 200
     body = response.json()
@@ -746,7 +746,7 @@ async def test_delete_invalid_images_route(client, db, create_test_project, auth
     await db.commit()
 
     response = await client.delete(
-        f"/api/projects/{project_id}/imagery/invalid",
+        f"/api/v1/projects/{project_id}/imagery/invalid",
     )
 
     assert response.status_code == 200

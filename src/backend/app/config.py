@@ -97,7 +97,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Drone Tasking Manager"
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
-    API_PREFIX: str = "/api"
+    API_PREFIX: str = "/api/v1"
 
     EXTRA_CORS_ORIGINS: str | list[str] | None = []
     FRONTEND_WEB_APP_PORT: int = 3040

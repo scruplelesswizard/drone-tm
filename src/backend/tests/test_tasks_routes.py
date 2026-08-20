@@ -103,7 +103,7 @@ async def _unlock_task(
 @pytest.mark.asyncio
 async def test_list_tasks(client):
     """Test listing tasks for the authenticated user."""
-    response = await client.get("/api/tasks")
+    response = await client.get("/api/v1/tasks")
     assert response.status_code == 200
     body = response.json()
     assert "results" in body
@@ -114,17 +114,17 @@ async def test_list_tasks(client):
 @pytest.mark.asyncio
 async def test_list_tasks_rejects_invalid_page(client):
     """page must be >= 1 - out of range is a 422, not silently clamped/ignored."""
-    response = await client.get("/api/tasks?page=0")
+    response = await client.get("/api/v1/tasks?page=0")
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_list_tasks_rejects_invalid_per_page(client):
     """per_page is bounded (1-100 for the shared pagination dependency)."""
-    response = await client.get("/api/tasks?per_page=0")
+    response = await client.get("/api/v1/tasks?per_page=0")
     assert response.status_code == 422
 
-    response = await client.get("/api/tasks?per_page=101")
+    response = await client.get("/api/v1/tasks?per_page=101")
     assert response.status_code == 422
 
 
@@ -132,7 +132,7 @@ async def test_list_tasks_rejects_invalid_per_page(client):
 async def test_task_states(client, create_test_project):
     project_id = create_test_project
 
-    response = await client.get(f"/api/tasks/states/{project_id}")
+    response = await client.get(f"/api/v1/tasks/states/{project_id}")
     assert response.status_code == 200
 
 
