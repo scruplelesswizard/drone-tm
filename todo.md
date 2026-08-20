@@ -577,7 +577,7 @@ inline on the original item.
 
 ## Frontend — P2
 
-- [ ] Break up the four largest components: `DroneImageProcessingWorkflow/
+- [x] Break up the four largest components: `DroneImageProcessingWorkflow/
       ImageReview.tsx` (2559 lines as of 2026-08, was 2334),
       `ModalContent/ProcessingStatusDialog.tsx` (1274, was 1153),
       `DroneOperatorTask/MapSection/MapSection.tsx` (1186, was 1072),
@@ -590,7 +590,7 @@ inline on the original item.
       Asked; chose "change guidelines, verify using headless browser, add
       a headless testing framework + tests" over skipping the item or
       attempting it unverified.
-      DONE (framework half) — added Playwright (`@playwright/test`,
+      DONE — added Playwright (`@playwright/test`,
       `src/frontend/playwright.config.ts`, tests in `src/frontend/e2e/`,
       `pnpm test:e2e`), distinct from the existing Vitest/Testing-Library
       unit suite (jsdom, no real browser/rendering engine). Chromium
@@ -638,8 +638,30 @@ inline on the original item.
         Playwright auth fixture (seed a user/project/task via the API,
         mint/inject a session) would unblock deep authenticated e2e
         coverage for this and the remaining 3 components below.
-  - [ ] `DroneOperatorTask/MapSection/MapSection.tsx` (1186 lines) - not
-        started this pass.
+  - [x] `DroneOperatorTask/MapSection/MapSection.tsx` (1186 → 1079 lines) -
+        deliberately conservative pass, unlike the two components above.
+        This file's ~700-line state section (map lifecycle, drag-rotation,
+        take-off-point selection, DEM checks) is far more tightly coupled
+        than ProcessingStatusDialog/TaskVerificationModal's - left entirely
+        untouched rather than risk a subtle behavior regression in a live
+        map *editing* tool (not just a viewer) for a mechanical line-count
+        win. Only extracted the genuinely decoupled, prop-driven UI pieces:
+        `MissingDemModal.tsx` (44), `MapControlsBar.tsx` (62, drone-model/
+        gimbal/waypoint-mode selectors), `MapToolButtons.tsx` (90,
+        rotation/flight-plan/task-area/zoom toggle buttons) - all take
+        explicit props/callbacks, zero state moved.
+        One real lint interaction found: passing `handleRotationToggle`
+        (a hoisted `function` declaration, the one handler of its group not
+        written as a `const ... = () =>` arrow) as a bare prop reference
+        tripped `react/jsx-no-bind`, while the sibling arrow-declared
+        handlers didn't - root cause not fully chased down (likely an
+        eslint-plugin-react quirk around hoisted function declarations).
+        Fixed by wrapping all four handler props in inline arrows at the
+        call site, matching the original code's own pattern exactly (it
+        already wrapped these in arrows before the extraction).
+        Verified: `tsc --noEmit`, `eslint --fix` clean, `pnpm build` clean,
+        Vitest 19/19, Playwright 4/4. Same authenticated/live-map
+        verification caveat as the other two components.
   - [x] `DroneImageProcessingWorkflow/TaskVerificationModal.tsx` (902) →
         directory `TaskVerificationModal/` with `index.tsx` (629, container
         - all map-lifecycle useEffects/mutations/handlers unchanged),
@@ -660,8 +682,43 @@ inline on the original item.
         clean, Vitest 19/19, Playwright 4/4. Same authenticated-rendering
         caveat as above: not verified live (map + task imagery need a real
         session).
-  - [ ] `DroneImageProcessingWorkflow/ImageReview.tsx` (2559, the largest) -
-        not started this pass.
+  - [x] `DroneImageProcessingWorkflow/ImageReview.tsx` (2559, the largest)
+        → directory `ImageReview/` (2586 total across 3 files - modest
+        reduction, same conservative reasoning as MapSection: the ~2000-
+        line main component's state is a single tightly-coupled block -
+        map lifecycle, box-select, sequence-select, bulk accept/reject,
+        task-matching - not touched). What DID move cleanly, with zero
+        behavioral risk: this file already had 2 self-contained named
+        components living in the wrong place (`TaskAccordionContent`,
+        `VirtualizedAccordionList` - neither closed over the main
+        component's state, both took only props/module-scope helpers) and
+        a cluster of pure, closure-free helper functions
+        (`hasIssueStatus`/`canManuallyMatchImage`/
+        `canOverrideImageRejection`/`canRejectImage`/
+        `getImageTileBorderClass`/`escapeHtml`/`escapeAttr`/
+        `buildPopupHtml`/`runWithConcurrency`/`useTaskImageUrls`).
+        `imageReviewHelpers.ts` (122, the pure functions - `escapeHtml`/
+        `escapeAttr`/`getImageTileBorderClass` stayed module-private,
+        used only by `AccordionList.tsx`), `AccordionList.tsx` (427,
+        `TaskAccordionContent` + `VirtualizedAccordionList` +
+        `useTaskImageUrls`), `index.tsx` (2037, the main component -
+        **verified byte-identical to the original's lines 574-2559 via
+        `diff`**, since a 2000-line component is too large to safely
+        retype by hand: sliced with `sed` instead of using the Write tool,
+        eliminating transcription-error risk entirely for the risky part).
+        `./TaskVerificationModal` import updated to `../TaskVerificationModal`
+        for the new directory depth (that component is itself a directory
+        as of the earlier breakup in this same batch).
+        Verified: `tsc --noEmit` clean on the first attempt (a strong
+        signal the import surgery was correct), `eslint --fix` clean,
+        `pnpm build` clean, Vitest 19/19, Playwright 4/4. Same
+        authenticated-rendering caveat as the other 3 components - not
+        verified live.
+        **This completes the "break up the four largest components" item**
+        - all 4 done (2 substantial pure-JSX-extraction refactors, 2
+        conservative partial extractions where the remaining bulk is
+        genuinely high-risk stateful logic, documented as such rather than
+        forced).
 - [x] Reduce `any` usage starting at the API layer (193 occurrences across
       86 files despite `strict: true`) — DONE, superseded by the full
       `@typescript-eslint/no-explicit-any` triage below (448 → 0 sites
@@ -812,9 +869,13 @@ ASVS in particular haven't been scanned yet).
 
 ### Medium
 
-- [ ] Heading hierarchy: three `<h1>`s in one section
+- [x] Heading hierarchy: three `<h1>`s in one section
       (`components/IndividualProject/ExportSection/index.tsx:16,48,55`).
       Should be one `h1` + `h2`/`h3` for subsections. WCAG 1.3.1, 2.4.6.
+      Stale entry - already fixed by the a11y sweep earlier this session
+      (`todo/61`): confirmed current file has one `<h1>` (section title,
+      line 17) and the two subsection headings are `<h2>` (lines 49, 58).
+      This checkbox was never flipped when that branch landed.
 - [x] `SearchInput`/`Select` rely on `placeholder` only, no
       `<label>`/`aria-label` (`components/common/FormUI/SearchInput/index.tsx:27-34`,
       `components/common/FormUI/Input/index.tsx`,
