@@ -474,12 +474,32 @@ ASVS in particular haven't been scanned yet).
 - [ ] Heading hierarchy: three `<h1>`s in one section
       (`components/IndividualProject/ExportSection/index.tsx:16,48,55`).
       Should be one `h1` + `h2`/`h3` for subsections. WCAG 1.3.1, 2.4.6.
-- [ ] `SearchInput`/`Select` rely on `placeholder` only, no
+- [x] `SearchInput`/`Select` rely on `placeholder` only, no
       `<label>`/`aria-label` (`components/common/FormUI/SearchInput/index.tsx:27-34`,
       `components/common/FormUI/Input/index.tsx`,
       `components/common/FormUI/Select/index.tsx:113-117`). Placeholder
       text isn't a reliable accessible name (it disappears on input). WCAG
       1.3.1, 4.1.2.
+      DONE — added an optional `ariaLabel` prop to both, defaulting to the
+      resolved placeholder text when omitted (still a computed fallback,
+      not nothing, while letting callers pass something more specific).
+      `Input` already spread `...rest` onto the DOM node so `aria-label`
+      reached it once passed; `SearchInput`/`Select` didn't forward it to
+      their inner `Input`, now fixed.
+      **New finding, filed separately** (out of this item's WCAG 1.3.1/
+      4.1.2 label scope, but found while in this file): `Select`'s
+      dropdown toggle `<div onClick={toggleDropdown}>` has no `role`,
+      `tabIndex`, or keyboard handler at all - the whole component is
+      mouse-only. The three `jsx-a11y` rules that would normally catch
+      this (`no-static-element-interactions`, `no-noninteractive-element-
+      interactions`, `click-events-have-key-events`) are disabled at the
+      top of the file. Not fixed this pass - `Select` isn't a native
+      `<select>`, so a real fix means implementing the ARIA combobox
+      pattern (role="combobox", `aria-expanded`, `aria-controls`,
+      `aria-activedescendant`, `listbox`/`option` roles, arrow-key
+      navigation) - a materially bigger change than this item's scope,
+      and one that needs the manual keyboard-testing this repo's
+      guidelines call for on UI changes of this size.
 - [ ] `Drawer` has `role="dialog"`/`aria-modal`/Escape handling (good) but
       no focus trap or initial focus on open
       (`components/common/Drawer/index.tsx`) - Tab can still leave the
