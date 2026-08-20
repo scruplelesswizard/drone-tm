@@ -870,9 +870,48 @@ than as inline notes on the item that found them:
             build cache on resume - worth doing between docker-heavy
             verification cycles for the rest of this backlog to avoid
             repeating it.
-- [ ] Give `GET /users` a real paged UI/UX instead of the large
+- [x] Give `GET /users` a real paged UI/UX instead of the large
       default/max page size (200/500) it currently uses to avoid breaking
       the user-mention picker, which expects "all users" back in one page.
+      DONE, scoped down from "build a UI" to "fix the actual coupling
+      bug" — there is no existing admin/user-management UI anywhere in
+      this frontend to attach real pagination controls to (checked: `GET
+      /users` has exactly one consumer, the mention picker). Building a
+      brand-new admin users page from scratch is a real feature (nav
+      entry point, permission-gating, what columns/actions) needing
+      product input this backlog item didn't provide, so not attempted.
+      What *is* actionable and now done: decoupled the picker from
+      `/users`'s pagination contract entirely.
+      - `GET /users` now uses the shared `pagination_params()` dependency
+        (page=1, per_page=20, max 100) like every other list endpoint,
+        instead of its own override (page=1, per_page=200, max 500).
+      - New `GET /users/mentionable` — unpaginated, field-minimal
+        (`id`/`name`/`profile_img` only, via a new `DbUser.
+        all_mentionable()` + `MentionableUserOut`/`MentionableUsersOut`
+        schemas), purpose-built for the picker's client-side-filter-as-
+        you-type UX, which genuinely does need the full user list in one
+        shot. `getUsers()`/`useGetUsersQuery` in the frontend now call
+        this instead.
+      - **New finding, filed separately, not fixed here**: `GET /users`
+        (and now `/mentionable`) return `email_address`/`is_active`/
+        `is_superuser` (the full `DbUser` model) to *any* authenticated
+        user, not just admins - `login_required` is the only gate, no
+        superuser check. `/mentionable`'s response is now minimal by
+        design, but the original `/users` listing endpoint still exposes
+        every user's email and superuser flag to any logged-in user.
+        Out of scope here since it's a permissions question (CLAUDE.md:
+        ask before changing the auth model), not a pagination one.
+      - Added `test_get_mentionable_users_returns_all_unpaginated` and
+        updated `test_get_users_rejects_invalid_per_page`'s bound
+        (500→100) to match. Verified `ruff check`/`format --diff` (clean
+        on the touched files - noted separately that this test file, like
+        633 other pre-existing sites across `tests/`, has bandit's S101
+        "assert in test" findings the repo's ruff config doesn't exempt
+        test files from; not something this change introduced or a
+        blocker locally since pre-commit hooks aren't installed in this
+        sandbox, but worth a real per-file-ignore entry at some point),
+        `tsc --noEmit`/`eslint .` (0 errors), `pnpm build`, and the full
+        backend suite (258/258 passed, +1 for the new test).
 - [x] Reformat/fix `vite.config.ts` to the project's own prettier style —
       covered by the `eslint --fix` pass below (it's no longer excluded
       from linting since the ESLint v9 migration).

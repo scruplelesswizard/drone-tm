@@ -382,7 +382,7 @@ class DbUser(BaseModel):
 
     @staticmethod
     async def all(
-        db: Connection, skip: int = 0, limit: int = 200
+        db: Connection, skip: int = 0, limit: int = 20
     ) -> tuple[list["DbUser"], int]:
         """Fetch a page of users, ordered by id for stable pagination."""
         async with db.cursor(row_factory=dict_row) as cur:
@@ -398,6 +398,19 @@ class DbUser(BaseModel):
                 {"skip": skip, "limit": limit},
             )
             return await cur.fetchall(), total
+
+    @staticmethod
+    async def all_mentionable(db: Connection) -> list["MentionableUserOut"]:
+        """Fetch every user's id/name/profile_img for the @-mention picker.
+
+        Deliberately unpaginated (unlike .all()) and field-minimal - the
+        picker filters client-side against the full user list as the
+        operator types, and doesn't need (or get, via this endpoint) the
+        rest of DbUser's fields.
+        """
+        async with db.cursor(row_factory=class_row(MentionableUserOut)) as cur:
+            await cur.execute("SELECT id, name, profile_img FROM users ORDER BY name;")
+            return await cur.fetchall()
 
     @staticmethod
     async def one(db: Connection, user_id: str):
@@ -515,6 +528,18 @@ class DbUser(BaseModel):
 class UserListOut(BaseModel):
     results: list[DbUser]
     pagination: PaginationMeta
+
+
+class MentionableUserOut(BaseModel):
+    """Minimal user shape for the @-mention picker - see DbUser.all_mentionable()."""
+
+    id: str
+    name: str
+    profile_img: str | None = None
+
+
+class MentionableUsersOut(BaseModel):
+    results: list[MentionableUserOut]
 
 
 class Base64Request(BaseModel):

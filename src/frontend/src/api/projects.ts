@@ -12,7 +12,7 @@ import {
   ProjectInfo,
 } from '@Services/createproject';
 import { getTaskStates, TaskStateItem } from '@Services/project';
-import { getUserProfileInfo, getUsers } from '@Services/common';
+import { getMentionableUsers, getUserProfileInfo } from '@Services/common';
 import {
   startProjectClassification,
   ingestExistingUploads,
@@ -89,10 +89,9 @@ export const useGetUsersQuery = (
   queryOptions?: Partial<UseQueryOptions<ProjectUser[]>>,
 ) => {
   return useQuery<ProjectUser[]>({
-    queryKey: ['users-list'],
+    queryKey: ['users-mentionable'],
     queryFn: async () => {
-      const res = await getUsers();
-      // Backend now returns { results, pagination } instead of a bare list.
+      const res = await getMentionableUsers();
       return res.data.results as ProjectUser[];
     },
     ...queryOptions,

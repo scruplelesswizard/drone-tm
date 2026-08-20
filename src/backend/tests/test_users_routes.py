@@ -74,12 +74,12 @@ async def test_get_users_respects_per_page(client, db, auth_user):
 
 @pytest.mark.asyncio
 async def test_get_users_rejects_invalid_per_page(client):
-    """per_page is bounded (1-500); out-of-range values are a validation
-    error, not a silent clamp."""
+    """per_page is bounded (1-100, the shared pagination_params() default);
+    out-of-range values are a validation error, not a silent clamp."""
     response = await client.get("/api/users?per_page=0")
     assert response.status_code == 422
 
-    response = await client.get("/api/users?per_page=501")
+    response = await client.get("/api/users?per_page=101")
     assert response.status_code == 422
 
 
@@ -88,6 +88,31 @@ async def test_get_users_rejects_invalid_page(client):
     """page must be >= 1 (1-indexed, unlike the old skip/limit params)."""
     response = await client.get("/api/users?page=0")
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_get_mentionable_users_returns_all_unpaginated(client, db, auth_user):
+    """GET /users/mentionable is decoupled from GET /users's real
+    pagination - it returns every user, field-minimal, in one page."""
+    for i in range(3):
+        await DbUser.get_or_create_user(
+            db,
+            AuthUser(
+                id=f"30000000000000000{i}",
+                email=f"mentionable-user-{i}@hotosm.org",
+                name=f"mentionable-user-{i}",
+            ),
+        )
+
+    response = await client.get("/api/users/mentionable")
+    assert response.status_code == 200
+    body = response.json()
+    assert "results" in body
+    assert "pagination" not in body
+    assert len(body["results"]) >= 4
+    assert any(u["name"] == "admin" for u in body["results"])
+    sample = body["results"][0]
+    assert set(sample.keys()) == {"id", "name", "profile_img"}
 
 
 @pytest.mark.asyncio
