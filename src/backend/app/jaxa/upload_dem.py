@@ -131,6 +131,7 @@ async def enqueue_dem_download(
     geometry,
     project_id: str,
     redis: ArqRedis,
+    request_id: str | None = None,
 ):
     """Enqueues a DEM download job to the arq-worker queue."""
     tiles = get_covering_tiles(geometry)
@@ -145,6 +146,7 @@ async def enqueue_dem_download(
             coordinates_str,
             str(project_id),
             _queue_name="default_queue",
+            request_id=request_id,
         )
 
         log.info(

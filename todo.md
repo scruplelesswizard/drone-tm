@@ -1517,11 +1517,53 @@ than as inline notes on the item that found them:
             the frontend is now a real type.
       - [x] Everything else listed above, done - see individual `[x]`
             entries in the batch history above for what each covered.
-- [ ] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
+- [x] Propagate the new request ID (`RequestIDMiddleware`, `main.py`) into
       arq jobs enqueued from a request, so a job can be traced back to the
       HTTP request that triggered it. Needs touching every enqueue call
       site to pass the ID through job kwargs/context - not attempted as
       part of adding the middleware itself.
+      DONE. `RequestIDMiddleware` now also stashes `request.state.
+      request_id`. On the worker side, rather than editing all 19 worker
+      function bodies individually, added a single choke point:
+      `with_request_id_context()` in `arq/tasks.py` wraps every entry in
+      `WorkerSettings.functions`/`cron_jobs` and pops an optional
+      `request_id` kwarg before calling the real function, binding it via
+      `log.contextualize()` for the duration of the call if present -
+      `@functools.wraps` preserves `__qualname__`, which is what arq's
+      function registry dispatches job names on (verified this
+      empirically, not just from docs, with a standalone repro). Jobs
+      enqueued without one (cron, scripts) are completely unaffected.
+      Wired `request_id=request.state.request_id` (or a threaded-through
+      `request_id` param, for the 2 sites where the enqueue happens in a
+      logic-layer helper rather than the route itself -
+      `enqueue_dem_download`, `create_tasks_from_geojson`) into all 14
+      route-originated `enqueue_job()` call sites across
+      `public_routes.py`, `classification_routes.py` (4),
+      `project_routes.py` (8), `jaxa/upload_dem.py`.
+      **Scope boundary, not attempted**: a job enqueueing *another* job
+      from inside a worker (one case exists -
+      `process_imported_odm_assets` calling `create_tasks_from_geojson`)
+      doesn't relay the original request_id forward - the todo item's
+      wording ("jobs enqueued *from a request*") is satisfied by the
+      primary route→job hop; chasing it through nested job→job chains
+      too would mean relaying an explicit param through more function
+      signatures for a rare, second-order case.
+      Broke 6 pre-existing tests that asserted exact `enqueue_job` call
+      args/kwargs (now includes the new `request_id`) or called a route
+      function directly without the now-required `request` param -
+      fixed each by asserting `request_id` is present as a string
+      separately from the rest of the kwargs dict (rather than widening
+      the exact-match to a hardcoded value, since it's a real UUID
+      generated per-request), and adding a `_fake_request()` helper
+      (`SimpleNamespace(state=SimpleNamespace(request_id=...))`) for the
+      handful of tests calling route functions directly rather than via
+      the HTTP client. Added `test_arq_request_id_propagation.py` (3
+      tests covering the wrapper itself: binds context and strips the
+      kwarg, is a no-op when absent, preserves `__qualname__`/`__name__`
+      for arq's dispatch). Verified `ruff check`/`format --diff` (clean),
+      an `api.openapi()` build (93 paths, no errors from the new
+      `Request` params), and the full backend suite (261/261 passed,
+      +3 for the new test file).
 - [ ] Regenerate `uv.lock` again once `prometheus_client` (or whichever
       package gets picked, see the `/metrics` item above) is added as a
       dependency - same container-based process used for the mypy lockfile

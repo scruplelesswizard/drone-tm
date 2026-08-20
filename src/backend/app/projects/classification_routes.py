@@ -24,7 +24,14 @@ from app.waypoints.flightplan_output import (
 )
 from arq import ArqRedis
 from drone_flightplan.drone_type import DroneType
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+)
 from loguru import logger as log
 from psycopg import Connection
 from pydantic import BaseModel
@@ -194,6 +201,7 @@ async def reset_stale_classification(
 )
 async def start_project_classification(
     project_id: UUID,
+    request: Request,
     db: Annotated[Connection, Depends(database.get_db)],
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
     user: Annotated[AuthUser, Depends(login_required)],
@@ -239,6 +247,7 @@ async def start_project_classification(
         str(project_id),
         disable_flight_tail_detection=disable_flight_tail_detection,
         _queue_name="default_queue",
+        request_id=request.state.request_id,
     )
 
     log.info(
@@ -261,6 +270,7 @@ async def start_project_classification(
 )
 async def ingest_existing_uploads(
     project_id: UUID,
+    request: Request,
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
     user: Annotated[AuthUser, Depends(login_required)],
 ):
@@ -284,6 +294,7 @@ async def ingest_existing_uploads(
         batch_id,
         _queue_name="default_queue",
         _job_id=stable_job_id,
+        request_id=request.state.request_id,
     )
 
     if job is None:
@@ -318,6 +329,7 @@ async def ingest_existing_uploads(
 )
 async def create_project_from_imagery_exif(
     body: project_schemas.ProjectFromImageryExifIn,
+    request: Request,
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
     user: Annotated[AuthUser, Depends(login_required)],
 ):
@@ -344,6 +356,7 @@ async def create_project_from_imagery_exif(
         body.path,
         body.project_name,
         _queue_name="default_queue",
+        request_id=request.state.request_id,
     )
 
     if job is None:
@@ -558,6 +571,7 @@ async def assign_image_to_task(
 async def delete_batch(
     project_id: UUID,
     batch_id: UUID,
+    request: Request,
     db: Annotated[Connection, Depends(database.get_db)],
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
     user: Annotated[AuthUser, Depends(login_required)],
@@ -576,6 +590,7 @@ async def delete_batch(
             str(project_id),
             str(batch_id),
             _queue_name="default_queue",
+            request_id=request.state.request_id,
         )
 
         log.info(f"Queued batch deletion job: {job.job_id} for batch: {batch_id}")

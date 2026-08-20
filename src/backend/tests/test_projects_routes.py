@@ -14,6 +14,12 @@ from loguru import logger as log
 from minio.error import S3Error
 
 
+def _fake_request() -> SimpleNamespace:
+    """Minimal stand-in for the FastAPI Request routes now take, just to
+    read .state.request_id for arq job propagation."""
+    return SimpleNamespace(state=SimpleNamespace(request_id="test-request-id"))
+
+
 @pytest.mark.asyncio
 async def test_create_project_with_files(
     client,
@@ -53,6 +59,7 @@ async def test_create_project_commits_before_return(monkeypatch, project_info):
 
     response = await project_routes.create_project(
         project_info=project_info,
+        request=_fake_request(),
         db=db,
         background_tasks=BackgroundTasks(),
         user_data=SimpleNamespace(
@@ -969,18 +976,17 @@ async def test_process_imagery_enqueues_when_transfer_complete(
         "message": "Processing started",
         "job_id": "job-process-single",
     }
-    assert fake_redis.jobs == [
-        (
-            (
-                "process_drone_images",
-                uuid.UUID(project_id),
-                uuid.UUID(task_id),
-                auth_user.id,
-                None,
-            ),
-            {"_queue_name": "default_queue"},
-        )
-    ]
+    assert len(fake_redis.jobs) == 1
+    job_args, job_kwargs = fake_redis.jobs[0]
+    assert job_args == (
+        "process_drone_images",
+        uuid.UUID(project_id),
+        uuid.UUID(task_id),
+        auth_user.id,
+        None,
+    )
+    assert isinstance(job_kwargs.pop("request_id"), str)
+    assert job_kwargs == {"_queue_name": "default_queue"}
 
 
 @pytest.mark.asyncio
