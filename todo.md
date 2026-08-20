@@ -640,8 +640,26 @@ inline on the original item.
         coverage for this and the remaining 3 components below.
   - [ ] `DroneOperatorTask/MapSection/MapSection.tsx` (1186 lines) - not
         started this pass.
-  - [ ] `DroneImageProcessingWorkflow/TaskVerificationModal.tsx` (902) - not
-        started this pass.
+  - [x] `DroneImageProcessingWorkflow/TaskVerificationModal.tsx` (902) →
+        directory `TaskVerificationModal/` with `index.tsx` (629, container
+        - all map-lifecycle useEffects/mutations/handlers unchanged),
+        `TaskMapPanel.tsx` (180, map + stats/coverage overlays),
+        `ImageSidebar.tsx` (140, virtualized image grid), `VerificationFooter
+        .tsx` (65). Same pure-extraction methodology as ProcessingStatusDialog
+        above. `./FlightGapDetectionModal` import updated to `../
+        FlightGapDetectionModal` for the new directory depth. One real type
+        gap surfaced: `imagesGeoJson()`'s return value was untyped/inferred
+        in the monolith, so passing it as an explicit `TaskMapPanel` prop
+        forced a choice - typed it loosely (matching what the source data
+        actually satisfies: `image.location` isn't a strict GeoJSON
+        `Geometry`) rather than fixing the underlying geometry typing, which
+        is out of scope for a pure refactor. Verified: `tsc --noEmit`,
+        `eslint --fix` (one `no-param-reassign` warning on the image-ref
+        callback moving into a props-receiving component - scoped
+        eslint-disable, same as the file's existing pattern), `pnpm build`
+        clean, Vitest 19/19, Playwright 4/4. Same authenticated-rendering
+        caveat as above: not verified live (map + task imagery need a real
+        session).
   - [ ] `DroneImageProcessingWorkflow/ImageReview.tsx` (2559, the largest) -
         not started this pass.
 - [x] Reduce `any` usage starting at the API layer (193 occurrences across
