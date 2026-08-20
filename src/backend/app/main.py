@@ -39,6 +39,7 @@ from hotosm_auth_fastapi import (
     osm_router,
 )
 from loguru import logger as log
+from prometheus_fastapi_instrumentator import Instrumentator
 from psycopg import Connection
 from psycopg_pool import AsyncConnectionPool
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -277,6 +278,12 @@ def get_application() -> FastAPI:
         # interactive traceback page (FastAPI(debug=...)) instead of
         # swallowing them here.
         _app.add_exception_handler(Exception, handle_unexpected_error)
+
+    # Bare /metrics (not under api_prefix, matching Prometheus scrape
+    # convention). No app-level auth - same expectation as any other
+    # Prometheus target, restricted at the network layer (ingress/
+    # NetworkPolicy) rather than the application layer.
+    Instrumentator().instrument(_app).expose(_app, include_in_schema=False)
 
     return _app
 

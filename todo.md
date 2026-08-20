@@ -332,10 +332,36 @@ inline on the original item.
       context (now in every log line via `req={extra[request_id]}`), and
       echoes it back on the response. Does **not** yet propagate into arq
       jobs enqueued from a request — see follow-ups.
-- [ ] **Needs interaction:** expose a Prometheus `/metrics` endpoint. Needs
-      a dependency choice (`prometheus-fastapi-instrumentator` vs
-      `prometheus_client` vs `starlette-exporter`) — CLAUDE.md requires
-      asking before adding a new dependency.
+- [x] Expose a Prometheus `/metrics` endpoint. Needed a dependency choice
+      (`prometheus-fastapi-instrumentator` vs `prometheus_client` vs
+      `starlette-exporter`) — asked, chose
+      `prometheus-fastapi-instrumentator`.
+      DONE — `Instrumentator().instrument(_app).expose(_app,
+      include_in_schema=False)` in `get_application()`, right before
+      `return _app`. Bare `/metrics` (not under `api_prefix`, matching
+      Prometheus scrape convention), no app-level auth - same expectation
+      as any other Prometheus target, meant to be restricted at the
+      network layer (ingress/`NetworkPolicy`), not the application layer.
+      `include_in_schema=False` keeps it out of the OpenAPI docs.
+      Pinned `==7.1.0`, **not** the latest `8.1.0` - `uv lock` caught a
+      real dependency conflict: `8.x` requires `starlette>=1.0.0`, but
+      this project's pinned `fastapi==0.112.0` requires
+      `starlette>=0.37.2,<0.38.0`, so `8.1.0` is actually uninstallable
+      here. `7.1.0` requires `starlette<1.0.0,>=0.30.0`, which is
+      compatible.
+      Regenerated `uv.lock` in a throwaway container built from the
+      backend Dockerfile's own apt-get + `uv` setup (same approach as the
+      earlier mypy-baseline lockfile fix) - `uv lock` alone needed the
+      full `libpq-dev`/GDAL/build-essential toolchain too, since
+      `psycopg-c` has no prebuilt wheel for this combination and gets
+      built from source just to resolve dependency metadata, not only to
+      install. Verified: `docker compose build backend` succeeds, both
+      `backend` and `arq-worker` containers start healthy, `curl
+      localhost:8000/metrics` returns real Prometheus text output, a real
+      request through `/api/projects/centroids` shows up in
+      `http_requests_total`, `api.openapi()` confirms `/metrics` is
+      correctly absent from the schema, and the full backend suite
+      (261/261 passed).
 
 ## Observability — P2
 
@@ -1581,10 +1607,12 @@ than as inline notes on the item that found them:
       an `api.openapi()` build (93 paths, no errors from the new
       `Request` params), and the full backend suite (261/261 passed,
       +3 for the new test file).
-- [ ] Regenerate `uv.lock` again once `prometheus_client` (or whichever
+- [x] Regenerate `uv.lock` again once `prometheus_client` (or whichever
       package gets picked, see the `/metrics` item above) is added as a
       dependency - same container-based process used for the mypy lockfile
       fix.
+      DONE as part of the `/metrics` item itself (same commit) - see that
+      entry above for the version-conflict finding and verification.
 - [x] Fixed two real bugs the RFC 7807 PR's own tests caught: (1) the
       exception handlers were only registered on the module-level `api`
       singleton, not inside `get_application()` itself, so any other
