@@ -4,6 +4,7 @@ import bbox from '@turf/bbox';
 import { toast } from 'react-toastify';
 import { Feature, FeatureCollection } from 'geojson';
 // import { v4 as uuidv4 } from 'uuid';
+import { m } from '@/paraglide/messages';
 import { useMap } from '../MapContext';
 import { IVectorLayer } from '../types';
 
@@ -164,7 +165,9 @@ export default function VectorLayer({
         try {
           parsedGeojson = JSON.parse(geojson) as Feature | FeatureCollection;
         } catch (error) {
-          toast.error(`Invalid GeoJSON string: ${(error as Error)?.message}`);
+          toast.error(
+            m.map_invalid_geojson({ reason: (error as Error)?.message }),
+          );
           return;
         }
       } else {

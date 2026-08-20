@@ -222,7 +222,7 @@ const MapSection = ({ className }: { className?: string }) => {
     const message =
       (typeof detail === 'object' ? detail?.message : detail) ||
       taskWaypointsError?.message;
-    toast.error(message || 'Failed to generate task waypoints.');
+    toast.error(message || m.map_task_waypoints_generation_failed());
   }, [isTaskWaypointsError, taskWaypointsError, demWarningShown]);
 
   useEffect(() => {

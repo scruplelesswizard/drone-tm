@@ -10,6 +10,7 @@ import {
   AdbDaemonWebUsbDeviceManager,
 } from '@yume-chan/adb-daemon-webusb';
 import { toast } from 'react-toastify';
+import { m } from '@/paraglide/messages';
 
 async function readShellOutput(
   process: AdbShellProtocolProcess,
@@ -47,7 +48,7 @@ async function getAdbConnection(): Promise<Adb | undefined> {
     AdbDaemonWebUsbDeviceManager.BROWSER;
 
   if (!Manager) {
-    toast.error('WebUSB is not supported in this browser');
+    toast.error(m.adb_webusb_unsupported());
     return undefined;
   }
 
@@ -56,7 +57,7 @@ async function getAdbConnection(): Promise<Adb | undefined> {
   const device: AdbDaemonWebUsbDevice | undefined =
     await Manager.requestDevice();
   if (!device) {
-    toast.error('No device selected');
+    toast.error(m.adb_no_device_selected());
     return undefined;
   }
 

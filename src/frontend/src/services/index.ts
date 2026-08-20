@@ -2,6 +2,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'react-toastify';
 
+import { m } from '@/paraglide/messages';
 import { getRuntimeConfig } from '@/runtimeConfig';
 
 const API_URL = getRuntimeConfig('VITE_API_URL', '/api');
@@ -42,7 +43,7 @@ api.interceptors.response.use(
       // Hanko session expired - clean up localStorage
       localStorage.removeItem('userprofile');
       localStorage.removeItem('signedInAs');
-      toast.error('Session Expired. Please Re-login.');
+      toast.error(m.auth_session_expired());
       window.location.href = '/';
       return Promise.reject(responseError);
     }
@@ -69,7 +70,7 @@ api.interceptors.response.use(
           originalRequest.headers['Access-Token'] = `${newAccessToken}`;
           return axios(originalRequest); // recall Api with new token1
         } catch {
-          toast.error('Session Expired. Please Re-login.');
+          toast.error(m.auth_session_expired());
           localStorage.removeItem('token');
           localStorage.removeItem('refresh');
           window.location.href = '/';
