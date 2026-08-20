@@ -3,7 +3,7 @@ from app.config import settings
 from app.models.enums import HTTPStatus
 from app.s3 import maybe_presign_s3_key
 from arq import ArqRedis
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from loguru import logger as log
 from pydantic import BaseModel
 
@@ -34,6 +34,7 @@ class PresignedUrlResponse(BaseModel):
 )
 async def scaleodm_webhook(
     payload: ScaleOdmWebhookPayload,
+    request: Request,
     redis_pool: ArqRedis = Depends(get_redis_pool),
     token: str | None = Query(None),
 ):
@@ -55,6 +56,7 @@ async def scaleodm_webhook(
         payload.uuid,
         _job_id=f"odm-reconcile:{payload.uuid}",
         _queue_name="default_queue",
+        request_id=request.state.request_id,
     )
     return {"status": "accepted", "uuid": payload.uuid}
 

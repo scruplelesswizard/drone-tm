@@ -204,15 +204,14 @@ async def test_start_project_classification_enqueues_job_for_staged_images(
         "project_id": project_id,
         "image_count": 1,
     }
-    assert fake_redis.jobs == [
-        (
-            ("classify_project_images", project_id),
-            {
-                "disable_flight_tail_detection": False,
-                "_queue_name": "default_queue",
-            },
-        )
-    ]
+    assert len(fake_redis.jobs) == 1
+    job_args, job_kwargs = fake_redis.jobs[0]
+    assert job_args == ("classify_project_images", project_id)
+    assert isinstance(job_kwargs.pop("request_id"), str)
+    assert job_kwargs == {
+        "disable_flight_tail_detection": False,
+        "_queue_name": "default_queue",
+    }
 
 
 @pytest.mark.asyncio

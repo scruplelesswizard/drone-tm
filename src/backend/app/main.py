@@ -105,12 +105,14 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     """Assign (or propagate) a request ID, bound to log context and echoed back.
 
     Lets a failed request be traced through backend logs by X-Request-ID.
-    Doesn't yet propagate into arq jobs enqueued from the request - see
-    todo.md.
+    Also stashed on request.state.request_id so route handlers that enqueue
+    an arq job can pass it through - see arq/tasks.py's
+    with_request_id_context() for the worker side of that chain.
     """
 
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        request.state.request_id = request_id
         with log.contextualize(request_id=request_id):
             response = await call_next(request)
         response.headers["X-Request-ID"] = request_id

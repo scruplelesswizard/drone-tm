@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import functools
 import hashlib
 import io
 import json
@@ -2040,38 +2041,72 @@ async def reconcile_odm_by_uuid(
     return {"project_id": str(project_id), **summary}
 
 
+def with_request_id_context(fn):
+    """Bind the enqueuing request's X-Request-ID to this job's log context.
+
+    A single choke point rather than editing every worker function body:
+    pops the optional `request_id` kwarg (passed by route handlers that
+    enqueue a job - see RequestIDMiddleware in main.py) before calling the
+    real function, so its signature is untouched and jobs enqueued without
+    one (cron jobs, scripts) are unaffected. @functools.wraps preserves
+    __qualname__, which is what arq's function registry dispatches on.
+    """
+
+    @functools.wraps(fn)
+    async def wrapper(ctx: dict[Any, Any], *args: Any, **kwargs: Any) -> Any:
+        request_id = kwargs.pop("request_id", None)
+        if request_id:
+            with log.contextualize(request_id=request_id):
+                return await fn(ctx, *args, **kwargs)
+        return await fn(ctx, *args, **kwargs)
+
+    return wrapper
+
+
 class WorkerSettings:
     """ARQ worker configuration"""
 
     redis_settings = RedisSettings.from_dsn(settings.DRAGONFLY_DSN)
     functions: ClassVar[list] = [
-        sleep_task,
-        count_project_tasks,
-        process_drone_images,
-        process_all_drone_images,
-        process_uploaded_image,
-        ingest_existing_uploads,
-        classify_project_images,
-        move_task_images_for_processing,
-        delete_batch_images,
-        process_project_task_metrics,
-        download_and_upload_dem,
-        generate_qfield_project,
-        process_imported_odm_assets,
-        create_project_from_imagery_exif,
-        generate_orthophoto_cog,
-        generate_3d_tiles,
-        reconcile_inflight_odm_tasks,
-        reconcile_odm_by_uuid,
-        reconcile_pending_transfers,
+        with_request_id_context(f)
+        for f in (
+            sleep_task,
+            count_project_tasks,
+            process_drone_images,
+            process_all_drone_images,
+            process_uploaded_image,
+            ingest_existing_uploads,
+            classify_project_images,
+            move_task_images_for_processing,
+            delete_batch_images,
+            process_project_task_metrics,
+            download_and_upload_dem,
+            generate_qfield_project,
+            process_imported_odm_assets,
+            create_project_from_imagery_exif,
+            generate_orthophoto_cog,
+            generate_3d_tiles,
+            reconcile_inflight_odm_tasks,
+            reconcile_odm_by_uuid,
+            reconcile_pending_transfers,
+        )
     ]
 
     # Backstop reconcile every 30 min (webhook and page-open do the fast path).
     # Plus a nightly sweep that resumes imagery transfers stalled by a
     # deploy/restart mid-move (runs at 03:00 UTC, off-peak).
     cron_jobs: ClassVar[list] = [
-        cron(reconcile_inflight_odm_tasks, minute={0, 30}, run_at_startup=False),
-        cron(reconcile_pending_transfers, hour=3, minute=0, run_at_startup=False),
+        cron(
+            with_request_id_context(reconcile_inflight_odm_tasks),
+            minute={0, 30},
+            run_at_startup=False,
+        ),
+        cron(
+            with_request_id_context(reconcile_pending_transfers),
+            hour=3,
+            minute=0,
+            run_at_startup=False,
+        ),
     ]
 
     queue_name = "default_queue"

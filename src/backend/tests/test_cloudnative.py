@@ -54,6 +54,12 @@ class _FakeRedis:
         return self._returns
 
 
+def _fake_request() -> SimpleNamespace:
+    """Minimal stand-in for the FastAPI Request the trigger endpoints now
+    take, just to read .state.request_id for arq job propagation."""
+    return SimpleNamespace(state=SimpleNamespace(request_id="test-request-id"))
+
+
 def _fake_project(
     *,
     image_processing_status: str = "SUCCESS",
@@ -262,7 +268,7 @@ async def test_trigger_orthophoto_409_when_not_success():
 
     with pytest.raises(HTTPException) as exc:
         await project_routes.trigger_orthophoto_conversion(
-            db=db, project=project, redis_pool=redis
+            request=_fake_request(), db=db, project=project, redis_pool=redis
         )
 
     assert exc.value.status_code == 409
@@ -278,7 +284,7 @@ async def test_trigger_orthophoto_already_generating_short_circuits():
     redis = _FakeRedis()
 
     result = await project_routes.trigger_orthophoto_conversion(
-        db=db, project=project, redis_pool=redis
+        request=_fake_request(), db=db, project=project, redis_pool=redis
     )
 
     assert result == {"status": "already_generating"}
@@ -298,7 +304,7 @@ async def test_trigger_orthophoto_enqueue_none_rolls_back_flag():
     redis = _FakeRedis(enqueue_returns=None)
 
     result = await project_routes.trigger_orthophoto_conversion(
-        db=db, project=project, redis_pool=redis
+        request=_fake_request(), db=db, project=project, redis_pool=redis
     )
 
     assert result == {"status": "already_generating"}

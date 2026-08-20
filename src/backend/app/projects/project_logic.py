@@ -298,6 +298,7 @@ async def create_tasks_from_geojson(
     boundaries: Any,
     project,
     redis=None,
+    request_id: str | None = None,
 ):
     """Create tasks and enqueue task metric processing asynchronously."""
     try:
@@ -336,6 +337,7 @@ async def create_tasks_from_geojson(
                     "process_project_task_metrics",
                     str(project_id),
                     _queue_name="default_queue",
+                    request_id=request_id,
                 )
                 log.info(
                     f"Queued task metrics job {job.job_id} for project {project_id}"

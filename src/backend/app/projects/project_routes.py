@@ -319,6 +319,7 @@ async def delete_project_by_id(
 )
 async def create_project(
     project_info: project_schemas.ProjectIn,
+    request: Request,
     db: Annotated[Connection, Depends(database.get_db)],
     background_tasks: BackgroundTasks,
     user_data: Annotated[AuthUser, Depends(login_dependency)],
@@ -365,7 +366,13 @@ async def create_project(
         geometry = project_info.outline["features"][0]["geometry"]
         try:
             redis = await get_redis_pool()
-            background_tasks.add_task(enqueue_dem_download, geometry, project_id, redis)
+            background_tasks.add_task(
+                enqueue_dem_download,
+                geometry,
+                project_id,
+                redis,
+                request.state.request_id,
+            )
         except HTTPException as e:
             # Project creation should succeed even if DEM background queue is unavailable.
             log.warning(
@@ -387,6 +394,7 @@ async def upload_project_task_boundaries(
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
     ],
+    request: Request,
     db: Annotated[Connection, Depends(database.get_db)],
     user: Annotated[AuthUser, Depends(login_required)],
     task_featcol: Annotated[FeatureCollection, Depends(project_deps.geojson_upload)],
@@ -410,7 +418,12 @@ async def upload_project_task_boundaries(
         )
 
     await project_logic.create_tasks_from_geojson(
-        db, project.id, task_featcol, project, redis_pool
+        db,
+        project.id,
+        task_featcol,
+        project,
+        redis_pool,
+        request_id=request.state.request_id,
     )
 
     return {
@@ -541,6 +554,7 @@ async def read_project(
 )
 async def process_imagery(
     task_id: uuid.UUID,
+    request: Request,
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
     ],
@@ -570,6 +584,7 @@ async def process_imagery(
         user_id,
         odm_url,
         _queue_name="default_queue",
+        request_id=request.state.request_id,
     )
 
     return {"message": "Processing started", "job_id": job.job_id}
@@ -632,6 +647,7 @@ async def retry_imagery_transfer(
     summary="Process all tasks associated with a project in one ScaleODM run",
 )
 async def process_all_imagery(
+    request: Request,
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
     ],
@@ -710,6 +726,7 @@ async def process_all_imagery(
         user_id,
         capacity_type,
         _queue_name="default_queue",
+        request_id=request.state.request_id,
     )
 
     return {
@@ -927,6 +944,7 @@ async def upload_imagery_to_oam(
 )
 async def generate_qfield_project(
     project_id: Annotated[UUID, Path(description="The project ID in UUID format.")],
+    request: Request,
     db: Annotated[Connection, Depends(database.get_db)],
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
     user_data: Annotated[AuthUser, Depends(login_required)],
@@ -948,6 +966,7 @@ async def generate_qfield_project(
         "generate_qfield_project",
         str(project_id),
         _queue_name="default_queue",
+        request_id=request.state.request_id,
     )
 
     return {
@@ -1092,6 +1111,7 @@ async def sign_part_upload(
     summary="Complete a multipart upload and queue image processing",
 )
 async def complete_upload(
+    request: Request,
     user: Annotated[AuthUser, Depends(login_required)],
     db: Annotated[Connection, Depends(database.get_db)],
     redis: Annotated[ArqRedis, Depends(get_redis_pool)],
@@ -1148,6 +1168,7 @@ async def complete_upload(
                 str(user.id),
                 _queue_name="default_queue",
                 _defer_by=timedelta(seconds=3),
+                request_id=request.state.request_id,
             )
             if job is None:
                 log.error(f"Failed to enqueue ODM import job for file: {data.file_key}")
@@ -1178,6 +1199,7 @@ async def complete_upload(
             str(data.batch_id) if data.batch_id else None,
             _queue_name="default_queue",
             _defer_by=timedelta(seconds=2),
+            request_id=request.state.request_id,
         )
 
         if job is None:
@@ -1610,6 +1632,7 @@ async def _trigger_cloudnative_job(
     function: str,
     job_id: str,
     generating_column: str,
+    request_id: str | None = None,
 ) -> dict:
     """Set the generating flag, then enqueue. Roll back on failure.
 
@@ -1631,6 +1654,7 @@ async def _trigger_cloudnative_job(
             project_id=str(project_id),
             _job_id=job_id,
             _queue_name="default_queue",
+            request_id=request_id,
         )
     except Exception:
         await _clear_generating_flag(db, project_id, generating_column)
@@ -1650,6 +1674,7 @@ async def _trigger_cloudnative_job(
     summary="Kick off COG generation for this project's orthophoto",
 )
 async def trigger_orthophoto_conversion(
+    request: Request,
     db: Annotated[Connection, Depends(database.get_db)],
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
@@ -1681,6 +1706,7 @@ async def trigger_orthophoto_conversion(
         function="generate_orthophoto_cog",
         job_id=f"cog:{project.id}",
         generating_column="cloud_ortho_generating",
+        request_id=request.state.request_id,
     )
 
 
@@ -1692,6 +1718,7 @@ async def trigger_orthophoto_conversion(
     summary="Kick off 3D Tiles generation for this project's textured mesh",
 )
 async def trigger_mesh_conversion(
+    request: Request,
     db: Annotated[Connection, Depends(database.get_db)],
     project: Annotated[
         project_schemas.DbProject, Depends(project_deps.get_project_by_id)
@@ -1722,6 +1749,7 @@ async def trigger_mesh_conversion(
         function="generate_3d_tiles",
         job_id=f"3dtiles:{project.id}",
         generating_column="cloud_mesh_generating",
+        request_id=request.state.request_id,
     )
 
 
@@ -1732,11 +1760,12 @@ async def trigger_mesh_conversion(
     response_model=project_schemas.ArqTestTaskResponse,
     summary="Enqueue a test sleep task (dev/debug only, not used in production)",
 )
-async def test(redis_pool: ArqRedis = Depends(get_redis_pool)):
+async def test(request: Request, redis_pool: ArqRedis = Depends(get_redis_pool)):
     try:
         job = await redis_pool.enqueue_job(
             "sleep_task",
             _queue_name="default_queue",
+            request_id=request.state.request_id,
         )
 
         log.info(f"Successfully enqueued sleep_task with job ID: {job.job_id}")
