@@ -14,6 +14,7 @@ from app.db.database import get_db, get_db_connection_pool
 from app.main import get_application
 from app.models.enums import UserRole
 from app.projects.project_schemas import DbProject, ProjectIn
+from app.rate_limit import limiter
 from app.users.user_deps import login_dependency, login_required
 from app.users.user_schemas import AuthUser, DbUser
 from arq import create_pool
@@ -159,6 +160,10 @@ async def test_get_project(db, create_test_project):
 @pytest_asyncio.fixture(autouse=True)
 async def app() -> AsyncGenerator[FastAPI, Any]:
     """Get the FastAPI test server."""
+    # The rate limiter (app/rate_limit.py) is a module-level singleton, so
+    # its request counters persist across tests even though get_application()
+    # builds a fresh FastAPI app each time - reset so tests stay independent.
+    limiter.reset()
     yield get_application()
 
 

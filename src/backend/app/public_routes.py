@@ -1,6 +1,7 @@
 from app.arq.tasks import get_redis_pool
 from app.config import settings
 from app.models.enums import HTTPStatus
+from app.rate_limit import limiter
 from app.s3 import maybe_presign_s3_key
 from arq import ArqRedis
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -32,6 +33,7 @@ class PresignedUrlResponse(BaseModel):
     response_model=ScaleOdmWebhookResponse,
     summary="Receive a ScaleODM status webhook",
 )
+@limiter.limit("60/minute")
 async def scaleodm_webhook(
     payload: ScaleOdmWebhookPayload,
     request: Request,
@@ -66,7 +68,9 @@ async def scaleodm_webhook(
     response_model=PresignedUrlResponse,
     summary="Get a presigned URL for a public S3 object",
 )
+@limiter.limit("30/minute")
 async def get_public_presigned_url(
+    request: Request,
     key: str = Query(..., description="S3 object key (e.g. tutorials/Foo.mp4)"),
     expires_hours: int = Query(2, ge=1, le=24),
 ):
