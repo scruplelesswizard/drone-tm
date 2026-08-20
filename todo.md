@@ -279,16 +279,37 @@ inline on the original item.
       `workflow_dispatch`. `actions/checkout@v4` with `fetch-depth: 0`
       (gitleaks needs full history to scan commits, not just the tip).
       Verified via `actionlint`.
-- [ ] Confirm/enable branch protection on `main`/`dev` (branch-protection API
+- [x] Confirm/enable branch protection on `main`/`dev` (branch-protection API
       returned 404 for both — status unconfirmed, likely absent)
       Asked; explicitly out of scope for the "mechanical + secret-scanning +
       lint-staged" CI/CD batch (2026-08 session) — not a code change, needs
       live GitHub admin API access this session doesn't have. Still open.
-- [ ] Build & push images on every merge to `dev`, not just on release —
+      DONE — applied via the branch-protection API to `dev` on
+      `scruplelesswizard/drone-tm` (no `main` branch exists there): 1
+      required approving review (stale reviews dismissed on new pushes),
+      required status checks (`gitleaks`, `pr-label`), no force-pushes, no
+      deletions. Deliberately did **not** require `build`/`test`/`lint`/
+      `pytest / just` — those are path-filtered (`src/backend/**` /
+      `src/frontend/**`) in `test.yml`/`frontend-test.yml`, so a doc-only
+      or single-domain PR would never trigger them and would sit
+      permanently blocked on an "Expected" check that never runs. Only
+      `gitleaks`/`pr-label` are unconditional on every PR.
+- [x] Build & push images on every merge to `dev`, not just on release —
       tag by git-sha, keep semver tagging for releases
       Asked; explicitly out of scope for the same batch (deploy-cadence
       change, not mechanical). Still open. Note: this is also what blocks
       the OpenAPI doc-gen item below — see its writeup.
+      DONE — added a `push: branches: [dev]` trigger to `tag_build.yml`
+      alongside the existing `release` trigger. No tagging-logic change
+      needed: the reusable `image_build.yml` workflow's default
+      `docker/metadata-action` rules already produce a `dev` (branch-ref)
+      tag and a `sha-<full sha>` tag on every push, and `type=semver`
+      tags only fire for release events — exactly the "tag by git-sha,
+      keep semver for releases" split this item asked for. Passed
+      `environment: dev` explicitly for push-triggered builds (vs. the
+      release tag name for release builds), so `vars`/`secrets` lookups
+      resolve to a stable environment name instead of a different one per
+      git ref.
 
 ## CI/CD & Delivery — P2
 
