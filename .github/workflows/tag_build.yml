@@ -37,3 +37,52 @@ jobs:
       dockerfile: frontend/Dockerfile
       multi_arch: true
       environment: ${{ github.event_name == 'release' && github.ref_name || 'dev' }}
+
+  # SBOM + keyless signing for both images. Runs as its own job (rather than
+  # inside the reusable image_build.yml, which doesn't support this) so it
+  # can consume each build's `image_name` output. Keyless: no signing key to
+  # manage/rotate - cosign signs using this job's own GitHub Actions OIDC
+  # identity, verifiable against Sigstore's public Fulcio/Rekor transparency
+  # log (`cosign verify --certificate-identity-regexp ... --certificate-
+  # oidc-issuer https://token.actions.githubusercontent.com`).
+  sign-and-sbom:
+    needs: [backend-build, frontend-build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      matrix:
+        include:
+          - name: backend
+            image: ${{ needs.backend-build.outputs.image_name }}
+          - name: frontend
+            image: ${{ needs.frontend-build.outputs.image_name }}
+    steps:
+      - uses: sigstore/cosign-installer@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ matrix.image }}
+          format: spdx-json
+          output-file: ${{ matrix.name }}-sbom.spdx.json
+          upload-artifact: false
+
+      - name: Sign image (keyless)
+        run: cosign sign --yes "${{ matrix.image }}"
+
+      - name: Attach signed SBOM attestation
+        run: |
+          cosign attest --yes \
+            --predicate "${{ matrix.name }}-sbom.spdx.json" \
+            --type spdxjson \
+            "${{ matrix.image }}"

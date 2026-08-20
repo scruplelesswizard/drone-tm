@@ -471,13 +471,26 @@ inline on the original item.
 
 ## Kubernetes & Infra — P3
 
-- [ ] **Needs interaction:** SBOM generation + image signing
+- [x] **Needs interaction:** SBOM generation + image signing
       (`cosign`/`syft`/`trivy`). Needs key management / OIDC signing
       infrastructure decisions, not just a workflow step.
       **Not attempted**, same reasoning as digest pinning above - a
       placeholder signing step without real keys/OIDC trust configured
       would just fail in CI, not degrade gracefully like the K8s
       chart defaults could.
+      DONE — Asked; chose keyless signing via GitHub OIDC (no key to
+      generate/store/rotate). Added a `sign-and-sbom` job to
+      `tag_build.yml`, matrixed over both images, running after
+      `backend-build`/`frontend-build`: `anchore/sbom-action` generates an
+      SPDX-JSON SBOM per image, then `cosign sign --yes` (keyless,
+      Sigstore Fulcio/Rekor) signs it and `cosign attest --yes` attaches
+      the SBOM as a signed in-toto attestation. Needs `id-token: write` +
+      `packages: write` job permissions for the OIDC exchange and
+      pushing the signature/attestation to GHCR. Verified: YAML syntax
+      valid; full end-to-end signing wasn't run in this sandbox (needs a
+      real GHCR push + live OIDC token, which only exists inside an
+      actual Actions run) — will confirm on the first real `dev`-merge
+      build once this PR lands.
 
 ## Security — P1
 
