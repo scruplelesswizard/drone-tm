@@ -756,9 +756,10 @@ ASVS in particular haven't been scanned yet).
 
 ### Medium
 
-- [ ] Heading hierarchy: three `<h1>`s in one section
+- [x] Heading hierarchy: three `<h1>`s in one section
       (`components/IndividualProject/ExportSection/index.tsx:16,48,55`).
       Should be one `h1` + `h2`/`h3` for subsections. WCAG 1.3.1, 2.4.6.
+      DONE — one `<h1>` + two `<h2>`s for the error/success subsections.
 - [x] `SearchInput`/`Select` rely on `placeholder` only, no
       `<label>`/`aria-label` (`components/common/FormUI/SearchInput/index.tsx:27-34`,
       `components/common/FormUI/Input/index.tsx`,
