@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useCallback } from 'react';
+import { ReactNode, useEffect, useCallback, useRef } from 'react';
+import useFocusTrap from '@/hooks/useFocusTrap';
 
 interface IDrawerProps {
   open: boolean;
@@ -17,6 +18,10 @@ export default function Drawer({
   overlayClassName = '',
   contentClassName = '',
 }: IDrawerProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(panelRef, open);
+
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -48,6 +53,8 @@ export default function Drawer({
 
       {/* Drawer panel - slides from top */}
       <div
+        ref={panelRef}
+        tabIndex={-1}
         className={`naxatw-absolute naxatw-left-0 naxatw-right-0 naxatw-top-0 naxatw-bg-white naxatw-shadow-lg naxatw-transition-transform naxatw-duration-200 naxatw-ease-out ${
           open ? 'naxatw-translate-y-0' : '-naxatw-translate-y-full'
         } ${contentClassName}`.trim()}
