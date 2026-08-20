@@ -187,6 +187,17 @@ useful, not DroneTM-specific.
 - Don't weaken or delete tests just to make CI pass.
 - If environment constraints block running tests, state the exact blocker
   rather than skipping silently.
+- Frontend UI verification: `src/frontend/e2e/` holds Playwright
+  (`pnpm test:e2e`) headless-Chromium end-to-end tests, distinct from
+  `src/frontend/src/**/*.test.tsx` (Vitest/Testing Library, jsdom-based
+  component tests). When a manual browser session isn't available, a
+  passing headless Playwright run against the real rendered app (routing,
+  redirects, DOM assertions — not just jsdom) is sufficient UI
+  verification; state that's what was used, don't claim manual browser
+  testing you didn't do. Prefer adding/extending a Playwright spec over
+  skipping verification for any UI change reachable from a public route;
+  authenticated/data-dependent flows still need a note on what wasn't
+  verified end-to-end.
 
 ## Database & migrations
 

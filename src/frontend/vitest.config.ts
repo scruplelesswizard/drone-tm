@@ -33,5 +33,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // e2e/ holds Playwright specs (real Chromium, own runner/config) - keep
+    // them out of Vitest's jsdom-based discovery.
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
 });

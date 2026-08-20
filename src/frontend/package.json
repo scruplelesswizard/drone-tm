@@ -11,7 +11,8 @@
     "lint": "eslint . --fix",
     "preview": "vite preview",
     "start": "vite",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.4.24",
@@ -85,6 +86,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.62.1",
     "@tanstack/eslint-plugin-query": "^4.38.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
