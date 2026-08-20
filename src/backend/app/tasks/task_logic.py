@@ -72,7 +72,7 @@ async def get_task_stats(db: Connection, user_data: AuthUser):
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Failed to fetch task statistics.",
-        )
+        ) from e
 
 
 async def update_take_off_point_in_db(
@@ -526,7 +526,7 @@ async def get_task_state(
         raise HTTPException(
             status_code=500,
             detail="An error occurred while retrieving the task state.",
-        )
+        ) from e
 
 
 async def handle_event(

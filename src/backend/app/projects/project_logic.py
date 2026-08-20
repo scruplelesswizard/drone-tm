@@ -113,7 +113,9 @@ async def get_centroids(db: Connection):
 
     except Exception as e:
         log.error(f"Error during reading centroids: {e!s}")
-        raise HTTPException(status_code=500, detail="Failed to read project centroids.")
+        raise HTTPException(
+            status_code=500, detail="Failed to read project centroids."
+        ) from e
 
 
 async def upload_file_to_s3(

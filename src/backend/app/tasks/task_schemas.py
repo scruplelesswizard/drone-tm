@@ -163,7 +163,7 @@ class Task(BaseModel):
                             )
         except Exception as e:
             log.error(f"Error fetching task geometry: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error.")
+            raise HTTPException(status_code=500, detail="Internal server error.") from e
 
     @staticmethod
     async def get_all_tasks(db: Connection, project_id: uuid.UUID):
@@ -445,7 +445,7 @@ class TaskDetailsOut(BaseModel):
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Failed to fetch task.",
-            )
+            ) from e
 
     @staticmethod
     async def get_task_by_project_and_index(
@@ -525,7 +525,7 @@ class TaskDetailsOut(BaseModel):
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Failed to fetch task.",
-            )
+            ) from e
 
 
 class TaskStats(BaseModel):

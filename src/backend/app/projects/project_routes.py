@@ -208,7 +208,7 @@ async def download_boundaries(
 
     except Exception as e:
         log.error(f"Unexpected error during boundaries download: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error.")
+        raise HTTPException(status_code=500, detail="Internal server error.") from e
 
 
 @router.get(
@@ -783,12 +783,12 @@ async def regulator_approval(
             )
 
         return {"message": "Comment Added successfully !!!"}
-    except Exception:
+    except Exception as e:
         log.exception(f"Failed to record regulator comment for project {project_id}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to record regulator comment",
-        )
+        ) from e
 
 
 @router.post(
@@ -1043,7 +1043,7 @@ async def initiate_upload(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to initiate multipart upload.",
-        )
+        ) from e
 
 
 @router.post(
@@ -1082,7 +1082,7 @@ async def sign_part_upload(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to generate presigned URL for part.",
-        )
+        ) from e
 
 
 @router.post(
@@ -1204,7 +1204,7 @@ async def complete_upload(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to complete multipart upload.",
-        )
+        ) from e
 
 
 @router.post(
@@ -1240,7 +1240,7 @@ async def abort_upload(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to abort multipart upload.",
-        )
+        ) from e
 
 
 @router.get(
@@ -1279,7 +1279,7 @@ async def get_uploaded_parts(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to list parts.",
-        )
+        ) from e
 
 
 @router.get(
@@ -1316,7 +1316,7 @@ async def export_odm_orthophoto(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail="No orthophoto found for this task.",
-        )
+        ) from None
 
     label = task_id or project_id
     filename = f"orthophoto_{label}.tif"
@@ -1355,7 +1355,9 @@ def _stream_s3_object_response(
     try:
         s3_client().stat_object(settings.S3_BUCKET_NAME, s3_key)
     except Exception:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=not_found_detail)
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail=not_found_detail
+        ) from None
 
     def generate():
         response = s3_client().get_object(settings.S3_BUCKET_NAME, s3_key)
@@ -1749,4 +1751,4 @@ async def test(redis_pool: ArqRedis = Depends(get_redis_pool)):
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Failed to enqueue task.",
-        )
+        ) from e

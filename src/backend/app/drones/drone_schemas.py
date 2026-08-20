@@ -158,7 +158,7 @@ class DroneFlightHeight(BaseModel):
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Failed to list drone flight heights.",
-            )
+            ) from e
 
     @staticmethod
     async def one(db: Connection, country: str):
@@ -176,4 +176,4 @@ class DroneFlightHeight(BaseModel):
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Failed to get drone flight height.",
-            )
+            ) from e

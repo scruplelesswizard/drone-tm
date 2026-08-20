@@ -87,4 +87,4 @@ async def get_public_presigned_url(
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Failed to generate presigned URL.",
-        )
+        ) from e
