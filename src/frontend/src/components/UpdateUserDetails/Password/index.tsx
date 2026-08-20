@@ -40,7 +40,7 @@ const Password = () => {
     mutationFn: payloadDataObject => patchUserProfile(payloadDataObject),
     onSuccess: () => {
       toast.success(m.profile_password_updated_success());
-      navigate('/dashboard');
+      void navigate('/dashboard');
     },
     onError: err => {
       // eslint-disable-next-line no-console
@@ -113,7 +113,7 @@ const Password = () => {
           className="naxatw-bg-red"
           onClick={e => {
             e.preventDefault();
-            handleSubmit(onSubmit)();
+            void handleSubmit(onSubmit)();
           }}
           withLoader
           isLoading={isPending}

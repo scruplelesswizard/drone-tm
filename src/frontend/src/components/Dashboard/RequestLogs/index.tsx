@@ -34,8 +34,8 @@ const RequestLogs = () => {
     mutationFn: postTaskStatus,
     onSuccess: () => {
       toast.success(m.dashboard_responded_to_request_toast());
-      queryClient.invalidateQueries({ queryKey: ['task-list'] });
-      queryClient.invalidateQueries({ queryKey: ['task-statistics'] });
+      void queryClient.invalidateQueries({ queryKey: ['task-list'] });
+      void queryClient.invalidateQueries({ queryKey: ['task-statistics'] });
     },
     onError: err => {
       toast.error(err.message);

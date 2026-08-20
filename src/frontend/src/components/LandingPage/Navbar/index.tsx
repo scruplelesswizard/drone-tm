@@ -16,7 +16,7 @@ const FRONTEND_URL =
 
 // Import Hanko web component for session verification
 if (AUTH_PROVIDER === 'hanko') {
-  import('@hotosm/hanko-auth');
+  void import('@hotosm/hanko-auth');
 }
 
 export default function Navbar() {

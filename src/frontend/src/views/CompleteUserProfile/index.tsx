@@ -174,10 +174,10 @@ const CompleteUserProfile = () => {
         await callApiSimultaneously(urlsToUpload, assetsToUpload, 'put');
       }
 
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      void queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       dispatch(setCommonState({ userProfileActiveTab: 1 }));
       toast.success(m.profile_update_success());
-      navigate('/projects');
+      void navigate('/projects');
     },
     onError: err => {
       // eslint-disable-next-line no-console
@@ -270,7 +270,7 @@ const CompleteUserProfile = () => {
               className="naxatw-bg-red"
               onClick={e => {
                 e.preventDefault();
-                handleSubmit(onSubmit)();
+                void handleSubmit(onSubmit)();
               }}
               withLoader
             >

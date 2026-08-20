@@ -24,7 +24,7 @@ const ApprovalSection = () => {
   >({
     mutationFn: regulatorComment,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       toast.success(m.regulator_approval_saved_success());
       setComment('');
     },

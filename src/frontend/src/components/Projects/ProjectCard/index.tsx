@@ -26,7 +26,7 @@ export default function ProjectCard({
 }: IProjectCardProps) {
   const navigate = useNavigate();
   const onProjectCardClick = () => {
-    navigate(`/projects/${slug || id}`);
+    void navigate(`/projects/${slug || id}`);
   };
 
   return (

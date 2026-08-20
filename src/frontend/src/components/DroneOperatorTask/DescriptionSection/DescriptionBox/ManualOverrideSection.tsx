@@ -78,9 +78,9 @@ const ManualOverrideSection = ({
     mutationFn: manualOverrideTaskState,
     onSuccess: () => {
       toast.success(m.drone_task_manual_override_success());
-      queryClient.invalidateQueries({ queryKey: ['task-assets-info'] });
-      queryClient.invalidateQueries({ queryKey: ['project-task-states'] });
-      queryClient.invalidateQueries({ queryKey: ['individual-task'] });
+      void queryClient.invalidateQueries({ queryKey: ['task-assets-info'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-task-states'] });
+      void queryClient.invalidateQueries({ queryKey: ['individual-task'] });
       setSelectedState(null);
       setShowConfirm(false);
     },

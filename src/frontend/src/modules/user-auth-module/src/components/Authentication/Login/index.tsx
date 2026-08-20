@@ -75,14 +75,14 @@ export default function Login() {
 
       if (userDetails?.has_user_profile) {
         if (isSafeRedirect(from)) {
-          navigate(from, { replace: true });
+          void navigate(from, { replace: true });
         } else if (userDetails?.role?.includes(signedInAs)) {
-          navigate('/projects');
+          void navigate('/projects');
         } else {
-          navigate('/complete-profile');
+          void navigate('/complete-profile');
         }
       } else {
-        navigate('/complete-profile');
+        void navigate('/complete-profile');
       }
     },
     onError: err => {
@@ -211,7 +211,7 @@ export default function Login() {
               variant="ghost"
               className="naxatw-text-body-btn !naxatw-text-red"
               onClick={() => {
-                navigate('/forgot-password');
+                void navigate('/forgot-password');
               }}
               type="button"
             >

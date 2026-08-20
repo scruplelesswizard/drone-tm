@@ -46,7 +46,7 @@ function QFieldExportDialog({
 
   useEffect(() => {
     if (show) {
-      checkExisting();
+      void checkExisting();
     } else {
       setStatus('idle');
       setDownloadUrl(null);

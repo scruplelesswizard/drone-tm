@@ -28,7 +28,7 @@ export default function UserProfile() {
       isFetching
     )
       return;
-    navigate('/complete-profile');
+    void navigate('/complete-profile');
   }, [userProfile, role, navigate, userDetails, isFetching]);
 
   const settingOptions = [
@@ -37,7 +37,7 @@ export default function UserProfile() {
       name: m.user_profile_menu_edit_profile(),
       icon: 'person',
       onClick: () => {
-        navigate('/user-profile');
+        void navigate('/user-profile');
         setToggle(false);
       },
       isRed: false,
@@ -48,7 +48,7 @@ export default function UserProfile() {
       icon: 'logout',
       onClick: () => {
         localStorage.clear();
-        navigate('/', { replace: true, state: null });
+        void navigate('/', { replace: true, state: null });
         toast.success(m.user_profile_logout_success());
       },
       isRed: true,

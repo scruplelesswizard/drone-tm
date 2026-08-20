@@ -176,10 +176,10 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
       // can't compute the prior pilot client-side, so refetch instead of
       // patching state inline.
       const newState = res.data.state || 'UNLOCKED';
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-task-states', projectUuid],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-detail', projectUuid],
       });
       document.getElementById('close-popup')?.click();

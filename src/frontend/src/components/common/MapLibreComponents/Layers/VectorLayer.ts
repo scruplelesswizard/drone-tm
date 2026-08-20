@@ -73,29 +73,39 @@ export default function VectorLayer({
       // });
 
       // changes on map libre 4
-      map.loadImage(image).then(({ data }) => {
-        if (isCancelled || !map.getStyle()) return;
+      map.loadImage(image).then(
+        ({ data }) => {
+          if (isCancelled || !map.getStyle()) return;
 
-        if (!map.hasImage(imageId)) {
-          map.addImage(imageId, data);
-        }
-        if (visibleOnMap && !map.getLayer(imageId) && map.getSource(sourceId)) {
-          map.addLayer({
-            id: imageId,
-            type: 'symbol',
-            source: sourceId,
-            layout: {
-              'symbol-placement': symbolPlacement,
-              'icon-image': imageId,
-              'icon-size': 0.8,
-              'icon-overlap': 'always',
-              'icon-anchor': iconAnchor,
-              ...imageLayoutOptions,
-            },
-            ...imageLayerOptions,
-          });
-        }
-      });
+          if (!map.hasImage(imageId)) {
+            map.addImage(imageId, data);
+          }
+          if (
+            visibleOnMap &&
+            !map.getLayer(imageId) &&
+            map.getSource(sourceId)
+          ) {
+            map.addLayer({
+              id: imageId,
+              type: 'symbol',
+              source: sourceId,
+              layout: {
+                'symbol-placement': symbolPlacement,
+                'icon-image': imageId,
+                'icon-size': 0.8,
+                'icon-overlap': 'always',
+                'icon-anchor': iconAnchor,
+                ...imageLayoutOptions,
+              },
+              ...imageLayerOptions,
+            });
+          }
+        },
+        () => {
+          // Missing icon degrades gracefully (layer just renders without it) -
+          // not worth surfacing to the user.
+        },
+      );
     }
 
     return () => {

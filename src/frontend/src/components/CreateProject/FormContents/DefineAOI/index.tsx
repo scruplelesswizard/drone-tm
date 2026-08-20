@@ -106,18 +106,18 @@ const DefineAOI = ({ formProps }: { formProps: UseFormPropsType }) => {
   const handleNoFlyZoneFileChange = (file: UploadedFilesType) => {
     if (!file) return;
     const geojson = validateGeoJSON(file[0]?.file);
-    try {
-      geojson.then(z => {
+    geojson
+      .then(z => {
         if (isAllGeoJSON(z) && !Array.isArray(z)) {
           const convertedGeojson = flatten(z);
           dispatch(setCreateProjectState({ noFlyZone: convertedGeojson }));
           setValue('no_fly_zones', convertedGeojson);
         }
+      })
+      .catch(err => {
+        // eslint-disable-next-line no-console
+        console.log(err);
       });
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-    }
   };
 
   useEffect(() => {

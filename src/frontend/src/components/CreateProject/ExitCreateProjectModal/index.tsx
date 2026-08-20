@@ -17,7 +17,7 @@ export default function ExitCreateProjectModal() {
           variant="ghost"
           className="naxatw-text-red"
           onClick={() => {
-            navigate('/projects');
+            void navigate('/projects');
             dispatch(toggleModal(null));
           }}
         >

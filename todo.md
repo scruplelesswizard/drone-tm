@@ -1978,7 +1978,7 @@ than as inline notes on the item that found them:
       real `just test backend`-equivalent run (this sandbox got Docker
       BuildKit working via a user-level `docker-buildx` CLI plugin install,
       no root needed) - full suite green, 257/257.
-- [ ] **Needs interaction:** every PR that triggers a test workflow should
+- [x] **Needs interaction:** every PR that triggers a test workflow should
       have tests exercising both expected and failure conditions - done
       for the backend PR stack (#2-#33) this pass; frontend PRs beyond the
       ErrorBoundary/AppErrorFallback test are still light (ESLint-v9 and
@@ -1989,3 +1989,48 @@ than as inline notes on the item that found them:
       picked yet; needs a decision on what beyond the existing ruff/ESLint
       configs is wanted (stricter mypy, more ESLint plugins, etc.) before
       it's actionable.
+      DONE — Asked; scope: require tests on new backend routes, require
+      tests on new frontend components, tighten ESLint, tighten ruff.
+      **Governance gates** (CI, not local lint): `.github/scripts/
+      check-route-tests.sh` (new job `require-route-tests` in `test.yml`)
+      fails a PR that changes a `*_routes.py` file with zero test-file
+      changes anywhere in the diff — repo-wide, not a per-route mapping,
+      deliberately coarse. `.github/scripts/check-component-tests.sh`
+      (new job `require-component-tests` in `frontend-test.yml`) fails a
+      PR that adds a new `components/**/*.tsx` file with no sibling
+      `*.test.tsx` (matches this repo's existing `index.tsx` →
+      `index.test.tsx` convention). Both PR-only (need `github.base_ref`),
+      both functionally tested against a scratch repo across
+      added/edited/no-op cases before wiring into CI.
+      **Ruff**: added `C4`/`PIE`/`ISC`/`RUF`/`TID` to `select` — all had
+      zero or single-digit violations (unlike `RET`/`PERF401`/`T201`/
+      `PTH`/`ARG`, which surface 40-170+ pre-existing sites each and are
+      deliberately deferred alongside `D`/pydocstyle above). Fixed the one
+      real `C416` site (dict-comprehension → `dict()`), added
+      `allowed-confusables = ["×"]` for legitimate `5°×5°`/`km ×`
+      typography in log/docstring text (`RUF001`/`RUF002`). Net violation
+      count unchanged (713 baseline, all pre-existing debt in
+      already-selected rules) — zero new debt from the added categories.
+      **ESLint**: `react-hooks/exhaustive-deps` warn→error (0 new
+      violations — already clean); added
+      `@typescript-eslint/no-floating-promises` (130 violations). 106 were
+      one of four safe, well-understood fire-and-forget patterns
+      (`navigate()`, `queryClient.invalidateQueries()`,
+      `handleSubmit(onSubmit)()`, side-effect `import()`) — fixed via
+      ESLint's own `floatingFixVoid` suggestion applied programmatically
+      by range (had to fix my own bug here: a naive insert-at-offset
+      script corrupted 3 files where the suggestion is a full-span
+      *replacement*, not a zero-width insertion — reverted and redid
+      those 3 with proper range-replace logic before re-verifying). The
+      remaining 24 got individual review, surfacing real (not just lint)
+      bugs: `callApiSimultaneously.ts`'s retry backoff called `delay(1000)`
+      without `await`, so retries never actually waited; a project-
+      printout `html2canvas` export cleared its own loading spinner
+      before the export finished; two `navigator.clipboard.writeText()`
+      call sites showed a success toast unconditionally, even if the
+      write itself failed. All three fixed for real (not just silenced).
+      Also had to add `'no-void': ['error', { allowAsStatement: true }]`
+      — airbnb's default config banned the `void` operator outright,
+      which conflicts with `no-floating-promises`'s own canonical fix.
+      Verified: full `eslint .` clean, `tsc && vite build` clean, Vitest
+      19/19.

@@ -10,6 +10,7 @@ on:
       - "src/pnpm-workspace.yaml"
       - "src/pnpm-lock.yaml"
       - ".github/workflows/frontend-test.yml"
+      - ".github/scripts/check-component-tests.sh"
 
   pull_request:
     paths:
@@ -17,6 +18,7 @@ on:
       - "src/pnpm-workspace.yaml"
       - "src/pnpm-lock.yaml"
       - ".github/workflows/frontend-test.yml"
+      - ".github/scripts/check-component-tests.sh"
 
   # Allow manual trigger (workflow_dispatch)
   workflow_dispatch:
@@ -106,3 +108,14 @@ jobs:
       # so this is now a normal gate like `test`/`build`.
       - run: ./node_modules/.bin/eslint .
         working-directory: src/frontend
+
+  # Governance: a PR that adds a new component must also add a sibling test
+  # file. PR-only (needs github.base_ref, which push events don't have).
+  require-component-tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: .github/scripts/check-component-tests.sh "${{ github.base_ref }}"

@@ -404,7 +404,7 @@ async def get_project_imagery_status(
             await cur.execute(query, {"project_id": str(project_id)})
             results = await cur.fetchall()
 
-        status_counts = {status: count for status, count in results}
+        status_counts = dict(results)
 
         return {
             "project_id": str(project_id),

@@ -53,7 +53,7 @@ const UploadToOAM = () => {
     mutationFn: uploadToOAM,
     onSuccess: data => {
       dispatch(toggleModal());
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-detail', projectId],
       });
       if (data?.data?.detail) {

@@ -183,24 +183,30 @@ export default function useDrawTool({
     if (!firstFeature) return () => {};
     const { geometry } = firstFeature;
     if (!lineStringTypes.includes(geometry.type)) return () => {};
-    map.loadImage(DirectionArrow).then(({ data }) => {
-      if (map.getLayer('arrowId')) return;
-      map.addImage('arrow', data);
-      map.addLayer({
-        id: 'arrowId',
-        type: 'symbol',
-        source: 'mapbox-gl-draw-cold',
-        layout: {
-          'symbol-placement': 'line',
-          'symbol-spacing': 100,
-          'icon-allow-overlap': false,
-          'icon-image': 'arrow',
-          'icon-size': 0.5,
-          visibility: 'visible',
-          'icon-rotate': 90,
-        },
-      });
-    });
+    map.loadImage(DirectionArrow).then(
+      ({ data }) => {
+        if (map.getLayer('arrowId')) return;
+        map.addImage('arrow', data);
+        map.addLayer({
+          id: 'arrowId',
+          type: 'symbol',
+          source: 'mapbox-gl-draw-cold',
+          layout: {
+            'symbol-placement': 'line',
+            'symbol-spacing': 100,
+            'icon-allow-overlap': false,
+            'icon-image': 'arrow',
+            'icon-size': 0.5,
+            visibility: 'visible',
+            'icon-rotate': 90,
+          },
+        });
+      },
+      () => {
+        // Missing icon degrades gracefully (line draws without the arrow) -
+        // not worth surfacing to the user.
+      },
+    );
     return () => {
       if (map.getLayer('arrowId')) {
         map.removeImage('arrow');

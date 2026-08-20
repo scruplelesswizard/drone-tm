@@ -150,7 +150,18 @@ src = ["../..", ".."]
 # deliberately left off - restoring it surfaces ~275 pre-existing
 # undocumented-* violations, which is a documentation-coverage project of
 # its own, not a lint-config fix.
-select = ["F", "E4", "E7", "E9", "W", "I", "N", "UP", "ASYNC", "B", "S", "SIM", "BLE"]
+# C4/PIE/ISC/RUF/TID added later (2026-08 governance pass): all had zero or
+# trivially-fixed violations, unlike RET/PERF401/T201/PTH/ARG, which surface
+# 40-170+ pre-existing sites each and are deliberately deferred alongside D
+# above - see todo.md's CI/CD backlog for the follow-up.
+select = [
+  "F", "E4", "E7", "E9", "W", "I", "N", "UP", "ASYNC", "B", "S", "SIM", "BLE",
+  "C4", "PIE", "ISC", "RUF", "TID",
+]
+# RUF001/RUF002 flagged "×" (multiplication sign) as an ambiguous confusable
+# in log/docstring text like "5°×5°" and "1.2 km × 3.4 km" - deliberate,
+# readable typography, not a homoglyph-attack risk in log/doc strings.
+allowed-confusables = ["×"]
 # Worker, API, and migration boundaries intentionally catch arbitrary failures
 # so they can log, clean up, or translate them into HTTP/task state.
 ignore = [

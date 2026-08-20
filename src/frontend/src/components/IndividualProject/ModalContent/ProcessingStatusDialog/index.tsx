@@ -135,11 +135,11 @@ const ProcessingStatusDialog = () => {
     useMutation({
       mutationFn: processAllImagery,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['project-detail'] });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+        void queryClient.invalidateQueries({
           queryKey: ['all-task-assets-info', projectId],
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ['projectTaskImagerySummary', projectId],
         });
         toast.success(m.processing_dialog_final_started_success());
@@ -198,10 +198,10 @@ const ProcessingStatusDialog = () => {
         return next;
       });
     }
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ['all-task-assets-info', projectId],
     });
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ['projectTaskImagerySummary', projectId],
     });
   }, [selectedTasks, processTask, queryClient, projectId]);
@@ -212,10 +212,10 @@ const ProcessingStatusDialog = () => {
       try {
         await processTask({ taskId, odmUrl });
         toast.success(m.processing_dialog_task_processing_started());
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ['all-task-assets-info', projectId],
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ['projectTaskImagerySummary', projectId],
         });
       } catch (error) {
@@ -269,8 +269,10 @@ const ProcessingStatusDialog = () => {
   );
 
   const handleCopyTaskId = useCallback((taskId: string) => {
-    navigator.clipboard.writeText(taskId);
-    toast.success(m.processing_dialog_task_id_copied());
+    navigator.clipboard
+      .writeText(taskId)
+      .then(() => toast.success(m.processing_dialog_task_id_copied()))
+      .catch(() => toast.error(m.processing_dialog_task_id_copy_failed()));
   }, []);
 
   const handleDownloadAssets = useCallback((assetsUrl: string) => {
@@ -349,7 +351,7 @@ const ProcessingStatusDialog = () => {
   const { mutate: uploadGcpFile, isPending: isUploadingGcp } = useMutation({
     mutationFn: saveGcpFile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       toast.success(m.processing_dialog_gcp_uploaded());
     },
     onError: () => {
@@ -650,7 +652,7 @@ const ProcessingStatusDialog = () => {
                 ) {
                   return;
                 }
-                handleProcessSelected();
+                void handleProcessSelected();
               }}
               disabled={selectedTasks.size === 0}
             >

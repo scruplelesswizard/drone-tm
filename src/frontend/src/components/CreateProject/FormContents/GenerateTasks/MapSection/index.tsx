@@ -70,7 +70,7 @@ const MapSection = () => {
       return () => {};
     // wait 1sec for split geojson is loaded and visible on map and capture
     const captureTimeout = setTimeout(() => {
-      takeScreenshot();
+      void takeScreenshot();
     }, 1000);
 
     return () => clearTimeout(captureTimeout);

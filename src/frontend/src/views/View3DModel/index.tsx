@@ -550,7 +550,7 @@ const View3DModel = () => {
     if (map.isStyleLoaded()) {
       map.addLayer(customLayer);
     } else {
-      map.once('style.load', () => {
+      void map.once('style.load', () => {
         if (!cancelled) map.addLayer(customLayer);
       });
     }

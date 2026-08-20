@@ -178,9 +178,9 @@ const IndividualProject = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: (projectId: string) => deleteProject(projectId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects-list'] });
+      void queryClient.invalidateQueries({ queryKey: ['projects-list'] });
       toast.error(m.individual_project_project_deleted_success());
-      navigate('/projects');
+      void navigate('/projects');
     },
   });
 
@@ -192,14 +192,16 @@ const IndividualProject = () => {
     useMutation({
       mutationFn: (projectId: string) => triggerOrthophotoConversion(projectId),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['project-detail', id] });
+        void queryClient.invalidateQueries({
+          queryKey: ['project-detail', id],
+        });
       },
       onError: () => toast.error(m.individual_project_convert_failed()),
     });
   const { mutate: convertMesh, isPending: isMeshTriggering } = useMutation({
     mutationFn: (projectId: string) => triggerMeshConversion(projectId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-detail', id] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail', id] });
     },
     onError: () => toast.error(m.individual_project_convert_failed()),
   });
@@ -536,16 +538,24 @@ const IndividualProject = () => {
                     onKeyDown={() => {}}
                     onClick={() => {
                       setExportingContent(true);
-                      if (exportRef.current) {
-                        html2canvas(exportRef.current).then(canvas => {
-                          const link = document.createElement('a');
-                          link.download = `${projectData?.name}.png`;
-                          link.href = canvas.toDataURL();
-                          link.click();
-                        });
-                      }
-                      setExportingContent(false);
                       setShowDownloadOptions(false);
+                      if (exportRef.current) {
+                        html2canvas(exportRef.current)
+                          .then(canvas => {
+                            const link = document.createElement('a');
+                            link.download = `${projectData?.name}.png`;
+                            link.href = canvas.toDataURL();
+                            link.click();
+                          })
+                          .catch(() => {
+                            toast.error(
+                              m.individual_project_export_printout_failed(),
+                            );
+                          })
+                          .finally(() => setExportingContent(false));
+                      } else {
+                        setExportingContent(false);
+                      }
                     }}
                   >
                     {m.individual_project_export_project_printout()}
@@ -668,7 +678,7 @@ const IndividualProject = () => {
                       onKeyDown={() => {}}
                       onClick={() => {
                         setShowDownloadOptions(false);
-                        downloadEntireOdmProject();
+                        void downloadEntireOdmProject();
                       }}
                     >
                       <span className="material-icons naxatw-text-base">

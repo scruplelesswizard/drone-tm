@@ -267,13 +267,13 @@ export default function TaskTable({
                                 m.processing_dialog_scaleodm_prompt(),
                               );
                               if (odmUrl !== null) {
-                                handleProcessSingle(
+                                void handleProcessSingle(
                                   task.task_id,
                                   odmUrl || undefined,
                                 );
                               }
                             } else {
-                              handleProcessSingle(task.task_id);
+                              void handleProcessSingle(task.task_id);
                             }
                           }}
                         >

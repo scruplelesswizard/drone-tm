@@ -232,7 +232,7 @@ const DescriptionBox = () => {
     mutationFn: postTaskStatus,
     onSuccess: () => {
       toast.success(m.drone_task_marked_fully_flown_success());
-      queryClient.invalidateQueries({ queryKey: ['task-assets-info'] });
+      void queryClient.invalidateQueries({ queryKey: ['task-assets-info'] });
     },
     onError: err => {
       const detail = (err.response?.data as { detail?: string })?.detail;
@@ -255,7 +255,7 @@ const DescriptionBox = () => {
     mutationFn: postTaskStatus,
     onSuccess: () => {
       toast.success(m.drone_task_reverted_to_locked_success());
-      queryClient.invalidateQueries({ queryKey: ['task-assets-info'] });
+      void queryClient.invalidateQueries({ queryKey: ['task-assets-info'] });
     },
     onError: err => {
       const detail = (err.response?.data as { detail?: string })?.detail;

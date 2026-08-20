@@ -252,7 +252,7 @@ const MapSection = ({ className }: { className?: string }) => {
     >({
       mutationFn: postTaskWaypoint,
       onSuccess: async () => {
-        queryClient.invalidateQueries({ queryKey: ['task-waypoints'] });
+        void queryClient.invalidateQueries({ queryKey: ['task-waypoints'] });
         dispatch(setSelectedTakeOffPoint(null));
         dispatch(setSelectedTakeOffPointOption('current_location'));
       },
@@ -655,8 +655,12 @@ const MapSection = ({ className }: { className?: string }) => {
       if (!btn) return;
       const coords = btn.getAttribute('data-coords');
       if (coords) {
-        navigator.clipboard.writeText(coords);
-        toast.success(m.drone_task_popup_coordinates_copied());
+        navigator.clipboard
+          .writeText(coords)
+          .then(() => toast.success(m.drone_task_popup_coordinates_copied()))
+          .catch(() =>
+            toast.error(m.drone_task_popup_coordinates_copy_failed()),
+          );
       }
     }
     function handleDownloadGpx(e: MouseEvent) {
