@@ -357,4 +357,4 @@ async def generate_kmz_with_placemarks(
 
     except Exception as e:
         log.error(f"Error generating KMZ for task {task_id}: {e}")
-        raise HTTPException(status_code=500, detail="Error generating KMZ.")
+        raise HTTPException(status_code=500, detail="Error generating KMZ.") from e

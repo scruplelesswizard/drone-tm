@@ -332,7 +332,9 @@ async def create_project_from_imagery_exif(
     try:
         await validate_s3_access(body.endpoint, body.bucket_name, body.path)
     except ValueError as e:
-        raise HTTPException(status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(e))
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from e
 
     job = await redis.enqueue_job(
         "create_project_from_imagery_exif",
@@ -409,7 +411,7 @@ async def get_project_imagery_status(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve project imagery status.",
-        )
+        ) from e
 
 
 @router.get(
@@ -444,7 +446,7 @@ async def get_project_images(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve project images.",
-        )
+        ) from e
 
 
 @router.post(
@@ -468,13 +470,13 @@ async def accept_image(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail=str(e),
-        )
+        ) from e
     except Exception as e:
         log.error(f"Failed to accept image: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to accept image.",
-        )
+        ) from e
 
 
 @router.post(
@@ -499,13 +501,13 @@ async def reject_image(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail=str(e),
-        )
+        ) from e
     except Exception as e:
         log.error(f"Failed to reject image: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to reject image.",
-        )
+        ) from e
 
 
 class ManualTaskAssignRequest(BaseModel):
@@ -536,13 +538,13 @@ async def assign_image_to_task(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail=str(e),
-        )
+        ) from e
     except Exception as e:
         log.error(f"Failed to manually assign image to task: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to assign image to task.",
-        )
+        ) from e
 
 
 @router.delete(
@@ -589,7 +591,7 @@ async def delete_batch(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to delete batch.",
-        )
+        ) from e
 
 
 @router.delete(
@@ -611,13 +613,13 @@ async def delete_image(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail=str(e),
-        )
+        ) from e
     except Exception as e:
         log.error(f"Failed to delete image: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to delete image.",
-        )
+        ) from e
 
 
 @router.delete(
@@ -639,7 +641,7 @@ async def delete_invalid_images(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to delete invalid images.",
-        )
+        ) from e
 
 
 # ─── Project-level (task-centric) endpoints ──────────────────────────────────
@@ -668,7 +670,7 @@ async def get_project_task_imagery_summary(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve task imagery summary.",
-        )
+        ) from e
 
 
 @router.get(
@@ -694,7 +696,7 @@ async def get_project_coverage(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to compute project coverage.",
-        )
+        ) from e
 
 
 @router.get(
@@ -716,7 +718,7 @@ async def get_project_review(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve project review data.",
-        )
+        ) from e
 
 
 @router.get(
@@ -738,7 +740,7 @@ async def get_project_map_data(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve project map data.",
-        )
+        ) from e
 
 
 @router.get(
@@ -768,7 +770,7 @@ async def get_task_image_urls(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve task image URLs.",
-        )
+        ) from e
 
 
 @router.get(
@@ -787,13 +789,13 @@ async def get_image_url(
     try:
         return await ImageClassifier.get_single_image_url(db, image_id, project_id)
     except ValueError as e:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     except Exception as e:
         log.error(f"Failed to get image URL: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve image URL.",
-        )
+        ) from e
 
 
 class BulkImageUrlsRequest(BaseModel):
@@ -824,7 +826,7 @@ async def get_bulk_image_urls(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve image URLs.",
-        )
+        ) from e
 
 
 @router.get(
@@ -846,13 +848,13 @@ async def get_project_task_verification(
             db, task_id, project_id
         )
     except ValueError as e:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(e)) from e
     except Exception as e:
         log.error(f"Failed to get task verification data: {e}")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to retrieve task verification data.",
-        )
+        ) from e
 
 
 @router.post(
@@ -972,7 +974,7 @@ async def mark_task_verified(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to mark task as verified.",
-        )
+        ) from e
 
 
 @router.post(

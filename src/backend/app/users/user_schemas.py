@@ -482,7 +482,7 @@ class DbUser(BaseModel):
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Failed to get user by email.",
-            )
+            ) from e
 
     @staticmethod
     async def get_requested_user_id(
@@ -526,5 +526,5 @@ class Base64Request(BaseModel):
         try:
             base64.b64decode(value, validate=True)
             return value
-        except Exception:
-            raise ValueError("Invalid Base64 string")
+        except Exception as e:
+            raise ValueError("Invalid Base64 string") from e

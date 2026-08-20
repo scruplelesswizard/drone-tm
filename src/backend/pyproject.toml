@@ -146,8 +146,6 @@ ignore = [
   # real, individually-triageable finding, not a false positive - fixing
   # them properly needs per-site review, tracked in todo.md as a follow-up
   # rather than done as a drive-by part of enabling the rule. ---
-  "B904",  # raise-without-from-inside-except (51 sites): needs per-site
-  # decision between `from err` and `from None`.
   "SIM105",  # suppressible-exception (7 sites): stylistic
   # (try/except/pass vs contextlib.suppress), not worth the churn.
   "S105",  # hardcoded-password-string / "S106" hardcoded-password-func-arg

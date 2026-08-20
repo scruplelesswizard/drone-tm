@@ -731,10 +731,11 @@ than as inline notes on the item that found them:
       on `todo/08-mypy-baseline` (PR #23) and cascaded through every branch
       after it, since it was failing CI on `mypy-baseline` and every PR
       built on top of it.
-- [ ] Incrementally clear the debt the restored ruff config now tracks in
+- [x] Incrementally clear the debt the restored ruff config now tracks in
       documented `ignore` entries: `B904` (51 sites, exception chaining),
       `N805`/`N806` (43 sites, naming), `ASYNC240` (11 sites, blocking calls
       in async functions). Each needs individual review, not a blind fix.
+      DONE — all four rules reviewed and cleared; see sub-items below.
       - [x] `ASYNC240` (11 sites) — DONE. Reviewed each: all 11 are
             `os.path.exists`/`.isfile`/`.getsize` calls on small local/temp
             files (DEM download cleanup, static frontend asset checks,
@@ -827,6 +828,48 @@ than as inline notes on the item that found them:
             Removed `N806` from the config-level `ignore` entirely.
             Verified `ruff check`/`format --diff` (clean) and full backend
             suite (257/257 passed).
+      - [x] `B904` (51 sites) — DONE. All 51 are `except X as e: ...
+            raise HTTPException(...)` (or similar) with no `from` clause.
+            Reviewed each site's except-clause and surrounding code (not
+            a blind sed) to decide `from e` vs `from None`: 49 of 51 are
+            genuine error-translation sites (an internal exception being
+            turned into a client-facing HTTP error) - `from e` is correct
+            there, preserving `__cause__` for server-side tracebacks
+            without leaking anything to the client (FastAPI never
+            surfaces `__cause__` in the HTTP response body). 9 of those
+            49 had a bare `except X:` with no bound variable at all
+            (`jwt.ExpiredSignatureError`/`jwt.JWTError` in
+            `user_routes.py`, plus a few bare `except Exception:`) - added
+            `as e` to the except clause so it could be chained. The
+            remaining 2 sites (`project_routes.py`'s two
+            `s3_client().stat_object(...)` "probe for existence" checks in
+            `export_odm_orthophoto`/`_stream_s3_object_response`) are
+            different: the caught exception is routine, expected control
+            flow (S3 "key not found"), not a genuine cause of the clean
+            404 being raised - used `from None` there instead, since
+            chaining a routine MinIO/S3 exception onto a domain 404 would
+            just be log/Sentry noise, not useful debugging signal.
+            Implemented via a script that locates each site's enclosing
+            `except` clause by indentation, adds `as e` where missing, and
+            appends `from e`/`from None` after the `raise` statement's
+            closing paren (found via paren-balance counting, not a fixed
+            line offset, since several are multi-line calls) - then
+            re-verified with `ruff check --select B904` (clean) before
+            trusting it. Removed `B904` from the config-level `ignore`
+            entirely - **all three items originally listed under this
+            backlog entry (`B904`, `N805`, `N806`) are now done.**
+            Verified `ruff check`/`format --diff` (clean, only line-wrap
+            reflow from the added `from e` suffixes) and full backend
+            suite (257/257 passed). Hit a real, unrelated infra blocker
+            mid-verification: the sandbox disk filled completely
+            (`ENOSPC`) right after this fix was written but before it
+            could be committed - every write, including a plain `Write`
+            tool call, failed. Not something fixable from inside the
+            sandbox; flagged to the user, who freed space externally.
+            `docker builder prune -af` reclaimed ~9GB of accumulated
+            build cache on resume - worth doing between docker-heavy
+            verification cycles for the rest of this backlog to avoid
+            repeating it.
 - [ ] Give `GET /users` a real paged UI/UX instead of the large
       default/max page size (200/500) it currently uses to avoid breaking
       the user-mention picker, which expects "all users" back in one page.

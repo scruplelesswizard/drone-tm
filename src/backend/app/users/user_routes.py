@@ -345,16 +345,20 @@ async def reset_password(
                 },
             )
 
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Token expired")
-    except jwt.JWTError:
-        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid token")
-    except Exception:
+    except jwt.ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED, detail="Token expired"
+        ) from e
+    except jwt.JWTError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid token"
+        ) from e
+    except Exception as e:
         log.exception("Failed to reset password")
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Failed to reset password",
-        )
+        ) from e
 
     return JSONResponse(
         content={"detail": "Your password has been successfully reset!"},
@@ -447,9 +451,9 @@ async def regulator_create(
             refresh_token=refresh_token,
             role="REGULATOR",
         )
-    except Exception:
+    except Exception as e:
         log.exception("Failed to log in regulator")
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Failed to log in regulator",
-        )
+        ) from e
