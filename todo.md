@@ -551,11 +551,51 @@ ASVS in particular haven't been scanned yet).
 
 ### Low
 
-- [ ] Verify `dangerouslySetInnerHTML` usages are sanitized, not raw
+- [x] Verify `dangerouslySetInnerHTML` usages are sanitized, not raw
       API/user data: `components/IndividualProject/QFieldExport/index.tsx`,
       `components/common/MapLibreComponents/{AsyncPopup,NewAsyncPopup}/index.tsx`
       (MapLibre popups render feature-derived content),
       `components/Dashboard/RequestLogs/index.tsx`. OWASP ASVS (XSS).
+      DONE — audited all 4, found and fixed **one real stored XSS**:
+      - `Dashboard/RequestLogs/index.tsx` — **VULNERABLE, fixed.** Rendered
+        `m.dashboard_request_log_message({ taskIndex, projectName })` via
+        `dangerouslySetInnerHTML`. The existing inline comment claimed this
+        was safe ("app-controlled i18n message string... not user input"),
+        but that's wrong: the paraglide *template* is app-controlled, the
+        `projectName` **interpolated into it is not** - project names are
+        arbitrary user-set text, and paraglide does zero HTML-escaping on
+        interpolated values (confirmed in the compiled output - it's a
+        plain JS template literal). The template also had literal
+        `<strong>` tags baked into the translated string around both
+        placeholders. A project named e.g. `<img src=x onerror=...>`
+        would execute for any user viewing Dashboard Request Logs. Fixed
+        by stripping the `<strong>` markup from all three locale strings
+        (`messages/{en,es,id}.json`) and switching the component to plain
+        JSX text interpolation (`{m.dashboard_request_log_message(...)}`)
+        instead of `dangerouslySetInnerHTML` - React auto-escapes JSX text
+        children, closing the injection vector entirely. Lost the bold
+        styling on task#/project name as a result; judged an acceptable
+        trade for eliminating a stored XSS rather than re-architecting
+        into a 3-locale JSX-composition split.
+      - `QFieldExport/index.tsx` — safe. `qrSvg` comes from the `qrcode`
+        library's `createSvgTag()`, which only emits structural
+        `<rect>`/`<path>` grid markup (verified directly: fed a payload
+        containing `"><script>` as QR *data* and confirmed the output SVG
+        contains no trace of the input string, only pixel geometry).
+      - `AsyncPopup`/`NewAsyncPopup` — safe today, but fragile. Both
+        `renderToString(popupUI(properties))` then re-inject the result via
+        `dangerouslySetInnerHTML` (`NewAsyncPopup` additionally hands that
+        string to `maplibre-gl`'s own `Popup.setHTML()`, which does the
+        same raw-innerHTML assignment outside React entirely). Checked
+        every `popupUI`/`getPopupUI` implementation passed to either
+        component (5 call sites, `Projects/MapSection`,
+        `IndividualProject/MapSection`, `FlightGapDetectionModal`,
+        `DroneOperatorTask/MapSection`) - all use plain JSX `{}` text
+        interpolation (React auto-escaped), none nest their own
+        `dangerouslySetInnerHTML` or build raw HTML strings. No live
+        vulnerability today, but nothing in the `popupUI` prop's type
+        signature prevents a future implementation from introducing one -
+        noted here rather than silently left as an assumption.
 - [ ] `alt=""` on a meaningful profile image in the task-lock user list
       (`components/IndividualProject/ModalContent/LockTaskDialog.tsx:209-213`)
       - other avatars in the codebase use descriptive alt text; this one
