@@ -1595,11 +1595,14 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     setIsBulkProcessing(false);
     if (failCount > 0) {
       toast.error(
-        `Accepted ${successCount}, failed to accept ${failCount} images.`,
+        m.image_review_bulk_accept_partial_failure({ successCount, failCount }),
       );
     } else {
       toast.success(
-        `${successCount} image${successCount > 1 ? 's' : ''} accepted`,
+        m.image_review_bulk_accept_success({
+          count: successCount,
+          suffix: successCount > 1 ? 's' : '',
+        }),
       );
     }
     queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
@@ -1622,11 +1625,14 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     setIsBulkProcessing(false);
     if (failCount > 0) {
       toast.error(
-        `Rejected ${successCount}, failed to reject ${failCount} images.`,
+        m.image_review_bulk_reject_partial_failure({ successCount, failCount }),
       );
     } else {
       toast.success(
-        `${successCount} image${successCount > 1 ? 's' : ''} rejected`,
+        m.image_review_bulk_reject_success({
+          count: successCount,
+          suffix: successCount > 1 ? 's' : '',
+        }),
       );
     }
     queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
@@ -1650,11 +1656,15 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     setIsBulkProcessing(false);
     if (failCount > 0) {
       toast.error(
-        `Assigned ${successCount}, failed to assign ${failCount} images.`,
+        m.image_review_bulk_assign_partial_failure({ successCount, failCount }),
       );
     } else {
       toast.success(
-        `${successCount} image${successCount > 1 ? 's' : ''} assigned to Task #${taskIndex}`,
+        m.image_review_bulk_assign_success({
+          count: successCount,
+          suffix: successCount > 1 ? 's' : '',
+          taskIndex,
+        }),
       );
     }
     queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });

@@ -373,10 +373,39 @@ inline on the original item.
       across the whole frontend, not just the API layer). Only remaining
       `any` token left in `src/` is inside a commented-out code block in
       `VectorLayer.ts` (not live code, not linted).
-- [ ] Finish i18n coverage (`LandingPage`/`Footer` and several cross-cutting
+- [x] Finish i18n coverage (`LandingPage`/`Footer` and several cross-cutting
       `toast.error()` calls are hardcoded English) — not attempted this
       pass; translating user-facing strings is a copy/product call as much
       as a code one.
+      DONE (mechanical extraction, English text only - not translated to
+      other locales, per explicit direction). `LandingPage`/`Footer`
+      turned out to need **zero changes** - all 16 component files and
+      their shared `constants/landingPage.tsx` data source were already
+      fully migrated to `m.xxx()`; this line item was stale by the time
+      it was picked up. The real remaining gap was hardcoded
+      `toast.error()`/`.success()`/`.warning()` calls: found 21 call
+      sites across 7 files via three passes (a plain-literal grep first,
+      then two broader regex sweeps, since template-literal calls
+      spanning multiple lines don't match a simple one-line grep - caught
+      7 more sites on the second pass, 2 more on a third). Added 20 new
+      keys to all three locale files (`en`/`es`/`id` - same English text
+      in each,
+      matching the earlier decision not to translate), reusing the
+      existing `{param}`/pluralization-`{suffix}` convention already
+      established by `image_review_deleted_invalid_images`. Files
+      touched: `services/index.ts`, `utils/adb.ts`,
+      `utils/callApiSimultaneously.ts`,
+      `DroneOperatorTask/DescriptionSection/UppyFileUploader/index.tsx`
+      (6 sites), `MapLibreComponents/Layers/VectorLayer.ts`,
+      `DroneImageProcessingWorkflow/TaskVerificationModal.tsx` (2 sites),
+      `DroneImageProcessingWorkflow/ImageReview.tsx` (6 sites),
+      `DroneOperatorTask/MapSection/MapSection.tsx`. Left dynamic
+      server/exception messages alone (`toast.error(err.response?.data
+      ?.detail)`, `toast.error(data.message)`, etc.) - those aren't
+      hardcoded frontend strings to migrate. Verified `tsc --noEmit`/
+      `eslint .` (0 errors), `pnpm test` (14/14), `pnpm build`, and a
+      final regex sweep confirming zero hardcoded-literal toast calls
+      remain anywhere in `src/`.
 
 ## Frontend — P3
 

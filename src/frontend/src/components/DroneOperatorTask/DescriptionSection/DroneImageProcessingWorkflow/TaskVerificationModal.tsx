@@ -431,7 +431,7 @@ const TaskVerificationModal = ({
         },
       );
 
-      toast.success(`Task #${taskIndex} marked ready for processing`);
+      toast.success(m.task_verification_marked_ready({ taskIndex }));
       queryClient.invalidateQueries({ queryKey: ['taskVerification'] });
       queryClient.invalidateQueries({
         queryKey: ['project-task-states', projectId],
@@ -489,7 +489,9 @@ const TaskVerificationModal = ({
       });
     },
     onError: error => {
-      toast.error(error.message || 'Failed to run flight gap analysis');
+      toast.error(
+        error.message || m.task_verification_flight_gap_analysis_failed(),
+      );
     },
   });
 

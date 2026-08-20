@@ -118,7 +118,9 @@ const UppyFileUploader = ({
             key: response.data.file_key,
           };
         } catch (error) {
-          toast.error(`Failed to initiate upload for ${file.name}`);
+          toast.error(
+            m.drone_task_upload_initiate_failed({ fileName: file.name }),
+          );
           throw error;
         }
       },
@@ -144,7 +146,10 @@ const UppyFileUploader = ({
           };
         } catch (error) {
           toast.error(
-            `Failed to sign part ${partData.partNumber} for ${file.name}`,
+            m.drone_task_upload_sign_part_failed({
+              partNumber: partData.partNumber,
+              fileName: file.name,
+            }),
           );
           throw error;
         }
@@ -185,7 +190,9 @@ const UppyFileUploader = ({
             location: data.key,
           };
         } catch (error) {
-          toast.error(`Failed to complete upload for ${file.name}`);
+          toast.error(
+            m.drone_task_upload_complete_failed({ fileName: file.name }),
+          );
           throw error;
         }
       },
@@ -255,7 +262,12 @@ const UppyFileUploader = ({
       file: UppyFile<Meta, Record<string, never>> | undefined,
       error: { name: string; message: string; details?: string },
     ) => {
-      toast.error(`Upload failed for ${file?.name}: ${error.message}`);
+      toast.error(
+        m.drone_task_upload_failed_with_reason({
+          fileName: file?.name || '',
+          reason: error.message,
+        }),
+      );
     };
 
     const handleComplete = (
@@ -266,7 +278,9 @@ const UppyFileUploader = ({
 
       // Only show notification once per upload batch
       if (successfulUploads > 0 && !notificationShownRef.current) {
-        toast.success(`${successfulUploads} file(s) uploaded successfully`);
+        toast.success(
+          m.drone_task_upload_success_count({ count: successfulUploads }),
+        );
         notificationShownRef.current = true;
 
         if (onUploadComplete) {
@@ -283,7 +297,7 @@ const UppyFileUploader = ({
       }
 
       if (failedUploads > 0) {
-        toast.error(`${failedUploads} file(s) failed to upload`);
+        toast.error(m.drone_task_upload_failed_count({ count: failedUploads }));
       }
 
       purgeCompletedFiles();

@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 import { toast } from 'react-toastify';
+import { m } from '@/paraglide/messages';
 
 // function that calls the api simultaneously
 export default async function callApiSimultaneously(
@@ -36,7 +37,7 @@ export default async function callApiSimultaneously(
     const responses = await Promise.all(promises);
     return responses;
   } catch (err) {
-    toast.error('Error occurred on image upload');
+    toast.error(m.upload_image_error_generic());
     throw err;
   }
 }
