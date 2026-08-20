@@ -512,13 +512,19 @@ ASVS in particular haven't been scanned yet).
       `Drawer/index.test.tsx` (3 tests: dialog semantics, Escape closes,
       overlay click closes). Verified `tsc --noEmit`/`eslint` (0 errors)
       and `pnpm test` (14/14 passed).
-- [ ] Fixed-width label containers risk text clipping on longer-language
+- [x] Fixed-width label containers risk text clipping on longer-language
       translations:
       `components/RegulatorsApprovalPage/Description/DescriptionSection.tsx:156,168,183`
       (`w-[146px]`) and
       `components/IndividualProject/ExportSection/index.tsx:22,25,30,33,38,41`
       (`w-28`) on translated field labels - should be `min-w` not fixed
       `w-`. i18n text-expansion guidance.
+      DONE — `w-[146px]` → `min-w-[146px]`, `w-28`/`md:w-36` →
+      `min-w-28`/`md:min-w-36`. Applied to both the label and value cells
+      in `ExportSection.tsx` (not just the translated-label ones flagged),
+      since the value cells can also hold unpredictable-length content
+      (e.g. `author_name`). Preserves current visual width for English,
+      lets the container grow instead of clipping for longer text.
 - [ ] No `prefers-reduced-motion` or `prefers-color-scheme` support
       anywhere (confirmed via repo-wide grep - zero matches).
       `tailwind.config.js` defines several transform/scale/opacity
