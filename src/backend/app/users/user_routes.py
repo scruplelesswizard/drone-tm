@@ -8,6 +8,7 @@ from app.config import get_password_hash, settings, verify_password
 from app.db import database
 from app.models.enums import HTTPStatus
 from app.pagination import PaginationParams, paginate, pagination_params
+from app.rate_limit import limiter
 from app.users import user_deps, user_logic, user_schemas
 from app.users.permissions import IsSelf, check_permissions
 from app.users.user_deps import (
@@ -56,7 +57,9 @@ router = APIRouter(
     response_model=Token,
     summary="Log in with username/password, get an access token",
 )
+@limiter.limit("5/minute")
 async def login_access_token(
+    request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Connection, Depends(database.get_db)],
     role: str = Form(...),

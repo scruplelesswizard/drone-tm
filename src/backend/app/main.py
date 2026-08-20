@@ -20,6 +20,7 @@ from app.problem_details import (
 )
 from app.projects import classification_routes, project_routes
 from app.public_routes import router as public_router
+from app.rate_limit import limiter
 from app.tasks import task_routes
 from app.users import user_routes
 from app.utils import sanitize_sensitive_text
@@ -42,6 +43,9 @@ from loguru import logger as log
 from prometheus_fastapi_instrumentator import Instrumentator
 from psycopg import Connection
 from psycopg_pool import AsyncConnectionPool
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 root = os.path.dirname(os.path.abspath(__file__))
@@ -220,6 +224,10 @@ def get_application() -> FastAPI:
 
     # Set custom logger
     _app.logger = get_logger()
+
+    _app.state.limiter = limiter
+    _app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    _app.add_middleware(SlowAPIMiddleware)
 
     _app.add_middleware(RequestIDMiddleware)
     _app.add_middleware(
