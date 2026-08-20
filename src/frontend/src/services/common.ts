@@ -32,7 +32,8 @@ export const postUserProfile = ({
 export const getUserProfileInfo = () =>
   authenticated(api).get('/users/my-info');
 
-export const getUsers = () => authenticated(api).get('/users');
+export const getMentionableUsers = () =>
+  authenticated(api).get('/users/mentionable');
 
 export const patchUserProfile = ({
   userId,
