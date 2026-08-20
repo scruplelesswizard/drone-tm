@@ -408,7 +408,7 @@
   "dashboard_sidebar_name_label": "Nama",
   "dashboard_sidebar_email_label": "Surel",
   "dashboard_sidebar_role_label": "Peran",
-  "dashboard_request_log_message": "<strong>Tugas# {taskIndex}</strong> dari proyek <strong>{projectName}</strong> diminta untuk terbang.",
+  "dashboard_request_log_message": "Tugas# {taskIndex} dari proyek {projectName} diminta untuk terbang.",
   "dashboard_drone_operator_certificate": "Sertifikat Operator Drone",
   "dashboard_drone_registration_certificate": "Sertifikat Pendaftaran Drone",
   "dashboard_reject_button": "Tolak",

@@ -408,7 +408,7 @@
   "dashboard_sidebar_name_label": "Nombre",
   "dashboard_sidebar_email_label": "Correo electrónico",
   "dashboard_sidebar_role_label": "Rol",
-  "dashboard_request_log_message": "Se ha solicitado el vuelo de la <strong>Tarea n.º {taskIndex}</strong> del proyecto <strong>{projectName}</strong>.",
+  "dashboard_request_log_message": "Se ha solicitado el vuelo de la Tarea n.º {taskIndex} del proyecto {projectName}.",
   "dashboard_drone_operator_certificate": "Certificado de operador de drones",
   "dashboard_drone_registration_certificate": "Certificado de registro de dron",
   "dashboard_reject_button": "Rechazar",

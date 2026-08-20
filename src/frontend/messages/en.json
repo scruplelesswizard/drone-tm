@@ -408,7 +408,7 @@
   "dashboard_sidebar_name_label": "Name",
   "dashboard_sidebar_email_label": "Email",
   "dashboard_sidebar_role_label": "Role",
-  "dashboard_request_log_message": "The <strong>Task# {taskIndex}</strong> from <strong>{projectName}</strong> project is requested for flight.",
+  "dashboard_request_log_message": "The Task# {taskIndex} from {projectName} project is requested for flight.",
   "dashboard_drone_operator_certificate": "Drone Operator Certificate",
   "dashboard_drone_registration_certificate": "Drone Registration Certificate",
   "dashboard_reject_button": "Reject",

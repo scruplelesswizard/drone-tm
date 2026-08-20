@@ -77,15 +77,12 @@ const RequestLogs = () => {
                 className="naxatw-flex naxatw-h-fit naxatw-w-full naxatw-items-center naxatw-justify-between naxatw-rounded-xl naxatw-border naxatw-border-gray-300 naxatw-px-3 naxatw-py-2"
               >
                 <div className="naxatw-flex naxatw-flex-col naxatw-gap-1">
-                  <div
-                    // eslint-disable-next-line react/no-danger -- app-controlled i18n message string (paraglide), not user input
-                    dangerouslySetInnerHTML={{
-                      __html: m.dashboard_request_log_message({
-                        taskIndex: task.project_task_index,
-                        projectName: task?.project_name,
-                      }),
-                    }}
-                  />
+                  <div>
+                    {m.dashboard_request_log_message({
+                      taskIndex: task.project_task_index,
+                      projectName: task?.project_name,
+                    })}
+                  </div>
                   <div className="naxatw-flex naxatw-gap-1">
                     {task?.certificate_url && (
                       <div
