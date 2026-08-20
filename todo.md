@@ -596,10 +596,25 @@ ASVS in particular haven't been scanned yet).
         vulnerability today, but nothing in the `popupUI` prop's type
         signature prevents a future implementation from introducing one -
         noted here rather than silently left as an assumption.
-- [ ] `alt=""` on a meaningful profile image in the task-lock user list
+- [x] `alt=""` on a meaningful profile image in the task-lock user list
       (`components/IndividualProject/ModalContent/LockTaskDialog.tsx:209-213`)
       - other avatars in the codebase use descriptive alt text; this one
       conveys user identity but is marked decorative.
+      **Verified, not a bug - no change made.** This avatar sits inside a
+      `<button>` immediately next to `<span>{user.name}</span>` (same
+      clickable element, both are descendants). The accessible-name
+      algorithm for a button concatenates all descendant text and image
+      `alt`s, skipping `alt=""` images - so the button's computed
+      accessible name is already the user's name via the visible span.
+      Giving the `<img>` `alt={user.name}` here would make a screen
+      reader announce the name **twice** (once from the img alt, once
+      from the span) - a real regression, not a fix. Also: the "other
+      avatars use descriptive alt text" comparison in the original
+      finding doesn't hold up on inspection - the other avatar sites
+      (`DashboardSidebar`, `BasicDetails` x2) all use the generic,
+      non-identity `m.common_profile_picture_alt()` ("Profile picture"),
+      not the person's actual name, so they're not actually a
+      contradicting precedent either. Left as `alt=""`.
 
 ### Checked and clean (no action needed)
 
