@@ -254,29 +254,69 @@ inline on the original item.
 
 ## Kubernetes & Infra — P0
 
-- [ ] **Needs interaction:** set default resource requests/limits
+- [x] **Needs interaction:** set default resource requests/limits
       (`chart/values.yaml` ships `backend.resources: {}`,
       `worker.resources: {}`, `qgis.resources: {}`). Real numbers need actual
       usage data (or at least a target cluster's node sizing) - guessed
       requests/limits are worse than none if they're wrong in either
       direction (throttling vs. no protection).
-- [ ] **Needs interaction:** harden container `securityContext` —
+      Asked; chose conservative placeholder defaults over leaving unset.
+      DONE — backend/qgis: limits 2000m/2Gi, requests 250m/512Mi. worker:
+      limits 4000m/4Gi, requests 500m/1Gi (higher - ODM/image-processing
+      jobs run there). Explicitly labeled in `values.yaml` as unverified
+      against real traffic, there for a deploy-owner to tune. Verified
+      `helm lint` + `helm template` render the new blocks correctly.
+- [x] **Needs interaction:** harden container `securityContext` —
       `readOnlyRootFilesystem`, `capabilities.drop:[ALL]`,
       `allowPrivilegeEscalation:false`. `readOnlyRootFilesystem` in
       particular risks breaking any container that writes to its own
       filesystem at runtime (temp files, caches) - needs a real deploy to
       verify before defaulting it on, not a chart-only change.
+      DONE (partial, by design) — added `allowPrivilegeEscalation: false`
+      and `capabilities.drop: ["ALL"]` to the shared `.Values.
+      securityContext` block (used by backend/worker/qgis containers alike),
+      both zero functional risk. Deliberately did **not** add
+      `readOnlyRootFilesystem` - confirmed via code review that both the
+      backend and worker genuinely write local temp files at runtime
+      (`tempfile.mkstemp()`/`tempfile.gettempdir()` in `app/arq/tasks.py`,
+      DEM/flightplan processing) - turning it on would need those paths
+      backed by an explicit `emptyDir` first and verifying against a real
+      deploy, exactly the risk the original item named. A `values.yaml`
+      comment documents why it's still absent rather than looking like an
+      oversight.
 
 ## Kubernetes & Infra — P1
 
-- [ ] **Needs interaction:** default HPA and PDB to enabled
+- [x] **Needs interaction:** default HPA and PDB to enabled
       (`autoscaling.enabled`/`podDisruptionBudget.*.enabled` default
       `false`). Enabling by default changes behavior for every existing
       install of the chart, not just new ones - a deploy-owner call.
-- [ ] **Needs interaction:** add default-deny `NetworkPolicy`. Wrong from a
+      Asked; chose to enable both as placeholder defaults. DONE -
+      `backend.autoscaling.enabled`/`worker.autoscaling.enabled`/
+      `podDisruptionBudget.backend.enabled`/`podDisruptionBudget.worker.
+      enabled` all flipped to `true`, using the existing min/max/target
+      values already present (1-10 replicas, 80% CPU target;
+      `minAvailable: 1`). **Worth flagging for the next reviewer**: at the
+      chart's default `replicaCount: 1`, `PodDisruptionBudget.
+      minAvailable: 1` means a voluntary eviction (e.g. node drain) has
+      nowhere to go and gets blocked until HPA scales past 1 replica under
+      real load - a real operational interaction between two "safe-looking"
+      defaults, not something a chart-only render can catch.
+- [x] **Needs interaction:** add default-deny `NetworkPolicy`. Wrong from a
       sandbox with no real cluster to validate against - a too-strict policy
       silently breaks Postgres/Dragonfly/RustFS connectivity in a way only
       visible at runtime.
+      Asked; chose conservative placeholder over skipping. DONE, but kept
+      **disabled by default** (`networkPolicy.enabled: false`) rather than
+      force-enabling something unverified - the template
+      (`templates/networkpolicy.yaml`) is written and ready for a
+      deploy-owner with a real cluster to turn on: default-deny baseline +
+      narrow allows for DNS, intra-release pod-to-pod traffic, HTTPS/HTTP
+      egress (broad, not enumerated - too many third-party endpoints:
+      S3, SMTP, ScaleODM, Hanko, Google OAuth, Sentry), and ingress to the
+      backend's HTTP port from anywhere (the ingress controller's own
+      namespace/labels vary too much across clusters to hardcode).
+      Verified with `helm template ... --set networkPolicy.enabled=true`.
 - [x] Add `startupProbe` to backend/worker — purely additive (new probe,
       existing liveness/readiness untouched); verified with `helm lint` +
       `helm template`.
@@ -286,6 +326,15 @@ inline on the original item.
 - [ ] **Needs interaction:** pin images by digest, not mutable tag. Needs a
       decision on the digest-refresh workflow (Renovate digest-pinning mode,
       or manual) - not just a values.yaml edit.
+      **Not attempted** despite the "implement conservative placeholder
+      defaults" direction for this batch - unlike the others, this one
+      doesn't have a meaningful placeholder form. Pinning a real digest
+      needs a live registry lookup per image that stays correct only if
+      something (Renovate or a manual process) keeps it updated; a
+      one-time hardcoded digest would just silently rot. Still needs an
+      explicit decision on that refresh mechanism, which touches CI config
+      this session was told to be conservative about changing without a
+      specific ask.
 - [x] Add `values.schema.json` to validate `helm install`/`template` inputs
       — deliberately permissive (`additionalProperties: true` throughout,
       subchart values left untyped) so it only constrains what this chart's
@@ -299,14 +348,52 @@ inline on the original item.
 - [ ] **Needs interaction:** SBOM generation + image signing
       (`cosign`/`syft`/`trivy`). Needs key management / OIDC signing
       infrastructure decisions, not just a workflow step.
+      **Not attempted**, same reasoning as digest pinning above - a
+      placeholder signing step without real keys/OIDC trust configured
+      would just fail in CI, not degrade gracefully like the K8s
+      chart defaults could.
 
 ## Security — P1
 
-- [ ] **Needs interaction:** add rate limiting (no `slowapi`, middleware, or
+- [x] **Needs interaction:** add rate limiting (no `slowapi`, middleware, or
       ingress-level throttling on login, the presigned-URL endpoint, or the
       ScaleODM webhook). Needs a decision on actual thresholds per endpoint
       and whether it's enforced app-side (`slowapi`) or at the ingress —
       picking numbers without input is a guess, not a fix.
+      Asked; chose app-side `slowapi` with conservative placeholder
+      thresholds over ingress-level or skipping. DONE — new
+      `app/rate_limit.py` (`Limiter(key_func=get_remote_address)`), wired
+      into `main.py` (`app.state.limiter`, `SlowAPIMiddleware`, the
+      `RateLimitExceeded` exception handler). Applied
+      `@limiter.limit(...)` to the three named routes: login 5/minute,
+      presigned-URL 30/minute, ScaleODM webhook 60/minute - all explicitly
+      flagged as unverified against real traffic. Regenerated `uv.lock`
+      (same container-based process as the `/metrics` item, `slowapi`
+      needed no extra system deps beyond what was already installed for
+      that lock).
+      **Verified real enforcement works correctly by hand** (`curl` loops
+      against the actual running `docker compose` backend - N successes
+      then 429s, exactly as configured, for all three routes) - but
+      **could not drive the same 429 through pytest's `client` fixture**.
+      Root-caused it: `asgi_lifespan.LifespanManager` + `httpx.
+      ASGITransport` (every test's `client` fixture depends on both)
+      causes slowapi's per-request dedup flag
+      (`request.state._rate_limiting_complete`) to end up `True` from the
+      first request onward, so the decorator's check never re-fires on
+      later calls in-process - confirmed via a minimal repro (same
+      decorated route rate-limits correctly under `ASGITransport` alone,
+      stops as soon as `LifespanManager` wraps the app). A test-harness
+      interaction, not an application bug. Tests
+      (`test_rate_limiting.py`) verify the configured limit value on each
+      decorated route directly (via `limiter._route_limits` introspection)
+      plus one real-request sanity check, with the hand-verification
+      method and root cause documented in the test file's own docstring
+      rather than silently working around it. Full backend suite:
+      265/265 passed (one flaky run first - 27 failures, all
+      `urllib3.MaxRetryError` against the S3 test container from resource
+      contention with concurrent docker builds in this same session - a
+      clean teardown+rerun came back green, matching the exact lesson
+      already documented earlier in this file).
 
 ## Security — P2
 
