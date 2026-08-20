@@ -23,7 +23,7 @@ from app.arq.cloudnative import (
     generate_3d_tiles,
     generate_orthophoto_cog,
 )
-from app.config import settings
+from app.config import MonitoringTypes, settings
 from app.db.database import get_db_connection_pool
 from app.images.flight_stationary_removal import mark_and_remove_stationary_imagery
 from app.images.flight_tail_removal import mark_and_remove_flight_tail_imagery
@@ -89,6 +89,28 @@ _FETCH_CONCURRENCY = 8
 async def startup(ctx: dict[Any, Any]) -> None:
     """Initialize ARQ resources including database pool"""
     log.info("Starting ARQ worker")
+
+    # Initialize Sentry/OTel monitoring if enabled - same env-driven gate
+    # main.py uses for the API process. Separate process, separate
+    # instrumentation call; see instrument_worker_otel()'s docstring for
+    # why it's not just instrument_app_otel() (no FastAPI app here).
+    if (
+        settings.MONITORING == MonitoringTypes.SENTRY
+        and settings.monitoring_config.SENTRY_DSN
+    ):
+        try:
+            from app.monitoring import instrument_worker_otel, set_sentry_otel_tracer
+
+            log.info("Adding Sentry OpenTelemetry monitoring config to ARQ worker")
+            set_sentry_otel_tracer(settings.monitoring_config.SENTRY_DSN)
+            instrument_worker_otel()
+        except ImportError:
+            log.warning(
+                """
+                Sentry monitoring is enabled, but dependencies are not installed.
+                Ensure that the MONITORING env variable is populated and try restarting the build process for the backend Docker image.
+                """
+            )
 
     # Initialize Redis
     ctx["redis"] = await create_pool(RedisSettings.from_dsn(settings.DRAGONFLY_DSN))

@@ -339,8 +339,25 @@ inline on the original item.
 
 ## Observability — P2
 
-- [ ] Instrument the arq worker, not just the API (`app/arq/*.py` has zero
+- [x] Instrument the arq worker, not just the API (`app/arq/*.py` has zero
       OTel/Sentry references)
+      DONE. Mirrors `main.py`'s API-side pattern (`MonitoringTypes.SENTRY`
+      env gate, `try/except ImportError` graceful-degrade if the optional
+      `monitoring` dependency group isn't installed): `arq/tasks.py`'s
+      `startup()` now calls `set_sentry_otel_tracer()` + a new
+      `instrument_worker_otel()` in `monitoring.py`. The worker version
+      skips `FastAPIInstrumentor` (no FastAPI app in a worker process) but
+      keeps `PsycopgInstrumentor`/`RequestsInstrumentor` - the worker does
+      plenty of both (DB queries, ScaleODM/S3 HTTP calls) and neither was
+      traced before. No new dependency - reuses the same
+      `opentelemetry-instrumentation-{psycopg,requests}` packages already
+      in the `monitoring` extras group for the API. Verified the
+      arq-worker container starts healthy with `MONITORING` unset
+      (exercises the graceful-skip path, matching this sandbox's test
+      env) and the full backend suite (261/261, unchanged - this repo has
+      no existing tests for the API-side monitoring gate either, so no
+      new test added here matches that established convention rather
+      than introducing a one-off exception).
 
 ## Frontend — P0
 

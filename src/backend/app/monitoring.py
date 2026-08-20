@@ -21,3 +21,18 @@ def instrument_app_otel(app: FastAPI):
     FastAPIInstrumentor.instrument_app(app)
     PsycopgInstrumentor().instrument(enable_commenter=True, commenter_options={})
     RequestsInstrumentor().instrument()
+
+
+def instrument_worker_otel():
+    """Add OpenTelemetry instrumentation for the arq worker process.
+
+    Same DB/HTTP instrumentation as instrument_app_otel(), minus
+    FastAPIInstrumentor - there's no FastAPI app in the worker process, so
+    request/route spans don't apply here. Only used if environment
+    variables configured.
+    """
+    from opentelemetry.instrumentation.psycopg import PsycopgInstrumentor
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor
+
+    PsycopgInstrumentor().instrument(enable_commenter=True, commenter_options={})
+    RequestsInstrumentor().instrument()
