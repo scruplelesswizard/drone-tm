@@ -759,6 +759,47 @@ than as inline notes on the item that found them:
             than invisibly exempted repo-wide. Verified `ruff check`/
             `format --diff` (clean) and full backend suite (257/257,
             comment-only diff so no functional change expected or found).
+      - [x] `N805` (21 sites) — DONE, and this one hid a real, actively-
+            deprecated bug, not just a style nit. 16 of the 21 sites were
+            `@model_validator(mode="after") def method(cls, values):` -
+            a pattern that only *looks* like a classmethod. Checked what
+            Pydantic actually does with it (`uvx --with pydantic python3
+            -c ...` against a minimal repro): for `mode="after"`, Pydantic
+            calls it with `cls=the actual class` and `values=the validated
+            model instance` - and emits `PydanticDeprecatedSince212:
+            Using @model_validator with mode='after' on a classmethod is
+            deprecated. Instead, use an instance method... Deprecated in
+            Pydantic V2.12 to be removed in V3.0.` That warning never
+            showed up in this repo's own test output because pytest's
+            warning capture didn't surface it by default - it was silently
+            live technical debt that would have hard-broken on a future
+            Pydantic v3 upgrade. Rewrote all 16 (`project_schemas.py` 13,
+            `task_schemas.py` 2, `user_schemas.py` 1) from `(cls, values)`
+            + `values.field`/`return values` to the correct `(self)` +
+            `self.field`/`return self` instance-method form, via a
+            structured script (find each `mode="after"` signature,
+            whole-word-replace `values`→`self` within that method's
+            indented body only) rather than a blind repo-wide sed, then
+            read the full diff for both files to confirm every site
+            transformed correctly (no stray `values` usages, no `cls.`
+            references anywhere in these bodies that would've broken).
+            2 more sites (`user_schemas.py` `password_complexity`,
+            `validate_base64`) were `@field_validator` methods missing
+            the `@classmethod` decorator - Pydantic auto-classmethod-ifies
+            these at runtime regardless (confirmed no behavior change),
+            but official Pydantic v2 style adds it explicitly for
+            IDE/type-checker clarity, which is also what satisfies ruff's
+            N805 check. The remaining 3 sites (`DbProject.one`/`.all`,
+            `DbUserProfile.get_userprofile_by_userid`) were plain
+            `@staticmethod`-style helpers (called as `ClassName.method(db,
+            ...)`, never via an instance) simply missing the
+            `@staticmethod` decorator - confirmed against sibling methods
+            in the same classes (`.create()`, `.delete()`) that already
+            had it. Removed `N805` from the config-level `ignore` entirely
+            (kept `N806` there, tracked separately below). Verified `ruff
+            check` (clean, 0 N805 findings) and full backend suite
+            (257/257 - critically, the Pydantic deprecation warning is
+            gone from the test output too, confirming the fix is live).
 - [ ] Give `GET /users` a real paged UI/UX instead of the large
       default/max page size (200/500) it currently uses to avoid breaking
       the user-mention picker, which expects "all users" back in one page.

@@ -70,6 +70,7 @@ class UserRegister(BaseModel):
         return v
 
     @field_validator("password", mode="before")
+    @classmethod
     def password_complexity(cls, v: str, info: ValidationInfo):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
@@ -108,14 +109,14 @@ class BaseUserProfile(BaseModel):
     oam_api_token: str | None = None
 
     @model_validator(mode="after")
-    def set_urls(cls, values):
+    def set_urls(self):
         """Set and format certificate and registration URLs."""
-        values.certificate_url = maybe_presign_s3_key(values.certificate_url, 2)
-        values.registration_certificate_url = maybe_presign_s3_key(
-            values.registration_certificate_url, 2
+        self.certificate_url = maybe_presign_s3_key(self.certificate_url, 2)
+        self.registration_certificate_url = maybe_presign_s3_key(
+            self.registration_certificate_url, 2
         )
 
-        return values
+        return self
 
     @field_validator("role", mode="after")
     @classmethod
@@ -339,6 +340,7 @@ class DbUserProfile(BaseUserProfile):
 
         return model_data
 
+    @staticmethod
     async def get_userprofile_by_userid(db: Connection, user_id: str):
         """Fetch the user profile by user ID."""
         query = """
@@ -519,6 +521,7 @@ class Base64Request(BaseModel):
     token: str
 
     @field_validator("token")
+    @classmethod
     def validate_base64(cls, value: str) -> str:
         try:
             base64.b64decode(value, validate=True)

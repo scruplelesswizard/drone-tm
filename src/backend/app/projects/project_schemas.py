@@ -64,20 +64,20 @@ class CentroidOut(BaseModel):
     status: str = None
 
     @model_validator(mode="after")
-    def calculate_status(cls, values):
+    def calculate_status(self):
         """Set the project status based on task counts."""
-        ongoing_task_count = values.ongoing_task_count
-        completed_task_count = values.completed_task_count
-        total_task_count = values.total_task_count
+        ongoing_task_count = self.ongoing_task_count
+        completed_task_count = self.completed_task_count
+        total_task_count = self.total_task_count
 
         if completed_task_count == 0 and ongoing_task_count == 0:
-            values.status = "not-started"
+            self.status = "not-started"
         elif completed_task_count == total_task_count:
-            values.status = "completed"
+            self.status = "completed"
         else:
-            values.status = "ongoing"
+            self.status = "ongoing"
 
-        return values
+        return self
 
 
 class AssetsInfo(BaseModel):
@@ -223,20 +223,20 @@ class TaskOut(BaseModel):
     total_image_uploaded: int | None = None
 
     @model_validator(mode="after")
-    def set_assets_url(cls, values):
+    def set_assets_url(self):
         """Set assets_url to a browser-usable URL."""
-        assets_url = values.assets_url
+        assets_url = self.assets_url
         if assets_url:
             # New ODM layout stores an S3 prefix ending in odm/ - convert to
             # the streaming export endpoint URL.
             if assets_url.startswith("projects/") and assets_url.endswith("/odm/"):
                 parts = assets_url.split("/")
                 if len(parts) >= 4:
-                    values.assets_url = f"{settings.API_PREFIX}/projects/odm/export/{parts[1]}/{parts[2]}/"
+                    self.assets_url = f"{settings.API_PREFIX}/projects/odm/export/{parts[1]}/{parts[2]}/"
             elif not assets_url.startswith("http"):
-                values.assets_url = maybe_presign_s3_key(assets_url, 2)
+                self.assets_url = maybe_presign_s3_key(assets_url, 2)
 
-        return values
+        return self
 
 
 class DbProject(BaseModel):
@@ -313,6 +313,7 @@ class DbProject(BaseModel):
             return [item.strip() for item in stripped.split(",")] if stripped else []
         return v
 
+    @staticmethod
     async def one(db: Connection, project_id: uuid.UUID):
         """Get a single project &  all associated tasks by ID."""
         async with db.cursor(row_factory=class_row(DbProject)) as cur:
@@ -470,6 +471,7 @@ class DbProject(BaseModel):
             raise KeyError(f"Project with slug {slug} not found.")
         return await DbProject.one(db, row["id"])
 
+    @staticmethod
     async def all(
         db: Connection,
         user_id: str | None = None,
@@ -779,32 +781,32 @@ class ProjectInfo(BaseModel):
     is_terrain_follow: bool = False
 
     @model_validator(mode="after")
-    def set_image_url(cls, values):
-        project_id = values.id
+    def set_image_url(self):
+        project_id = self.id
         if not project_id:
-            return values
+            return self
 
         image_dir = f"projects/{project_id}/map_screenshot.png"
 
-        values.image_url = safe_url(
+        self.image_url = safe_url(
             lambda: maybe_presign_s3_key(image_dir, 5),
             label="image_url",
         )
 
-        return values
+        return self
 
     @model_validator(mode="after")
-    def set_assets_url(cls, values):
-        project_id = values.id
-        if not project_id or values.image_processing_status != "SUCCESS":
-            values.assets_url = None
-            return values
+    def set_assets_url(self):
+        project_id = self.id
+        if not project_id or self.image_processing_status != "SUCCESS":
+            self.assets_url = None
+            return self
 
         # Prefer DB-stored URL (set when processing completes) to avoid an S3
         # probe on every project detail fetch.
-        if values.output_odm_assets_url:
-            values.assets_url = values.output_odm_assets_url
-            return values
+        if self.output_odm_assets_url:
+            self.assets_url = self.output_odm_assets_url
+            return self
 
         # Fallback: probe S3 for the project-level ODM prefix.
         odm_prefix = f"projects/{project_id}/odm/"
@@ -815,170 +817,170 @@ class ProjectInfo(BaseModel):
                 ),
                 None,
             )
-            values.assets_url = (
+            self.assets_url = (
                 f"{settings.API_PREFIX}/projects/odm/export/{project_id}/"
                 if probe is not None
                 else None
             )
         except Exception:
-            values.assets_url = None
+            self.assets_url = None
 
-        return values
+        return self
 
     @model_validator(mode="after")
-    def set_orthophoto_url(cls, values):
-        project_id = values.id
-        if not project_id or values.image_processing_status != "SUCCESS":
-            values.orthophoto_url = None
-            return values
+    def set_orthophoto_url(self):
+        project_id = self.id
+        if not project_id or self.image_processing_status != "SUCCESS":
+            self.orthophoto_url = None
+            return self
 
-        if values.output_orthophoto_url:
-            values.orthophoto_url = values.output_orthophoto_url
-            return values
+        if self.output_orthophoto_url:
+            self.orthophoto_url = self.output_orthophoto_url
+            return self
 
-        values.orthophoto_url = safe_url(
+        self.orthophoto_url = safe_url(
             lambda: get_orthophoto_url_for_project(project_id),
             label="orthophoto_url",
         )
 
-        return values
+        return self
 
     @model_validator(mode="after")
-    def set_dsm_url(cls, values):
+    def set_dsm_url(self):
         """DSM (Digital Surface Model) probe - top-of-canopy raster."""
-        project_id = values.id
-        if not project_id or values.image_processing_status != "SUCCESS":
-            values.dsm_url = None
-            return values
-        values.dsm_url = safe_url(
+        project_id = self.id
+        if not project_id or self.image_processing_status != "SUCCESS":
+            self.dsm_url = None
+            return self
+        self.dsm_url = safe_url(
             lambda: get_dsm_url_for_project(project_id), label="dsm_url"
         )
-        return values
+        return self
 
     @model_validator(mode="after")
-    def set_dtm_url(cls, values):
+    def set_dtm_url(self):
         """DTM (Digital Terrain Model) probe - bare-ground raster."""
-        project_id = values.id
-        if not project_id or values.image_processing_status != "SUCCESS":
-            values.dtm_url = None
-            return values
-        values.dtm_url = safe_url(
+        project_id = self.id
+        if not project_id or self.image_processing_status != "SUCCESS":
+            self.dtm_url = None
+            return self
+        self.dtm_url = safe_url(
             lambda: get_dtm_url_for_project(project_id), label="dtm_url"
         )
-        return values
+        return self
 
     @model_validator(mode="after")
-    def set_mesh_source_available(cls, values):
+    def set_mesh_source_available(self):
         """Probe S3 for the textured-mesh OBJ; drives the 3D Convert button."""
-        project_id = values.id
-        if not project_id or values.image_processing_status != "SUCCESS":
-            values.mesh_source_available = False
-            return values
+        project_id = self.id
+        if not project_id or self.image_processing_status != "SUCCESS":
+            self.mesh_source_available = False
+            return self
         try:
-            values.mesh_source_available = mesh_source_available_for_project(project_id)
+            self.mesh_source_available = mesh_source_available_for_project(project_id)
         except Exception as e:
             log.warning("Failed to probe mesh source for project {}: {}", project_id, e)
-            values.mesh_source_available = False
-        return values
+            self.mesh_source_available = False
+        return self
 
     @model_validator(mode="after")
-    def set_pointcloud_url(cls, values):
-        project_id = values.id
-        if not project_id or values.image_processing_status != "SUCCESS":
-            values.pointcloud_url = None
-            return values
+    def set_pointcloud_url(self):
+        project_id = self.id
+        if not project_id or self.image_processing_status != "SUCCESS":
+            self.pointcloud_url = None
+            return self
 
-        if values.output_pointcloud_url:
-            values.pointcloud_url = values.output_pointcloud_url
-            return values
+        if self.output_pointcloud_url:
+            self.pointcloud_url = self.output_pointcloud_url
+            return self
 
-        values.pointcloud_url = safe_url(
+        self.pointcloud_url = safe_url(
             lambda: get_pointcloud_url_for_project(project_id),
             label="pointcloud_url",
         )
 
-        return values
+        return self
 
     @model_validator(mode="after")
-    def set_mesh_glb_url(cls, values):
+    def set_mesh_glb_url(self):
         """Presigned URL to the ODM GLB for the drone-mesh viewer."""
-        project_id = values.id
-        if not project_id or values.image_processing_status != "SUCCESS":
-            values.mesh_glb_url = None
-            return values
+        project_id = self.id
+        if not project_id or self.image_processing_status != "SUCCESS":
+            self.mesh_glb_url = None
+            return self
 
-        values.mesh_glb_url = safe_url(
+        self.mesh_glb_url = safe_url(
             lambda: get_mesh_glb_url_for_project(project_id),
             label="mesh_glb_url",
         )
 
-        return values
+        return self
 
     @model_validator(mode="after")
-    def set_cloudnative_urls(cls, values):
+    def set_cloudnative_urls(self):
         """Expose direct-S3 URLs for the cloudnative outputs.
 
         Both objects live under ``publicuploads/cloudnative/{project_id}/...``
         so the URL works without presigning. URLs are emitted only when the
         matching *_ready flag is true.
         """
-        project_id = values.id
+        project_id = self.id
         if not project_id:
-            values.cloud_ortho_cog_url = None
-            values.cloud_mesh_tileset_url = None
-            return values
+            self.cloud_ortho_cog_url = None
+            self.cloud_mesh_tileset_url = None
+            return self
 
-        values.cloud_ortho_cog_url = (
+        self.cloud_ortho_cog_url = (
             safe_url(
                 lambda: cloudnative_orthophoto_cog_browser_url(project_id),
                 label="cloud_ortho_cog_url",
             )
-            if values.cloud_ortho_ready
+            if self.cloud_ortho_ready
             else None
         )
-        values.cloud_mesh_tileset_url = (
+        self.cloud_mesh_tileset_url = (
             safe_url(
                 lambda: cloudnative_3d_tileset_browser_url(project_id),
                 label="cloud_mesh_tileset_url",
             )
-            if values.cloud_mesh_ready
+            if self.cloud_mesh_ready
             else None
         )
-        return values
+        return self
 
     @model_validator(mode="after")
-    def set_has_gcp(cls, values):
-        project_id = values.id
+    def set_has_gcp(self):
+        project_id = self.id
         if not project_id:
-            values.has_gcp = False
-            return values
+            self.has_gcp = False
+            return self
 
         try:
-            values.has_gcp = check_file_exists(
+            self.has_gcp = check_file_exists(
                 settings.S3_BUCKET_NAME,
                 f"projects/{project_id}/gcp.txt",
             )
         except Exception as e:
             log.warning(f"Failed to determine has_gcp for project {project_id}: {e}")
-            values.has_gcp = False
+            self.has_gcp = False
 
-        return values
+        return self
 
     @model_validator(mode="after")
-    def calculate_status(cls, values):
+    def calculate_status(self):
         """Set the project status based on task counts."""
-        ongoing_task_count = values.ongoing_task_count
-        completed_task_count = values.completed_task_count
-        total_task_count = values.total_task_count
+        ongoing_task_count = self.ongoing_task_count
+        completed_task_count = self.completed_task_count
+        total_task_count = self.total_task_count
 
         if completed_task_count == 0 and ongoing_task_count == 0:
-            values.status = ProjectCompletionStatus.NOT_STARTED
+            self.status = ProjectCompletionStatus.NOT_STARTED
         elif completed_task_count == total_task_count:
-            values.status = ProjectCompletionStatus.COMPLETED
+            self.status = ProjectCompletionStatus.COMPLETED
         else:
-            values.status = ProjectCompletionStatus.ON_GOING
+            self.status = ProjectCompletionStatus.ON_GOING
 
-        return values
+        return self
 
 
 class ProjectOut(BaseModel):

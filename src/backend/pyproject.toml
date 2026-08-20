@@ -148,7 +148,6 @@ ignore = [
   # rather than done as a drive-by part of enabling the rule. ---
   "B904",  # raise-without-from-inside-except (51 sites): needs per-site
   # decision between `from err` and `from None`.
-  "N805",  # invalid-first-argument-name-for-method (21 sites) and
   "N806",  # non-lowercase-variable-in-function (22 sites): mix of real
   # violations and Pydantic/SQLAlchemy conventions that look like violations;
   # needs per-site review, not a blind rename.
