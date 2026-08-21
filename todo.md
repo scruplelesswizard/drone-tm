@@ -2058,7 +2058,7 @@ lockfile regens above), grepping for TODO/FIXME across both apps, `pnpm
 audit`, and checking which of `.pre-commit-config.yaml`'s hooks actually
 run in CI (none do — grepped every `.github/workflows/*.yml`).
 
-- [ ] **Real bug:** `mypy` crashes outright — `cd src/backend && uv run
+- [x] **Real bug:** `mypy` crashes outright — `cd src/backend && uv run
       mypy app` (the exact command both `just lint` and the pre-commit
       `mypy` hook run) fails immediately with `Source file found twice
       under different module names: "s3_paths" and
@@ -2074,7 +2074,12 @@ run in CI (none do — grepped every `.github/workflows/*.yml`).
       runs mypy anyway (see next item). Since CI has never gated on this,
       the crash could have been live in `dev` for a while; needs `git
       bisect`/blame on `app/projects/` history to confirm exactly when.
-- [ ] **Real gap:** no CI workflow runs any of `.pre-commit-config.yaml`
+      DONE (PR #92) — `explicit_package_bases = true` + `mypy_path = "."`
+      fixes the crash; 523 surfaced errors grandfathered via
+      `[[tool.mypy.overrides]] ignore_errors = true` for the 33 affected
+      modules (same rationale as ruff's per-file-ignores — fixing the
+      tool, not the debt, is this item's scope).
+- [x] **Real gap:** no CI workflow runs any of `.pre-commit-config.yaml`
       (ruff check, ruff format, mypy, codespell, actionlint, oxfmt,
       detect-private-key/detect-aws-credentials, uv-lock-check) — grepped
       every file in `.github/workflows/`, zero hits for
@@ -2083,7 +2088,18 @@ run in CI (none do — grepped every `.github/workflows/*.yml`).
       lint rule and still go fully green in CI. (Frontend ESLint is the
       one exception — already gated via `frontend-test.yml`'s `lint`
       job from the original backlog.)
-- [ ] OpenAPI doc-gen (`docs.yml`'s commented-out `build_openapi_json`
+      DONE (PR #93) — new `backend-lint` job in `test.yml` (mypy, ruff
+      check, ruff format --check), runs inside `python:3.11-slim-trixie`
+      (not `ubuntu-latest` — confirmed the runner OS's `libgdal-dev` is
+      too old to build the pinned `gdal==3.10.3` sdist at all). Standing
+      it up surfaced real drift: 653 of 713 ruff violations were a
+      missing `tests/* = ["S101"]` exemption; the remaining 60 split
+      between a documented per-file-ignore for `packages/drone-flightplan`
+      (GDAL-API-mirroring naming, own release cadence) and real fixes in
+      the app's own tests (`usedforsecurity=False`, ternary, explicit
+      `strict=True`) — some of these (`N806`/`B904`) were "fully triaged"
+      in earlier PRs, so this is regression, not original debt.
+- [x] OpenAPI doc-gen (`docs.yml`'s commented-out `build_openapi_json`
       job) can now actually be re-enabled — it was blocked on an image
       tag (`ghcr.io/${{ github.repository }}/backend:ci-${{
       github.ref_name }}`) that nothing produced. That's no longer true:
@@ -2093,7 +2109,17 @@ run in CI (none do — grepped every `.github/workflows/*.yml`).
       workflow's own trigger fires on (`docs.yml` only runs on push to
       `dev`), via `docker/metadata-action`'s default branch-ref rule.
       Swap the image ref, uncomment the job.
-- [ ] **Needs interaction:** `GET /api/v1/projects/odm/export/{project_id}
+      DONE (PR #94) — swapped `ci-${{ github.ref_name }}` for the real
+      `backend:dev` tag, uncommented both jobs. Surfaced a second real
+      blocker: the reusable workflow imports `app.main` with cwd = repo
+      root (GitHub Actions container jobs always use `GITHUB_WORKSPACE`
+      as cwd), but this repo's `app/` lives under `src/backend/app/` —
+      reproduced `ModuleNotFoundError: No module named 'app'` locally
+      against the built image, every time. Fixed with an additive
+      `PYTHONPATH=/project/src/backend` in the runtime image's `ENV`
+      block (the container's own `CMD` already resolves fine via its own
+      `WORKDIR` either way).
+- [x] **Needs interaction:** `GET /api/v1/projects/odm/export/{project_id}
       [/{task_id}]` (and its point-cloud/DEM-export siblings in
       `project_routes.py`) are deliberately public with no auth — the
       code has a fully-written, commented-out auth check
@@ -2102,18 +2128,34 @@ run in CI (none do — grepped every `.github/workflows/*.yml`).
       access control.` This is an auth-model question per CLAUDE.md's
       change-boundary rules, not a drive-by fix — asking rather than
       flipping it.
-- [ ] **Needs interaction / blocked:** GitHub vulnerability alerts +
-      Dependabot automated security fixes are disabled repo-wide on
-      `scruplelesswizard/drone-tm` (`gh api
+      Asked; user said "Add rbac". DONE (PR #95) — enabled the
+      already-written check on `export_odm_assets`, and found + fixed
+      the same gap (no auth at all, not even a TODO) on 5 undocumented
+      siblings: `export_odm_orthophoto`, `export_odm_dsm`,
+      `export_odm_dtm`, `export_odm_pointcloud`, `head_odm_assets`. All 6
+      now use `check_permissions(IsSuperUser() | IsProjectCreator())` —
+      the existing permission framework already used by
+      `delete_project_by_id`, not a new RBAC system. Also fixed a real
+      frontend regression this would have caused: the ZIP-all download
+      button used a bare `fetch()`/`<a href>` that carries neither the
+      legacy-JWT `Access-Token` header nor (reliably) a cross-origin
+      session cookie — rewritten to fetch an authenticated blob, matching
+      the existing reflight-plan download's own pattern. 2 new tests
+      (unauthenticated → 403, non-owner → 403 without touching S3) plus
+      2 existing tests updated to authenticate. Full backend suite
+      267/267, frontend build/lint/vitest/Playwright all clean.
+- [x] GitHub vulnerability alerts + Dependabot automated security fixes
+      were disabled repo-wide on `scruplelesswizard/drone-tm` (`gh api
       repos/.../vulnerability-alerts` → 404 "disabled";
       `automated-security-fixes` → `enabled: false`), despite
       `.github/dependabot.yml` existing from the original backlog — the
       config file alone doesn't turn Dependabot on. Confirmed real signal
       behind this: `pnpm audit --audit-level=high` in `src/` finds 94
       vulnerabilities (2 critical, 42 high) with zero open Dependabot PRs
-      to address any of them. Attempted `gh api -X PUT
-      .../vulnerability-alerts` directly (same live-toggle pattern used
-      for the branch-protection item in the original backlog) — blocked
-      by this session's permission classifier as a live shared-infra
-      change. Needs the user (or explicit authorization) to flip both
-      toggles; not a code change.
+      to address any of them. First attempt (`gh api -X PUT
+      .../vulnerability-alerts`) was blocked by this session's permission
+      classifier as a live shared-infra change.
+      DONE — user explicitly said "enable dependabot". Re-ran both `gh
+      api -X PUT` calls (`vulnerability-alerts`,
+      `automated-security-fixes`), verified both now report enabled. Not
+      a code change — nothing to PR.
