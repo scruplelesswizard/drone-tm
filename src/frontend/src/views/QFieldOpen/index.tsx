@@ -100,7 +100,7 @@ export default function QFieldOpen() {
           {m.qfield_open_title()}
         </h1>
 
-        <p className="naxatw-bg-red-50 naxatw-rounded-lg naxatw-px-4 naxatw-py-3 naxatw-text-sm naxatw-text-[#D73F3F]">
+        <p className="naxatw-rounded-lg naxatw-bg-red-50 naxatw-px-4 naxatw-py-3 naxatw-text-sm naxatw-text-red-500">
           {m.qfield_open_requirement()}
         </p>
 

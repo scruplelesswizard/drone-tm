@@ -121,13 +121,13 @@ export default function MultiSelect({
       {showClearIcon ? (
         <Icon
           name="clear"
-          className="hover:naxatw-text-primary-400 naxatw-absolute naxatw-right-0 naxatw-items-center !naxatw-text-base"
+          className="naxatw-absolute naxatw-right-0 naxatw-items-center !naxatw-text-base hover:naxatw-text-primary-400"
           onClick={() => setSearchText('')}
         />
       ) : (
         <Icon
           name={!isOpen ? 'expand_more' : 'search'}
-          className="group-hover:naxatw-text-primary-400 naxatw-absolute naxatw-right-0 naxatw-items-center"
+          className="naxatw-absolute naxatw-right-0 naxatw-items-center group-hover:naxatw-text-primary-400"
         />
       )}
 

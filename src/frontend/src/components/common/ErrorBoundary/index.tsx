@@ -44,7 +44,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           <div className="title naxatw-flex naxatw-flex-col naxatw-items-center naxatw-justify-center">
             <Icon
               name="running_with_errors"
-              className="naxatw-text-red-600 naxatw-text-4xl"
+              className="naxatw-text-4xl naxatw-text-red-600"
             />
             <p className="naxatw-text-lg naxatw-font-bold naxatw-text-gray-800">
               {m.common_error_occurred()}
@@ -55,12 +55,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               href={errorLocation}
               target="_blank"
               rel="noopener noreferrer"
-              className="naxatw-text-red-600 naxatw-text-sm naxatw-underline"
+              className="naxatw-text-sm naxatw-text-red-600 naxatw-underline"
             >
               {fileName}
             </a>
           ) : (
-            <p className="naxatw-text-red-600 naxatw-text-sm">{fileName}</p>
+            <p className="naxatw-text-sm naxatw-text-red-600">{fileName}</p>
           )}
         </div>
       );

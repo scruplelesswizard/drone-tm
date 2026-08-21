@@ -26,11 +26,11 @@ export default function SearchInput({
   const resolvedPlaceholder = placeholder || m.common_search();
   return (
     <FlexRow
-      className={`hover:naxatw-border-b-primary-400 naxatw-group naxatw-relative naxatw-w-full naxatw-items-center naxatw-border-b-2 ${className}`}
+      className={`naxatw-group naxatw-relative naxatw-w-full naxatw-items-center naxatw-border-b-2 hover:naxatw-border-b-primary-400 ${className}`}
     >
       <Icon
         name="search"
-        className="group-hover:naxatw-text-primary-400 naxatw-text-grey-500"
+        className="naxatw-text-grey-500 group-hover:naxatw-text-primary-400"
       />
       <Input
         type="text"

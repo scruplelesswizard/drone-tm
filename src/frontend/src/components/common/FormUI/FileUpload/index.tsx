@@ -113,7 +113,7 @@ export default function FileUpload({
       >
         <Icon
           name="cloud_upload"
-          className="naxatw-text-primary-400 naxatw-text-3xl"
+          className="naxatw-text-3xl naxatw-text-primary-400"
         />
         <p className="naxatw-text-xs naxatw-text-grey-600">
           {placeholder || m.common_default_file_upload_placeholder()}

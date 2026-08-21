@@ -1562,7 +1562,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
                               type="button"
                               onClick={handleBulkRejectImages}
                               disabled={isBulkProcessing}
-                              className="hover:naxatw-bg-red-600 naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-red naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white disabled:naxatw-opacity-50"
+                              className="naxatw-flex naxatw-items-center naxatw-gap-1 naxatw-rounded naxatw-bg-red naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-semibold naxatw-text-white hover:naxatw-bg-red-600 disabled:naxatw-opacity-50"
                             >
                               <span
                                 className="material-icons"
@@ -1834,7 +1834,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
                   {selectedImage.status.replace('_', ' ')}
                 </p>
                 {selectedImage.rejection_reason && (
-                  <p className="naxatw-text-red-300 naxatw-text-sm">
+                  <p className="naxatw-text-sm naxatw-text-red-300">
                     {m.common_reason_label()} {selectedImage.rejection_reason}
                   </p>
                 )}
@@ -2016,7 +2016,7 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         <div className="naxatw-fixed naxatw-inset-0 naxatw-z-[10000] naxatw-flex naxatw-items-center naxatw-justify-center naxatw-bg-black naxatw-bg-opacity-50">
           <div className="naxatw-w-full naxatw-max-w-md naxatw-rounded-lg naxatw-bg-white naxatw-p-6 naxatw-shadow-xl">
             <div className="naxatw-mb-4 naxatw-flex naxatw-items-center naxatw-gap-3">
-              <span className="material-icons naxatw-text-red-500 naxatw-text-3xl">
+              <span className="material-icons naxatw-text-3xl naxatw-text-red-500">
                 warning
               </span>
               <h3 className="naxatw-text-lg naxatw-font-semibold naxatw-text-gray-900">

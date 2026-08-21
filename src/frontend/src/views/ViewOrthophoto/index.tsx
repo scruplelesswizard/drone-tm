@@ -241,7 +241,7 @@ const ViewOrthophoto = () => {
         {!isFetching && viewState === 'error' && (
           <div className="naxatw-absolute naxatw-inset-0 naxatw-flex naxatw-items-center naxatw-justify-center">
             <div className="naxatw-rounded-lg naxatw-bg-white naxatw-p-8 naxatw-text-center naxatw-shadow-xl">
-              <span className="material-icons naxatw-text-red-500 naxatw-mb-3 naxatw-block naxatw-text-4xl">
+              <span className="material-icons naxatw-mb-3 naxatw-block naxatw-text-4xl naxatw-text-red-500">
                 error_outline
               </span>
               <p className="naxatw-text-base naxatw-font-semibold naxatw-text-gray-700">

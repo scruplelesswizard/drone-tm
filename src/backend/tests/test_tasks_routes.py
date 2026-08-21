@@ -137,6 +137,46 @@ async def test_task_states(client, create_test_project):
 
 
 @pytest.mark.asyncio
+async def test_get_task_with_no_events_defaults_to_unlocked(
+    client, db, create_test_project
+):
+    """A task with zero task_events rows - the real state of every task
+    immediately after generation, since task creation (project_logic.py's
+    generate_tasks) only ever inserts into `tasks`, never `task_events` -
+    used to 500. GET /tasks/{task_id} inner-joined against task_events, so
+    a task with no events matched no rows at all; FastAPI's response_model
+    validation then rejected the None DbProject.create returns for a
+    request with no matching row as an unhandled 500 (None isn't a valid
+    TaskDetailsOut). State.UNLOCKED (0) is documented as the default status
+    for exactly this case, so the fix coalesces to it rather than assuming
+    a row always exists."""
+    project_id = create_test_project
+    task_id = uuid.uuid4()
+
+    async with db.cursor() as cur:
+        await cur.execute(
+            """
+            INSERT INTO tasks (id, project_id, project_task_index, outline)
+            VALUES (
+                %(task_id)s, %(project_id)s, 1,
+                ST_GeomFromText(
+                    'POLYGON((85.32 27.7063, 85.3195 27.7055, 85.3212 27.7048, 85.3214 27.7061, 85.32 27.7063))',
+                    4326
+                )
+            )
+            """,
+            {"task_id": task_id, "project_id": project_id},
+        )
+    await db.commit()
+
+    response = await client.get(f"/api/v1/tasks/{task_id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["state"] == "UNLOCKED"
+    assert body["project_task_index"] == 1
+
+
+@pytest.mark.asyncio
 async def test_project_author_revert_steps_back_from_has_imagery(monkeypatch):
     """Admin reverting HAS_IMAGERY should step back to the prior LOCKED state,
     not jump straight to UNLOCKED. This is the core of the sequential revert

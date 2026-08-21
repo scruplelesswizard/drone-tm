@@ -49,7 +49,7 @@ export default function ForgotPassword() {
       <Flex className="naxatw-flex naxatw-flex-col naxatw-items-center naxatw-justify-center naxatw-font-semibold">
         <Icon
           name="lock_reset"
-          className="naxatw-bg-primary-400 naxatw-rounded-[80px] naxatw-px-4 naxatw-py-[15px] naxatw-text-white"
+          className="naxatw-rounded-[80px] naxatw-bg-primary-400 naxatw-px-4 naxatw-py-[15px] naxatw-text-white"
         />
         <h1 className="naxatw-text-2xl naxatw-font-semibold naxatw-leading-10">
           {m.auth_forgot_password_question()}
