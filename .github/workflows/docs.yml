@@ -11,16 +11,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  # build_openapi_json:
-  #   uses: hotosm/gh-workflows/.github/workflows/openapi_build.yml@4.1.0
-  #   with:
-  #     image: ghcr.io/${{ github.repository }}/backend:ci-${{ github.ref_name }}
-  #     example_env_file_path: ".env.example"
-  #     output_path: docs/openapi.json
+  # `ci-${{ github.ref_name }}` never existed - nothing built that tag. A
+  # real `dev`-tagged image does now: tag_build.yml's `push: branches:
+  # [dev]` trigger (this workflow only runs on push to dev, matching
+  # ref_name) builds+pushes one on every merge via docker/metadata-
+  # action's default branch-ref rule.
+  build_openapi_json:
+    uses: hotosm/gh-workflows/.github/workflows/openapi_build.yml@4.1.0
+    with:
+      image: ghcr.io/${{ github.repository }}/backend:dev
+      example_env_file_path: ".env.example"
+      output_path: docs/openapi.json
 
   publish_docs:
     uses: hotosm/gh-workflows/.github/workflows/mkdocs_build.yml@4.1.0
-    # needs:
-    #   - build_openapi_json
-    # with:
-    #   openapi: true
+    needs:
+      - build_openapi_json
+    with:
+      openapi: true
