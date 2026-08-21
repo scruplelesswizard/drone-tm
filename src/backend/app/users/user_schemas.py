@@ -163,16 +163,16 @@ class UserProfileUpdate(BaseUserProfile):
 class DbUserProfile(BaseUserProfile):
     """UserProfile model for interacting with the user_profile table."""
 
-    user_id: int
+    user_id: str
     has_oam_token: bool = False
 
     @staticmethod
-    async def _handle_file_upload(profile: UserProfileCreate, user_id: int):
+    async def _handle_file_upload(profile: UserProfileCreate, user_id: str):
         """Handle file uploads (certificate and registration) and return presigned URLs and S3 paths.
 
         Args:
             profile (UserProfileCreate): The user profile containing file fields.
-            user_id (int): The user's ID.
+            user_id (str): The user's ID.
 
         Returns:
             dict: A dictionary with presigned URLs and S3 paths for each file type.
@@ -202,7 +202,7 @@ class DbUserProfile(BaseUserProfile):
         return result
 
     @staticmethod
-    async def _update_roles(db: Connection, user_id: int, new_roles: list | None):
+    async def _update_roles(db: Connection, user_id: str, new_roles: list | None):
         """Update the roles of the user in the database."""
         if new_roles is not None:
             role_update_query = """
@@ -218,7 +218,7 @@ class DbUserProfile(BaseUserProfile):
                 await cur.execute(role_update_query, (new_roles, user_id))
 
     @staticmethod
-    async def create(db: Connection, user_id: int, profile_create: UserProfileCreate):
+    async def create(db: Connection, user_id: str, profile_create: UserProfileCreate):
         """Create a new user profile."""
         model_data = profile_create.model_dump(exclude_none=True, exclude={"password"})
 
@@ -270,7 +270,7 @@ class DbUserProfile(BaseUserProfile):
         return model_data
 
     @staticmethod
-    async def update(db: Connection, user_id: int, profile_update: UserProfileUpdate):
+    async def update(db: Connection, user_id: str, profile_update: UserProfileUpdate):
         """Update or insert a user profile."""
         field_mapping = {
             "certificate_file": "certificate_url",

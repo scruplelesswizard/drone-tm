@@ -139,7 +139,7 @@ async def create_user_profile(
     """Create user profile based on provided user_id and profile_update data.
 
     Args:
-        user_id (int): The ID of the user whose profile is being updated.
+        user_id (str): The ID of the user whose profile is being updated.
         profile_update (UserProfileUpdate): Updated profile data to apply.
 
     Returns:
@@ -171,7 +171,7 @@ async def update_user_profile(
     """Update user profile based on provided user_id and profile_update data.
 
     Args:
-        user_id (int): The ID of the user whose profile is being updated.
+        user_id (str): The ID of the user whose profile is being updated.
         profile_update (UserProfileUpdate): Updated profile data to apply.
 
     Returns:

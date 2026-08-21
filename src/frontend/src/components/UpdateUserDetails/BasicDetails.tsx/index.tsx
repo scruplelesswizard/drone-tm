@@ -9,6 +9,7 @@ import { Button } from '@Components/RadixComponents/Button';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchUserProfile } from '@Services/common';
 import { countries } from 'countries-list';
+import avatarImage from '@Assets/images/avatar-images.svg';
 import { m } from '@/paraglide/messages';
 
 type BasicDetailsFormData = {
@@ -70,7 +71,11 @@ const BasicDetails = () => {
       <FlexColumn gap={5} className="naxatw-mt-5">
         <Flex className="naxatw-h-14 naxatw-w-14 naxatw-items-center naxatw-justify-center naxatw-overflow-hidden naxatw-rounded-full naxatw-bg-grey-600">
           <img
-            src={userProfile?.profile_img}
+            // src="" never fires onError (the browser treats it as "no
+            // image", not a failed load) and this img has no onError
+            // fallback at all - an empty/missing profile_img would
+            // otherwise render a permanent broken-image icon.
+            src={userProfile?.profile_img || avatarImage}
             alt={m.common_profile_picture_alt()}
           />
         </Flex>
