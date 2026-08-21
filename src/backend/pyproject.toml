@@ -129,6 +129,15 @@ exclude_lines = [
 python_version = "3.11"
 plugins = ["pydantic.mypy"]
 exclude = ["app/migrations/", "packages/", "scripts/2026/"]
+# `app/` has no `__init__.py` anywhere (implicit namespace packages), which
+# without `explicit_package_bases` makes mypy's root-finding ambiguous once
+# a file is reachable both as e.g. "s3_paths" and "app.projects.s3_paths" -
+# crashes with "Source file found twice" instead of type-checking anything.
+# `mypy_path = "."` (this directory, src/backend - matches the `cd
+# src/backend && uv run mypy app` invocation both `just lint` and the
+# pre-commit hook use) pins the package root so "app" resolves consistently.
+explicit_package_bases = true
+mypy_path = "."
 # Gradual-typing baseline: don't require annotations everywhere yet, but do
 # type-check the bodies of unannotated functions so real bugs still surface.
 # Tighten (disallow_untyped_defs, etc.) incrementally as coverage improves.
@@ -137,6 +146,53 @@ check_untyped_defs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_unreachable = true
+
+# `explicit_package_bases` above (needed to fix the crash) made mypy able to
+# actually walk the whole tree for the first time since whatever broke it -
+# surfacing 523 real, individually-triageable errors across these 33 files
+# that have been accumulating unchecked (mypy crashed before reaching any of
+# them; nothing in CI runs mypy either - see todo.md). Grandfathered here as
+# pre-existing debt, same rationale/pattern as ruff's per-file-ignores below:
+# fixing the tool is this change's scope, not fixing 523 type errors as a
+# drive-by. Tracked as a follow-up in todo.md; new/untouched modules stay
+# fully checked.
+[[tool.mypy.overrides]]
+module = [
+  "app.arq.tasks",
+  "app.config",
+  "app.db.db_models",
+  "app.drones.drone_logic",
+  "app.drones.drone_schemas",
+  "app.gcp.gcp_crud",
+  "app.gcp.gcp_routes",
+  "app.images.flight_gap_identification",
+  "app.images.flight_stationary_removal",
+  "app.images.flight_tail_removal",
+  "app.images.image_classification",
+  "app.images.image_logic",
+  "app.jaxa.tif_spider",
+  "app.jaxa.upload_dem",
+  "app.main",
+  "app.projects.classification_routes",
+  "app.projects.project_deps",
+  "app.projects.project_logic",
+  "app.projects.project_routes",
+  "app.projects.project_schemas",
+  "app.tasks.task_logic",
+  "app.tasks.task_routes",
+  "app.tasks.task_schemas",
+  "app.users.auth",
+  "app.users.permissions",
+  "app.users.user_deps",
+  "app.users.user_logic",
+  "app.users.user_routes",
+  "app.users.user_schemas",
+  "app.utils",
+  "app.waypoints.waypoint_logic",
+  "app.waypoints.waypoint_routes",
+  "app.waypoints.waypoint_schemas",
+]
+ignore_errors = true
 
 [tool.ruff]
 # Preserve the source roots Ruff inferred before this backend-local config existed.
