@@ -40,7 +40,7 @@ const OrganizationDetails = () => {
   >({
     mutationFn: payloadDataObject => patchUserProfile(payloadDataObject),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      void queryClient.invalidateQueries({ queryKey: ['user-profile'] });
 
       toast.success(m.profile_details_updated_success_lower());
     },
@@ -123,7 +123,7 @@ const OrganizationDetails = () => {
           className="naxatw-bg-red"
           onClick={e => {
             e.preventDefault();
-            handleSubmit(onSubmit)();
+            void handleSubmit(onSubmit)();
           }}
           withLoader
           isLoading={isPending}

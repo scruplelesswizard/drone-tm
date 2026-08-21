@@ -76,9 +76,9 @@ function HankoAuth() {
           Array.isArray(userDetails.role) &&
           userDetails.role.length > 0
         ) {
-          navigate('/projects');
+          void navigate('/projects');
         } else {
-          navigate('/complete-profile');
+          void navigate('/complete-profile');
         }
 
         // Only show toast on fresh login, not when returning from Portal profile
@@ -92,11 +92,11 @@ function HankoAuth() {
             ? error.message
             : m.auth_hanko_failed_generic(),
         );
-        navigate('/login');
+        void navigate('/login');
       }
     };
 
-    loginRedirect();
+    void loginRedirect();
   }, [navigate, signedInAs, queryClient]);
 
   return (

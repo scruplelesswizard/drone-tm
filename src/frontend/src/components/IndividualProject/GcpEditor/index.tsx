@@ -26,7 +26,7 @@ const GcpEditor = ({
   const { mutate: saveGcp, isPending } = useMutation({
     mutationFn: saveGcpFile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       dispatch(setProjectState({ showGcpEditor: false }));
       toast.success(m.gcp_editor_save_success());
     },
@@ -62,10 +62,15 @@ const GcpEditor = ({
     Promise.all([
       import('@hotosm/gcp-editor'),
       import('@hotosm/gcp-editor/style.css'),
-    ]).then(() => {
-      customElements.define = originalDefine;
-      setLoaded(true);
-    });
+    ])
+      .then(() => {
+        customElements.define = originalDefine;
+        setLoaded(true);
+      })
+      .catch(() => {
+        customElements.define = originalDefine;
+        toast.error(m.gcp_editor_load_failed());
+      });
 
     return () => {
       customElements.define = originalDefine;

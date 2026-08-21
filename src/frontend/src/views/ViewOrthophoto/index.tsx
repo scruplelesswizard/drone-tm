@@ -160,7 +160,7 @@ const ViewOrthophoto = () => {
     if (map.loaded()) {
       loadCog();
     } else {
-      map.once('load', loadCog);
+      void map.once('load', loadCog);
     }
 
     return () => {

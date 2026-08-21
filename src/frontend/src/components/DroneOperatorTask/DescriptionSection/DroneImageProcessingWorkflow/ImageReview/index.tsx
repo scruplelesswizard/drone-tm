@@ -786,11 +786,13 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       } else {
         toast.success(m.image_review_image_accepted_success());
       }
-      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['projectReview', projectId],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['projectMapData', projectId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-task-states', projectId],
       });
       setSelectedImage(null);
@@ -808,11 +810,13 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
     mutationFn: (imageId: string) => rejectImage(projectId, imageId),
     onSuccess: () => {
       toast.success(m.image_review_image_rejected_success());
-      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['projectReview', projectId],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['projectMapData', projectId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-task-states', projectId],
       });
       setSelectedImage(null);
@@ -831,11 +835,13 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
       assignImageToTask(projectId, imageId, taskId),
     onSuccess: () => {
       toast.success(m.image_review_image_assigned_success());
-      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['projectReview', projectId],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['projectMapData', projectId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-task-states', projectId],
       });
       setConfirmMatch(null);
@@ -865,11 +871,13 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
           }),
         );
       }
-      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['projectReview', projectId],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['projectMapData', projectId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-task-states', projectId],
       });
       setShowCleanupConfirm(false);
@@ -1083,9 +1091,13 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         }),
       );
     }
-    queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
-    queryClient.invalidateQueries({ queryKey: ['projectMapData', projectId] });
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
+      queryKey: ['projectReview', projectId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ['projectMapData', projectId],
+    });
+    void queryClient.invalidateQueries({
       queryKey: ['project-task-states', projectId],
     });
     setBoxSelectedImages([]);
@@ -1113,9 +1125,13 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         }),
       );
     }
-    queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
-    queryClient.invalidateQueries({ queryKey: ['projectMapData', projectId] });
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
+      queryKey: ['projectReview', projectId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ['projectMapData', projectId],
+    });
+    void queryClient.invalidateQueries({
       queryKey: ['project-task-states', projectId],
     });
     setBoxSelectedImages([]);
@@ -1145,9 +1161,13 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         }),
       );
     }
-    queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
-    queryClient.invalidateQueries({ queryKey: ['projectMapData', projectId] });
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
+      queryKey: ['projectReview', projectId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ['projectMapData', projectId],
+    });
+    void queryClient.invalidateQueries({
       queryKey: ['project-task-states', projectId],
     });
     setConfirmBulkMatch(null);
@@ -1883,13 +1903,13 @@ const ImageReview = ({ projectId }: ImageReviewProps) => {
         taskId={verificationModal.taskId}
         taskIndex={verificationModal.taskIndex}
         onVerified={() => {
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ['projectReview', projectId],
           });
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ['projectMapData', projectId],
           });
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ['project-task-states', projectId],
           });
         }}

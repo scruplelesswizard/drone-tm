@@ -106,7 +106,7 @@ export const UploadImageryDialog = ({
       setShowAbortConfirmation(true);
       return;
     }
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ['project-task-states', projectId],
     });
     setBatchIds([]);
@@ -116,7 +116,7 @@ export const UploadImageryDialog = ({
 
   const handleKeepAndClose = () => {
     toast.success(m.imagery_upload_keep_success());
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ['project-task-states', projectId],
     });
     setShowAbortConfirmation(false);
@@ -352,7 +352,7 @@ export const ClassifyImageryDialog = ({
       setIsPolling(false);
       setHasStarted(false);
       setIsComplete(false);
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-imagery-status', projectId],
       });
     },
@@ -373,10 +373,10 @@ export const ClassifyImageryDialog = ({
           ? m.classify_imagery_scan_already_running()
           : m.classify_imagery_scan_started(),
       );
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-imagery-status', projectId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['project-task-states', projectId],
       });
     },
@@ -446,7 +446,7 @@ export const ClassifyImageryDialog = ({
   }, [projectId, scanUploadsMutation]);
 
   const handleClose = () => {
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ['project-task-states', projectId],
     });
     onClose();
@@ -824,7 +824,7 @@ export const VerifyImageryDialog = ({
   const queryClient = useQueryClient();
 
   const handleClose = () => {
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ['project-task-states', projectId],
     });
     onClose();

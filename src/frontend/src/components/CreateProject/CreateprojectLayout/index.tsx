@@ -186,7 +186,7 @@ const CreateprojectLayout = () => {
           splitGeojson: null,
         }),
       );
-      navigate('/projects');
+      void navigate('/projects');
     },
     onError: err => {
       toast.error(err.message);
@@ -444,7 +444,7 @@ const CreateprojectLayout = () => {
             <Button
               onClick={e => {
                 e.preventDefault();
-                handleSubmit(onSubmit)();
+                void handleSubmit(onSubmit)();
               }}
               type="submit"
               className="!naxatw-bg-red !naxatw-text-white"

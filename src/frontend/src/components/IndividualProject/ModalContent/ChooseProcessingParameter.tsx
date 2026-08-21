@@ -21,7 +21,7 @@ const ChooseProcessingParameter = () => {
   const { mutate: startImageProcessing } = useMutation({
     mutationFn: processAllImagery,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       toast.success(m.proj_choose_param_toast_started());
       dispatch(toggleModal());
     },

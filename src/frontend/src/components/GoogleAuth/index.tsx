@@ -70,14 +70,14 @@ function GoogleAuth() {
             savedPath.startsWith('/') &&
             !savedPath.startsWith('//')
           ) {
-            navigate(savedPath, { replace: true });
+            void navigate(savedPath, { replace: true });
           } else if (
             userDetails?.has_user_profile &&
             userDetails?.role?.includes(signedInAs)
           ) {
-            navigate('/projects');
+            void navigate('/projects');
           } else {
-            navigate('/complete-profile');
+            void navigate('/complete-profile');
           }
         };
         try {
@@ -86,13 +86,13 @@ function GoogleAuth() {
         } catch (e) {
           console.error(e);
           toast.error((e as Error)?.message || m.auth_login_failed_generic());
-          navigate('/', { replace: true });
+          void navigate('/', { replace: true });
           return;
         }
       }
       setIsReadyToRedirect(true);
     };
-    loginRedirect();
+    void loginRedirect();
   }, [location.search, navigate, signedInAs]);
 
   return (

@@ -29,7 +29,7 @@ export default function ForgotPassword() {
     onSuccess: () => {
       toast.success(m.auth_forgot_password_email_sent());
 
-      navigate('/login');
+      void navigate('/login');
     },
   });
 
@@ -88,7 +88,7 @@ export default function ForgotPassword() {
             leftIcon="west"
             className="naxatw-text-red"
             onClick={() => {
-              navigate('/login');
+              void navigate('/login');
             }}
             type="button"
           >

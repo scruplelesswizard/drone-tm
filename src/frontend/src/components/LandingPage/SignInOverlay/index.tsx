@@ -43,7 +43,7 @@ export default function SignInOverlay() {
           name="close"
           onClick={() => {
             dispatch(setCommonState({ openSignInMenu: false }));
-            navigate(location.pathname, { replace: true, state: null });
+            void navigate(location.pathname, { replace: true, state: null });
           }}
         />
       </FlexRow>
@@ -76,9 +76,11 @@ export default function SignInOverlay() {
               }
 
               if (isAuthenticated()) {
-                navigate('/projects');
+                void navigate('/projects');
               } else {
-                navigate('/login', { state: { from: location.state?.from } });
+                void navigate('/login', {
+                  state: { from: location.state?.from },
+                });
               }
             }}
           >
@@ -113,9 +115,11 @@ export default function SignInOverlay() {
               }
 
               if (isAuthenticated()) {
-                navigate('/projects');
+                void navigate('/projects');
               } else {
-                navigate('/login', { state: { from: location.state?.from } });
+                void navigate('/login', {
+                  state: { from: location.state?.from },
+                });
               }
             }}
           >

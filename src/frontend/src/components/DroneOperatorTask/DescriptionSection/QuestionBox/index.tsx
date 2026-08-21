@@ -42,7 +42,7 @@ const QuestionBox = ({
     onSuccess: () => {
       // Optionally, refetch queries or show a success message
       toast.success(m.drone_task_comment_added_success());
-      navigate(`/projects/${projectSlug}`);
+      void navigate(`/projects/${projectSlug}`);
     },
     onError: error => {
       // Handle error

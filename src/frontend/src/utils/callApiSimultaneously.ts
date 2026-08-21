@@ -23,7 +23,7 @@ export default async function callApiSimultaneously(
       return await axios.put(url, singleData);
     } catch (err) {
       if (n === 1) throw err;
-      delay(1000); // 1 sec delay
+      await delay(1000); // 1 sec delay before retrying
       // eslint-disable-next-line no-return-await
       return await retryFc(url, singleData, n - 1);
     }

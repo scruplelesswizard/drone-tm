@@ -23,7 +23,7 @@ const FRONTEND_URL =
   import.meta.env.VITE_FRONTEND_URL || window.location.origin;
 
 if (AUTH_PROVIDER === 'hanko') {
-  import('@hotosm/hanko-auth');
+  void import('@hotosm/hanko-auth');
 }
 
 export default function Navbar() {

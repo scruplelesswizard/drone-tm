@@ -306,7 +306,7 @@ const DroneOperatorDescriptionBox = () => {
                   tabIndex={0}
                   onKeyDown={() => sendFlightPlanViaAdb()}
                   onClick={() => {
-                    sendFlightPlanViaAdb();
+                    void sendFlightPlanViaAdb();
                     setShowDownloadOptions(false);
                   }}
                 >

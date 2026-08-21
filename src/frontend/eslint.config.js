@@ -72,6 +72,11 @@ const legacyRuleOverrides = {
   // window.__RUNTIME_CONFIG__ is the established naming convention for the
   // docker-entrypoint.sh-injected runtime config global (see runtimeConfig.ts).
   'no-underscore-dangle': ['error', { allow: ['__RUNTIME_CONFIG__'] }],
+  // airbnb disallows `void` outright; `void someAsyncCall()` is the
+  // canonical fix `@typescript-eslint/no-floating-promises` suggests for a
+  // deliberately-unawaited promise, so allow it as a statement (still
+  // banned as a subexpression, e.g. `const x = void foo()`).
+  'no-void': ['error', { allowAsStatement: true }],
 };
 
 export default [
@@ -107,7 +112,8 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       ...legacyRuleOverrides,
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/exhaustive-deps': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
     },
   },
   {

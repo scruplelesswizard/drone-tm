@@ -10,7 +10,7 @@ export default function LanguageSwitcher() {
   const handleLanguageSelect = (event: WaSelectEvent) => {
     const selectedLang = (event.detail.item as HTMLElement & { value: string })
       .value as Locale;
-    setLocale(selectedLang);
+    void setLocale(selectedLang);
   };
 
   return (

@@ -38,7 +38,7 @@ const TaskOrthoCogViewer = ({
     };
     window.addEventListener('keydown', handleKey);
 
-    (async () => {
+    void (async () => {
       // ODM fast-ortho COGs are RGBA (3 colour bands + alpha). Letting OL
       // auto-detect band layout works for these; setting convertToRGB:true
       // breaks composeTile_ because OL then expects a different band count

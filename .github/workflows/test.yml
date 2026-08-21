@@ -9,12 +9,14 @@ on:
       - "src/backend/**"
       - "tasks/test/**"
       - ".github/workflows/test.yml"
+      - ".github/scripts/check-route-tests.sh"
 
   pull_request:
     paths:
       - "src/backend/**"
       - "tasks/test/**"
       - ".github/workflows/test.yml"
+      - ".github/scripts/check-route-tests.sh"
 
   # Allow manual trigger (workflow_dispatch)
   workflow_dispatch:
@@ -26,3 +28,14 @@ jobs:
       environment: "test"
       command: "test backend"
     secrets: inherit
+
+  # Governance: a PR that touches a route file must also touch a test file.
+  # PR-only (needs github.base_ref, which push events don't have).
+  require-route-tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: .github/scripts/check-route-tests.sh "${{ github.base_ref }}"

@@ -55,7 +55,7 @@ export default function LanguageSwitcherLanding({
               key={locale}
               type="button"
               onClick={() => {
-                setLocale(locale);
+                void setLocale(locale);
                 setOpen(false);
               }}
               className={`naxatw-block naxatw-w-full naxatw-cursor-pointer naxatw-px-4 naxatw-py-1.5 naxatw-text-left naxatw-text-body-sm hover:naxatw-bg-grey-100 ${

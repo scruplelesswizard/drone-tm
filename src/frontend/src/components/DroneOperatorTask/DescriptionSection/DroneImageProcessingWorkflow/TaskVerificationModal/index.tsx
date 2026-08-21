@@ -430,19 +430,21 @@ const TaskVerificationModal = ({
       );
 
       toast.success(m.task_verification_marked_ready({ taskIndex }));
-      queryClient.invalidateQueries({ queryKey: ['taskVerification'] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: ['taskVerification'] });
+      void queryClient.invalidateQueries({
         queryKey: ['project-task-states', projectId],
       });
-      queryClient.invalidateQueries({ queryKey: ['projectReview', projectId] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['projectReview', projectId],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['projectMapData', projectId],
       });
-      queryClient.invalidateQueries({ queryKey: ['project-detail'] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+      void queryClient.invalidateQueries({
         queryKey: ['projectTaskImagerySummary', projectId],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['all-task-assets-info', projectId],
       });
       onVerified?.();
@@ -462,7 +464,7 @@ const TaskVerificationModal = ({
     mutationFn: (imageId: string) => deleteTaskImage(projectId, imageId),
     onSuccess: () => {
       toast.success(m.drone_task_image_deleted());
-      refetch();
+      void refetch();
       setSelectedImageId(null);
     },
     onError: (error: AxiosError) => {

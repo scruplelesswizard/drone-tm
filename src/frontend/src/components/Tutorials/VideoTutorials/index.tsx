@@ -11,7 +11,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.play();
+      // play() rejects if the browser blocks autoplay (e.g. no user
+      // interaction yet) - expected, not an error worth surfacing.
+      videoRef.current.play().catch(() => {});
     }
   }, [src]);
 

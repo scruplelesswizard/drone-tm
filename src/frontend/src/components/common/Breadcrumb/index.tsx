@@ -17,7 +17,7 @@ const BreadCrumb = ({ data }: IBreadCrumbProps) => {
       {data.map((breadCrumbItem, index) => {
         const isNavigable = index < data.length - 1;
         const handleActivate = () => {
-          if (isNavigable) navigate(breadCrumbItem.navLink);
+          if (isNavigable) void navigate(breadCrumbItem.navLink);
         };
         return (
           <React.Fragment key={breadCrumbItem.name}>

@@ -22,7 +22,7 @@ document.documentElement.lang = getLocale();
 
 // Workaround required, as @hotosm/gcp-editor already imports all components
 if (!customElements.get('hot-tracking')) {
-  import('@hotosm/ui/dist/hotosm-ui.js');
+  void import('@hotosm/ui/dist/hotosm-ui.js');
 }
 
 const queryClient = new QueryClient({
