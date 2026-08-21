@@ -95,7 +95,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHON_LIB="/opt/python/lib/python$PYTHON_IMG_TAG/site-packages" \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    # The container's own CMD already resolves `app.main:api` fine via its
+    # WORKDIR (below). This is purely additive, for tools that run `python`
+    # against this image from a different cwd - e.g. CI's OpenAPI JSON
+    # build (docs.yml), which checks out the repo to its own workspace
+    # root and imports `app.main` from there, not from this image's copy.
+    PYTHONPATH="/project/src/backend"
 
 RUN set -ex \
     && apt-get update \
