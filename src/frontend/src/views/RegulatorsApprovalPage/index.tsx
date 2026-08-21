@@ -99,7 +99,7 @@ const RegulatorsApprovalPage = () => {
     );
 
   return (
-    <BindContentContainer className="naxatw-h-screen-nav naxatw-px-3 naxatw-py-8 lg:naxatw-px-20">
+    <BindContentContainer className="naxatw-h-screen-nav naxatw-overflow-y-auto naxatw-px-3 naxatw-py-8 lg:naxatw-px-20">
       <BreadCrumb
         data={[
           { name: m.regulator_project_breadcrumb(), navLink: '/projects' },

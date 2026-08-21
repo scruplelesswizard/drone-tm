@@ -50,7 +50,7 @@ const Dashboard = () => {
   };
 
   return (
-    <section className="naxatw-flex naxatw-h-screen-nav naxatw-flex-col naxatw-px-3 naxatw-pt-2 lg:naxatw-px-16">
+    <section className="naxatw-flex naxatw-h-screen-nav naxatw-flex-col naxatw-overflow-y-auto naxatw-px-3 naxatw-pt-2 lg:naxatw-px-16">
       <FlexRow className="naxatw-py-5">
         <h5 className="naxatw-font-bold">{m.dashboard_profile_heading()}</h5>
       </FlexRow>
