@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { AxiosError } from 'axios';
 import centroid from '@turf/centroid';
 import html2canvas from 'html2canvas';
 import { Feature } from 'geojson';
@@ -24,7 +25,7 @@ import { Button } from '@Components/RadixComponents/Button';
 import Skeleton from '@Components/RadixComponents/Skeleton';
 import DescriptionSection from '@Components/RegulatorsApprovalPage/Description/DescriptionSection';
 import { projectOptions } from '@Constants/index';
-import { deleteProject } from '@Services/project';
+import { deleteProject, downloadOdmAssetsZip } from '@Services/project';
 import {
   triggerMeshConversion,
   triggerOrthophotoConversion,
@@ -327,27 +328,26 @@ const IndividualProject = () => {
     const projectId = projectData?.id || id;
     if (!projectId) return;
 
-    const assetsPath = `/projects/odm/export/${projectId}`;
-    const downloadUrl = buildDownloadUrl(assetsPath);
-
     try {
-      const response = await fetch(downloadUrl, { method: 'HEAD' });
-      if (response.status === 404) {
-        toast.warning(m.individual_project_no_odm_export_found());
-        return;
-      }
-      if (!response.ok) {
-        toast.error(m.individual_project_failed_check_odm_export());
-        return;
-      }
+      // Only the project creator or a superuser can read this endpoint -
+      // must go through the authenticated axios instance, not a bare
+      // fetch()/<a href> (neither carries the Access-Token header/session
+      // cookie the way the shared api instance does).
+      const blob = await downloadOdmAssetsZip(projectId);
 
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = url;
       link.setAttribute('download', `entire_odm_project_${projectId}.zip`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
+      if ((error as AxiosError)?.response?.status === 404) {
+        toast.warning(m.individual_project_no_odm_export_found());
+        return;
+      }
       toast.error(
         m.individual_project_download_error({ error: String(error) }),
       );
