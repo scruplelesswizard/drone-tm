@@ -2159,3 +2159,56 @@ run in CI (none do — grepped every `.github/workflows/*.yml`).
       api -X PUT` calls (`vulnerability-alerts`,
       `automated-security-fixes`), verified both now report enabled. Not
       a code change — nothing to PR.
+
+## Round 3 — found while scoping a UI design pass (2026-08-21)
+
+Not a fresh scoping pass like Round 2 - these surfaced organically while
+setting up a real local dev instance (seeded DB user + password) to take
+screenshots for a visual-refresh mockup, then again while checking
+mobile/desktop responsiveness. Same "found and fixed", not just logged,
+standard as the rest of this file.
+
+- [x] **Real bug:** broken avatar image rendering, 4 sites
+      (`common/UserAvatar`, `Dashboard/DashboardSidebar`,
+      `CompleteUserProfile`'s and `UpdateUserDetails`' `BasicDetails`
+      forms) — `src=""` never fires `onError` (the HTML `img` element
+      treats an empty `src` as "no image", not a failed load), so a user
+      with no `profile_img` got a permanent broken-image icon +
+      overlapping alt text instead of a fallback, even on the 2 sites
+      that had an `onError` handler (it just never fired).
+      DONE (PR #97, merged) — guard the `src` itself
+      (`imageSource || avatarImage`) instead of relying solely on
+      `onError`. 8 new Vitest tests.
+- [x] **Real bug:** `GET /users/my-info` 500'd for any user whose id
+      isn't all-digits — `DbUserProfile.user_id` was typed `int` even
+      though the `users.id` column (and `DbUser.id`) is a plain varchar;
+      parsing a real DB row via `class_row(DbUserProfile)` raised a
+      pydantic `ValidationError` for a non-numeric id. Hanko SSO ids are
+      UUIDs, so this broke every Hanko user with a profile - unnoticed
+      because the one existing test's fixture user id happens to be an
+      all-digits Google-OAuth sub.
+      DONE (PR #97, merged) — retyped to `str` throughout `DbUserProfile`
+      (the field + 4 method signatures with the same stale `int` hint).
+      New regression test constructs a real Hanko-style UUID user.
+- [x] **Real bug:** content below the fold was completely unreachable on
+      mobile-height viewports on 4 pages (`IndividualProject`,
+      `Dashboard`, `CreateProject`, `RegulatorsApprovalPage`) — each
+      wraps its content in a fixed-height `h-screen-nav` section
+      (`calc(100vh - 57px)`) with default `overflow: visible`; once a
+      page's real content exceeds one screen (much more likely once
+      everything's stacked to one narrow mobile column), the box stays
+      fixed-height but the document never gains scrollable area to
+      reveal what overflows it - no scrollbar, no touch-scroll, nothing.
+      Confirmed on `IndividualProject` at 375×812: a real project's
+      About tab (metadata, Imagery Workflow steps, Delete Project
+      button) sat entirely below the unreachable line -
+      `section.scrollHeight` (1508px) vs. `clientHeight` (755px) with
+      `document.body.scrollHeight` pinned to exactly `window.innerHeight`.
+      DONE (PR #98) — added `overflow-y-auto` alongside the existing
+      `h-screen-nav` on all 4 pages; verified via a real mouse-wheel
+      gesture (0 scroll pre-fix, full scroll post-fix) and a screenshot
+      diff confirming zero regression on desktop. `HankoAuth`/
+      `GoogleAuth`'s use of the same class left alone - fixed centered
+      spinners that never overflow. Not captured as a permanent
+      automated test - these routes need an authenticated session and
+      the e2e suite has no seed/login fixture yet.
