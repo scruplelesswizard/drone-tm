@@ -2047,3 +2047,73 @@ than as inline notes on the item that found them:
       which conflicts with `no-floating-promises`'s own canonical fix.
       Verified: full `eslint .` clean, `tsc && vite build` clean, Vitest
       19/19.
+
+## Round 2 — scoped 2026-08-20
+
+Original backlog (above) is fully complete (66/66, both PRs merged into
+`dev`). This round is a fresh scoping pass, not an item-by-item audit
+request — found via: reproducing `just lint`'s mypy/ruff commands in a
+throwaway container (same approach used for the mypy-baseline/`/metrics`
+lockfile regens above), grepping for TODO/FIXME across both apps, `pnpm
+audit`, and checking which of `.pre-commit-config.yaml`'s hooks actually
+run in CI (none do — grepped every `.github/workflows/*.yml`).
+
+- [ ] **Real bug:** `mypy` crashes outright — `cd src/backend && uv run
+      mypy app` (the exact command both `just lint` and the pre-commit
+      `mypy` hook run) fails immediately with `Source file found twice
+      under different module names: "s3_paths" and
+      "app.projects.s3_paths"`, before checking a single file. Introduced
+      by `1560cfa5` (2D Ortho & 3D mesh viewer, adds
+      `app/projects/s3_paths.py`) hitting a namespace-package ambiguity
+      in mypy's implicit-package-root resolution (no `__init__.py`
+      anywhere in `app/`). Confirmed via `--explicit-package-bases`
+      (mypy's own suggested fix): crash goes away, revealing 523 real
+      errors across 33 files that have been accumulating unchecked since
+      whenever this broke — nobody would have seen them because (a) mypy
+      just crashes locally instead of reporting, and (b) nothing in CI
+      runs mypy anyway (see next item). Since CI has never gated on this,
+      the crash could have been live in `dev` for a while; needs `git
+      bisect`/blame on `app/projects/` history to confirm exactly when.
+- [ ] **Real gap:** no CI workflow runs any of `.pre-commit-config.yaml`
+      (ruff check, ruff format, mypy, codespell, actionlint, oxfmt,
+      detect-private-key/detect-aws-credentials, uv-lock-check) — grepped
+      every file in `.github/workflows/`, zero hits for
+      `pre-commit`/`ruff`/`mypy`. `test.yml`/`frontend-test.yml` only run
+      pytest/vitest+eslint+build. A PR can currently fail every local
+      lint rule and still go fully green in CI. (Frontend ESLint is the
+      one exception — already gated via `frontend-test.yml`'s `lint`
+      job from the original backlog.)
+- [ ] OpenAPI doc-gen (`docs.yml`'s commented-out `build_openapi_json`
+      job) can now actually be re-enabled — it was blocked on an image
+      tag (`ghcr.io/${{ github.repository }}/backend:ci-${{
+      github.ref_name }}`) that nothing produced. That's no longer true:
+      `tag_build.yml`'s `push: branches: [dev]` trigger (added by the
+      original backlog's "build & push images on every merge to dev"
+      item) already produces a `dev`-tagged image on every push this
+      workflow's own trigger fires on (`docs.yml` only runs on push to
+      `dev`), via `docker/metadata-action`'s default branch-ref rule.
+      Swap the image ref, uncomment the job.
+- [ ] **Needs interaction:** `GET /api/v1/projects/odm/export/{project_id}
+      [/{task_id}]` (and its point-cloud/DEM-export siblings in
+      `project_routes.py`) are deliberately public with no auth — the
+      code has a fully-written, commented-out auth check
+      (`user_data.is_superuser or project.author_id == user_data.id`)
+      behind `# TODO: Re-enable auth when we have proper role-based
+      access control.` This is an auth-model question per CLAUDE.md's
+      change-boundary rules, not a drive-by fix — asking rather than
+      flipping it.
+- [ ] **Needs interaction / blocked:** GitHub vulnerability alerts +
+      Dependabot automated security fixes are disabled repo-wide on
+      `scruplelesswizard/drone-tm` (`gh api
+      repos/.../vulnerability-alerts` → 404 "disabled";
+      `automated-security-fixes` → `enabled: false`), despite
+      `.github/dependabot.yml` existing from the original backlog — the
+      config file alone doesn't turn Dependabot on. Confirmed real signal
+      behind this: `pnpm audit --audit-level=high` in `src/` finds 94
+      vulnerabilities (2 critical, 42 high) with zero open Dependabot PRs
+      to address any of them. Attempted `gh api -X PUT
+      .../vulnerability-alerts` directly (same live-toggle pattern used
+      for the branch-protection item in the original backlog) — blocked
+      by this session's permission classifier as a live shared-infra
+      change. Needs the user (or explicit authorization) to flip both
+      toggles; not a code change.
