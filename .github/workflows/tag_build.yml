@@ -4,6 +4,14 @@ on:
   # All releases
   release:
     types: [published]
+  # Every merge to dev - keeps a deployable `dev`/`sha-<sha>` tagged image
+  # available between releases, not just at release time. Release builds
+  # still get semver tags (from docker/metadata-action's `type=semver`
+  # rule, driven by the pushed git tag) - this only adds an additional
+  # trigger, tagging behavior for releases is unchanged.
+  push:
+    branches:
+      - dev
   # Allow manual trigger
   workflow_dispatch:
 
@@ -18,6 +26,7 @@ jobs:
       extra_build_args: MONITORING=sentry
       scan_image: true
       multi_arch: true
+      environment: ${{ github.event_name == 'release' && github.ref_name || 'dev' }}
 
   frontend-build:
     uses: hotosm/gh-workflows/.github/workflows/image_build.yml@4.1.0
@@ -27,3 +36,4 @@ jobs:
       image_name: ghcr.io/${{ github.repository }}/frontend
       dockerfile: frontend/Dockerfile
       multi_arch: true
+      environment: ${{ github.event_name == 'release' && github.ref_name || 'dev' }}
