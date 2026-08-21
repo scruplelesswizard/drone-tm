@@ -6,8 +6,11 @@ from types import SimpleNamespace
 
 import pytest
 from app.arq.tasks import get_redis_pool
-from app.models.enums import State
+from app.db.database import get_db
+from app.models.enums import State, UserRole
 from app.projects import project_deps, project_logic, project_routes, project_schemas
+from app.users.user_deps import login_dependency
+from app.users.user_schemas import AuthUser
 from fastapi import BackgroundTasks, HTTPException
 from httpx import ASGITransport, AsyncClient
 from loguru import logger as log
@@ -313,7 +316,7 @@ async def test_read_project_includes_project_planning_metadata(
 
 
 @pytest.mark.asyncio
-async def test_head_project_odm_assets_returns_available(app, monkeypatch):
+async def test_head_project_odm_assets_returns_available(app, monkeypatch, auth_user):
     project_id = uuid.uuid4()
     s3_object = SimpleNamespace(
         object_name=f"projects/{project_id}/odm/odm_orthophoto/odm_orthophoto.tif",
@@ -331,6 +334,9 @@ async def test_head_project_odm_assets_returns_available(app, monkeypatch):
     app.dependency_overrides[project_deps.get_project_by_id] = lambda: SimpleNamespace(
         id=project_id
     )
+    # export_odm_assets/head_odm_assets now require the project creator or a
+    # superuser (see check_permissions) - auth_user is a superuser fixture.
+    app.dependency_overrides[login_dependency] = lambda: auth_user
 
     try:
         async with AsyncClient(
@@ -342,6 +348,7 @@ async def test_head_project_odm_assets_returns_available(app, monkeypatch):
             )
     finally:
         app.dependency_overrides.pop(project_deps.get_project_by_id, None)
+        app.dependency_overrides.pop(login_dependency, None)
 
     assert response.status_code == 200
     assert response.content == b""
@@ -353,7 +360,9 @@ async def test_head_project_odm_assets_returns_available(app, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_head_project_odm_assets_returns_404_when_missing(app, monkeypatch):
+async def test_head_project_odm_assets_returns_404_when_missing(
+    app, monkeypatch, auth_user
+):
     project_id = uuid.uuid4()
 
     class FakeS3Client:
@@ -364,6 +373,7 @@ async def test_head_project_odm_assets_returns_404_when_missing(app, monkeypatch
     app.dependency_overrides[project_deps.get_project_by_id] = lambda: SimpleNamespace(
         id=project_id
     )
+    app.dependency_overrides[login_dependency] = lambda: auth_user
 
     try:
         async with AsyncClient(
@@ -375,8 +385,76 @@ async def test_head_project_odm_assets_returns_404_when_missing(app, monkeypatch
             )
     finally:
         app.dependency_overrides.pop(project_deps.get_project_by_id, None)
+        app.dependency_overrides.pop(login_dependency, None)
 
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_head_project_odm_assets_requires_auth(app, db):
+    """No access-token header at all -> 403 (FastAPI's APIKeyHeader security
+    scheme auto-errors before verify_access_token's own body ever runs),
+    before the permission check or S3 are ever reached. get_db is
+    overridden purely so login_dependency's own get_db sub-dependency
+    doesn't crash on a missing pool - auth itself (verify_access_token) is
+    deliberately left un-overridden."""
+    project_id = uuid.uuid4()
+    app.dependency_overrides[get_db] = lambda: db
+
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test",
+        ) as test_client:
+            response = await test_client.head(
+                f"/api/v1/projects/odm/export/{project_id}/"
+            )
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_export_odm_assets_forbidden_for_non_owner(app, monkeypatch):
+    """An authenticated non-superuser who isn't the project author gets 403,
+    not the assets - check_permissions(IsSuperUser() | IsProjectCreator())
+    denies before the S3 prefix is ever probed."""
+    project_id = uuid.uuid4()
+    owner_id = "someone-else-id"
+    other_user = AuthUser(
+        id="not-the-owner-id",
+        email="pilot@hotosm.org",
+        name="pilot",
+        profile_img="",
+        role=UserRole.DRONE_PILOT.name,
+        is_superuser=False,
+    )
+
+    def s3_client_should_not_be_called():
+        raise AssertionError("S3 must not be probed when permission is denied")
+
+    monkeypatch.setattr(project_routes, "s3_client", s3_client_should_not_be_called)
+    # DbProject.model_construct bypasses field validation - only .id/
+    # .author_id matter for IsProjectCreator's check.
+    app.dependency_overrides[project_deps.get_project_by_id] = lambda: (
+        project_schemas.DbProject.model_construct(id=project_id, author_id=owner_id)
+    )
+    app.dependency_overrides[login_dependency] = lambda: other_user
+
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test",
+        ) as test_client:
+            response = await test_client.head(
+                f"/api/v1/projects/odm/export/{project_id}/"
+            )
+    finally:
+        app.dependency_overrides.pop(project_deps.get_project_by_id, None)
+        app.dependency_overrides.pop(login_dependency, None)
+
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio

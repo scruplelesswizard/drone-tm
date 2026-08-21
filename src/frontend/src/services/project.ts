@@ -69,3 +69,12 @@ export const uploadToOAM = (payload: { projectId: string; tags: string[] }) => {
     { headers: { 'Content-Type': 'application/json' } },
   );
 };
+
+// Whole-project ODM assets ZIP is only readable by the project creator or a
+// superuser (see check_permissions on export_odm_assets/head_odm_assets) -
+// must go through the authenticated axios instance (Access-Token header /
+// session cookie), not a bare <a href> or fetch().
+export const downloadOdmAssetsZip = (projectId: string): Promise<Blob> =>
+  authenticated(api)
+    .get(`/projects/odm/export/${projectId}`, { responseType: 'blob' })
+    .then(response => response.data);

@@ -1318,7 +1318,13 @@ async def export_odm_orthophoto(
     request: Request,
     project_id: uuid.UUID,
     project: Annotated[
-        project_schemas.DbProject, Depends(project_deps.get_project_by_id)
+        project_schemas.DbProject,
+        Depends(
+            check_permissions(
+                IsSuperUser() | IsProjectCreator(),
+                get_obj=project_deps.get_project_by_id,
+            )
+        ),
     ],
     task_id: uuid.UUID | None = None,
 ):
@@ -1408,7 +1414,13 @@ def _stream_s3_object_response(
 async def export_odm_dsm(
     project_id: uuid.UUID,
     project: Annotated[
-        project_schemas.DbProject, Depends(project_deps.get_project_by_id)
+        project_schemas.DbProject,
+        Depends(
+            check_permissions(
+                IsSuperUser() | IsProjectCreator(),
+                get_obj=project_deps.get_project_by_id,
+            )
+        ),
     ],
 ):
     """Stream the DSM (Digital Surface Model, top-of-canopy) GeoTIFF."""
@@ -1428,7 +1440,13 @@ async def export_odm_dsm(
 async def export_odm_dtm(
     project_id: uuid.UUID,
     project: Annotated[
-        project_schemas.DbProject, Depends(project_deps.get_project_by_id)
+        project_schemas.DbProject,
+        Depends(
+            check_permissions(
+                IsSuperUser() | IsProjectCreator(),
+                get_obj=project_deps.get_project_by_id,
+            )
+        ),
     ],
 ):
     """Stream the DTM (Digital Terrain Model, bare-ground) GeoTIFF."""
@@ -1448,7 +1466,13 @@ async def export_odm_dtm(
 async def export_odm_pointcloud(
     project_id: uuid.UUID,
     project: Annotated[
-        project_schemas.DbProject, Depends(project_deps.get_project_by_id)
+        project_schemas.DbProject,
+        Depends(
+            check_permissions(
+                IsSuperUser() | IsProjectCreator(),
+                get_obj=project_deps.get_project_by_id,
+            )
+        ),
     ],
 ):
     """Stream the point cloud LAZ file for the project-level ODM output."""
@@ -1474,11 +1498,15 @@ async def export_odm_assets(
     request: Request,
     project_id: uuid.UUID,
     project: Annotated[
-        project_schemas.DbProject, Depends(project_deps.get_project_by_id)
+        project_schemas.DbProject,
+        Depends(
+            check_permissions(
+                IsSuperUser() | IsProjectCreator(),
+                get_obj=project_deps.get_project_by_id,
+            )
+        ),
     ],
     task_id: uuid.UUID | None = None,
-    # Uncomment to enforce auth (see TODO in body):
-    # user_data: Annotated[AuthUser, Depends(login_required)] = None,
 ):
     """Stream-zip all ODM assets for a task (or whole project) into a single download.
 
@@ -1490,19 +1518,8 @@ async def export_odm_assets(
     When omitted, exports the project-level ``projects/{pid}/odm/`` prefix
     (produced by final/whole-project processing).
 
-    Currently public (no auth required) so any user can download assets.
+    Only the project creator or a superuser may export assets.
     """
-    # TODO: Re-enable auth when we have proper role-based access control.
-    # To enable, uncomment the `user_data` dependency in the signature above
-    # and the check below. Works for both legacy JWT (access-token header)
-    # and Hanko (session cookie - browser sends it automatically on <a>
-    # downloads, so no query-param token fallback is needed).
-    # if not (user_data.is_superuser or project.author_id == user_data.id):
-    #     raise HTTPException(
-    #         status_code=HTTPStatus.FORBIDDEN,
-    #         detail="Only the project creator may export ODM assets",
-    #     )
-
     prefix = _odm_assets_prefix(project.id, task_id)
 
     # Probe for at least one object so we can 404 before streaming starts,
@@ -1561,7 +1578,13 @@ async def head_odm_assets(
     request: Request,
     project_id: uuid.UUID,
     project: Annotated[
-        project_schemas.DbProject, Depends(project_deps.get_project_by_id)
+        project_schemas.DbProject,
+        Depends(
+            check_permissions(
+                IsSuperUser() | IsProjectCreator(),
+                get_obj=project_deps.get_project_by_id,
+            )
+        ),
     ],
     task_id: uuid.UUID | None = None,
 ):
