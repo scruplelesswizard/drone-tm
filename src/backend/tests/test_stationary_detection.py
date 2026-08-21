@@ -46,7 +46,9 @@ async def _insert_points(db, project_id, batch_id, task_id, auth_user, points):
                     "project_id": str(project_id),
                     "filename": filename,
                     "s3_key": f"projects/{project_id}/user-uploads/{filename}",
-                    "hash_md5": hashlib.md5(filename.encode("utf-8")).hexdigest(),
+                    "hash_md5": hashlib.md5(
+                        filename.encode("utf-8"), usedforsecurity=False
+                    ).hexdigest(),
                     "batch_id": str(batch_id),
                     "task_id": str(task_id),
                     "lon": lon,

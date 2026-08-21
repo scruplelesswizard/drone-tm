@@ -261,7 +261,9 @@ async def test_reject_gimbal_errors(db, create_test_project, auth_user):
         for i, e in enumerate(gimbal_errors):
             filename = e["name"]
             s3_key = f"dtm-data/projects/{project_id}/user-uploads/{filename}"
-            hash_md5 = hashlib.md5(filename.encode("utf-8")).hexdigest()
+            hash_md5 = hashlib.md5(
+                filename.encode("utf-8"), usedforsecurity=False
+            ).hexdigest()
             uploaded_at = now + timedelta(seconds=i)
             # Intentional gimbal errors
             exif_data = json.dumps({"GimbalPitchDegree": e["pitch"]})
@@ -392,7 +394,9 @@ async def test_reject_invalid_coordinates_range(db, create_test_project, auth_us
                 "project_id": str(project_id),
                 "filename": file_name,
                 "s3_key": f"dtm-data/projects/{project_id}/user-uploads/{file_name}",
-                "hash_md5": hashlib.md5(file_name.encode("utf-8")).hexdigest(),
+                "hash_md5": hashlib.md5(
+                    file_name.encode("utf-8"), usedforsecurity=False
+                ).hexdigest(),
                 "batch_id": str(batch_id),
                 "task_id": str(task_id),
                 "uploaded_by": auth_user.id,

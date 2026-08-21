@@ -8,7 +8,9 @@ async def test_request_id_is_echoed_back_when_provided(client):
     """A caller-supplied X-Request-ID propagates onto the response, so a
     client-side trace ID survives round-trip."""
     given = str(uuid.uuid4())
-    response = await client.get("/api/v1/users/my-info", headers={"X-Request-ID": given})
+    response = await client.get(
+        "/api/v1/users/my-info", headers={"X-Request-ID": given}
+    )
     assert response.headers["x-request-id"] == given
 
 

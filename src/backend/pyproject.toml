@@ -268,6 +268,11 @@ extend-immutable-calls = [
 # These are retained compatibility modules; renaming them would break imports.
 "**/flightPlanWaypointGenerator.py" = ["N999"]
 "**/sampleRasterAtPoints.py" = ["N999"]
+# S101 (assert-detected): `assert` is how pytest assertions work - bandit's
+# own docs recommend disabling this rule for test suites. Missing until now
+# because nothing in CI ever ran ruff (see todo.md) to surface the 653 hits
+# this was generating across the test suite.
+"tests/*" = ["S101"]
 # S608 (hardcoded-sql-expression): reviewed site-by-site instead of a blanket
 # repo-wide ignore, so S608 stays live everywhere else and a new f-string-
 # built query elsewhere still gets caught. Each file below only ever
@@ -294,3 +299,14 @@ extend-immutable-calls = [
 "tests/test_project_processing.py" = ["DTZ001"]
 # This test deliberately passes a naive datetime to exercise input validation.
 "tests/test_solar_position.py" = ["DTZ001"]
+# drone-flightplan is a standalone library (own pyproject.toml, own PyPI
+# release cadence - see CLAUDE.md) wrapping GDAL/OGR's own camelCase C++ API
+# (ImportFromProj4, GetLayerDefn, etc.) - local variables mirroring that
+# naming (rasterSR, outLayer, ...) are a deliberate readability choice, not
+# sloppiness, and renaming ~30 of them blind (no test coverage for these
+# modules) isn't worth the risk for a lint-gate PR. B904/S108/N813/UP042
+# here are pre-existing debt in vendored CLI/output-format code, each a
+# real one-by-one fix, not reviewed line-by-line as part of standing up
+# this gate - same "grandfather, don't drive-by fix" rationale as mypy's
+# ignore_errors overrides above.
+"packages/drone-flightplan/**" = ["N806", "B904", "S108", "N813", "UP042", "B007"]
