@@ -14,7 +14,11 @@ const DashboardSidebar = () => {
     <FlexColumn className="naxatw-h-full naxatw-items-center naxatw-rounded-xl naxatw-border naxatw-border-gray-500 naxatw-p-2.5 naxatw-py-4">
       <Flex className="naxatw-h-20 naxatw-w-20 naxatw-items-center naxatw-justify-center naxatw-overflow-hidden naxatw-rounded-full naxatw-bg-grey-600">
         <img
-          src={userDetails?.profile_img}
+          // src="" never fires onError (the browser treats it as "no
+          // image", not a failed load), so an empty profile_img would
+          // otherwise render a permanent broken-image icon instead of the
+          // fallback below.
+          src={userDetails?.profile_img || avatarImage}
           alt={m.common_profile_picture_alt()}
           className="naxatw-h-full naxatw-w-full"
           onError={e => {

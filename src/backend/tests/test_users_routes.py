@@ -1,6 +1,11 @@
+import uuid
+
 import pytest
-from app.users.user_deps import create_reset_password_token
-from app.users.user_schemas import AuthUser, DbUser
+from app.db.database import get_db
+from app.models.enums import UserRole
+from app.users.user_deps import create_reset_password_token, login_required
+from app.users.user_schemas import AuthUser, DbUser, DbUserProfile, UserProfileCreate
+from httpx import ASGITransport, AsyncClient
 from loguru import logger as log
 
 
@@ -12,6 +17,50 @@ async def test_my_info(client):
     user_info = response.json()
 
     assert user_info["email_address"] == "admin@hotosm.org"
+
+
+@pytest.mark.asyncio
+async def test_my_info_non_numeric_user_id(app, db):
+    """/my-info used to 500 for any user whose id isn't all-digits -
+    DbUserProfile.user_id was typed `int` even though the users.id column
+    (and DbUser.id) is a plain varchar. Hanko SSO ids are UUIDs, not
+    numbers, so this broke every Hanko-authenticated user with a profile;
+    it went unnoticed because the only existing coverage (test_my_info,
+    the default `client` fixture's auth_user) happens to use a Google-OAuth
+    sub id that's all digits and parses as a valid int by accident."""
+    non_numeric_user = AuthUser(
+        id=str(uuid.uuid4()),
+        email=f"hanko-style-user-{uuid.uuid4()}@hotosm.org",
+        name="Hanko Style User",
+        profile_img="",
+        role="PROJECT_CREATOR",
+        is_superuser=False,
+    )
+    await DbUser.get_or_create_user(db, non_numeric_user)
+    await DbUserProfile.create(
+        db,
+        non_numeric_user.id,
+        UserProfileCreate(password="SomePassword123!", role=[UserRole.PROJECT_CREATOR]),
+    )
+    await db.commit()
+
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[login_required] = lambda: non_numeric_user
+
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as test_client:
+            response = await test_client.get("/api/v1/users/my-info")
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+        app.dependency_overrides.pop(login_required, None)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == non_numeric_user.id
+    assert body["has_user_profile"] is True
+    assert body["user_id"] == non_numeric_user.id
 
 
 @pytest.mark.asyncio
