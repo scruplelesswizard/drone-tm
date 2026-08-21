@@ -430,7 +430,7 @@ inline on the original item.
 
 ## Kubernetes & Infra — P2
 
-- [ ] **Needs interaction:** pin images by digest, not mutable tag. Needs a
+- [x] **Needs interaction:** pin images by digest, not mutable tag. Needs a
       decision on the digest-refresh workflow (Renovate digest-pinning mode,
       or manual) - not just a values.yaml edit.
       **Not attempted** despite the "implement conservative placeholder
@@ -442,6 +442,25 @@ inline on the original item.
       explicit decision on that refresh mechanism, which touches CI config
       this session was told to be conservative about changing without a
       specific ask.
+      DONE — Asked; chose Renovate-managed. Added `renovate.json`
+      (`config:recommended` + a `packageRules` entry pinning digests for
+      every `docker`-datasource dependency) — validated with the real
+      `renovate-config-validator`. Resolved and pinned current digests via
+      `docker buildx imagetools inspect` for every external base image:
+      `python:3.11-slim-trixie` (backend, via a new `PYTHON_IMG_DIGEST`
+      ARG alongside the existing `PYTHON_IMG_TAG` — Renovate's documented
+      pattern for digest-pinning a parameterized tag), `ghcr.io/
+      spwoodcock/obj2tiles:v1.6.2`, `node:24-slim` and `docker.io/rclone/
+      rclone:1` (frontend), and the Helm chart's `qgis.image` (`ghcr.io/
+      hotosm/qfield-project-packager:26.3`) — added a `digest:` value next
+      to `tag:` and updated `qgis-deployment.yaml` to append `@{digest}`
+      when set. Left `postgresql.image` (bitnami subchart, `enabled:
+      false` by default, not this chart's own template) unpinned — lower
+      value pinning a disabled third-party subchart's own image config,
+      whose `digest` key support isn't guaranteed the way this chart's own
+      templates now guarantee it. Verified: `docker build --check` on both
+      Dockerfiles (digests resolve, no warnings), `helm lint` +
+      `helm template` (qgis image renders as `repo:tag@digest`).
 - [x] Add `values.schema.json` to validate `helm install`/`template` inputs
       — deliberately permissive (`additionalProperties: true` throughout,
       subchart values left untyped) so it only constrains what this chart's

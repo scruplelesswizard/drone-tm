@@ -1,12 +1,15 @@
 # syntax=docker/dockerfile:1
 # ARG for the base image
 ARG PYTHON_IMG_TAG=3.11
+# Digest pin, kept in sync with PYTHON_IMG_TAG by Renovate (docker manager,
+# ARG-based digest pinning - see renovate.json)
+ARG PYTHON_IMG_DIGEST=sha256:9c900dea9e8fb7e16277c179b555cc72d29a352dbc33cff48ad5a0412fd5bfc7
 
 # Static Obj2Tiles binary, copied into the runtime stage for OBJ -> 3D tiles conversion
-FROM ghcr.io/spwoodcock/obj2tiles:v1.6.2 AS obj2tiles
+FROM ghcr.io/spwoodcock/obj2tiles:v1.6.2@sha256:f997ac35ddcb893c8a24eba378ca2fd1726f1fc8feb9a3b71c6976808a85c3e3 AS obj2tiles
 
 # Base build stage with dependencies required to build Python wheels
-FROM python:$PYTHON_IMG_TAG-slim-trixie AS build
+FROM python:$PYTHON_IMG_TAG-slim-trixie@$PYTHON_IMG_DIGEST AS build
 
 # Install build dependencies
 RUN set -ex \
@@ -76,7 +79,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 EOT
 
 # Run stage (final stage)
-FROM python:$PYTHON_IMG_TAG-slim-trixie AS service
+FROM python:$PYTHON_IMG_TAG-slim-trixie@$PYTHON_IMG_DIGEST AS service
 
 LABEL org.opencontainers.image.title="DroneTM Backend" \
       org.opencontainers.image.description="HOTOSM Drone Tasking Manager - FastAPI backend + arq worker" \

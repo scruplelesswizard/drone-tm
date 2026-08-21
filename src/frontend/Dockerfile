@@ -1,5 +1,5 @@
 # Base image with frontend code
-FROM node:24-slim AS base
+FROM node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack prepare pnpm@9.15.5 --activate && corepack enable
@@ -46,7 +46,7 @@ COPY --from=mesh-build /app/drone-mesh/dist /app/frontend/dist/mesh
 
 
 # Copy generated static files to docker volume at start
-FROM docker.io/rclone/rclone:1 AS prod
+FROM docker.io/rclone/rclone:1@sha256:b06aed988cf5967de7c25be5925240983981c757f4ed1ac9d2fa659d51d60548 AS prod
 LABEL org.opencontainers.image.title="DroneTM Frontend" \
       org.opencontainers.image.description="HOTOSM Drone Tasking Manager - React SPA static build" \
       org.opencontainers.image.source="https://github.com/hotosm/drone-tm" \
