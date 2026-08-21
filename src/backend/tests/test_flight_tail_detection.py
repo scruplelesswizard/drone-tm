@@ -79,7 +79,9 @@ async def test_flight_tail_images_marked_rejected(db, create_test_project, auth_
         for i, (lon, lat) in enumerate(points):
             filename = f"img_{i:03d}.jpg"
             s3_key = f"projects/{project_id}/user-uploads/{filename}"
-            hash_md5 = hashlib.md5(filename.encode("utf-8")).hexdigest()
+            hash_md5 = hashlib.md5(
+                filename.encode("utf-8"), usedforsecurity=False
+            ).hexdigest()
             uploaded_at = now + timedelta(seconds=i)
 
             await cur.execute(
@@ -208,7 +210,9 @@ async def test_flight_tail_does_not_override_existing_rejection_reason(
         for i, (lon, lat) in enumerate(points):
             filename = f"img_{i:03d}.jpg"
             s3_key = f"projects/{project_id}/user-uploads/{filename}"
-            hash_md5 = hashlib.md5(filename.encode("utf-8")).hexdigest()
+            hash_md5 = hashlib.md5(
+                filename.encode("utf-8"), usedforsecurity=False
+            ).hexdigest()
             uploaded_at = now + timedelta(seconds=i)
 
             await cur.execute(
@@ -373,7 +377,9 @@ async def test_multi_flight_batch_does_not_create_false_tails(
         for insert_idx, (orig_idx, dt, lon, lat) in enumerate(rows):
             filename = f"sample_{orig_idx:03d}.jpg"
             s3_key = f"projects/{project_id}/user-uploads/{filename}"
-            hash_md5 = hashlib.md5(filename.encode("utf-8")).hexdigest()
+            hash_md5 = hashlib.md5(
+                filename.encode("utf-8"), usedforsecurity=False
+            ).hexdigest()
             uploaded_at = now + timedelta(seconds=uploaded_order[insert_idx])
 
             await cur.execute(
@@ -481,7 +487,9 @@ async def test_vertical_takeoff_tail(db, create_test_project, auth_user):
 
             file_name = f"flight_takeoff_{i:03d}.jpg"
             s3_key = f"dtm-data/projects/{project_id}/user-uploads/{file_name}"
-            hash_md5 = hashlib.md5(file_name.encode("utf-8")).hexdigest()
+            hash_md5 = hashlib.md5(
+                file_name.encode("utf-8"), usedforsecurity=False
+            ).hexdigest()
 
             exif_data = json.dumps(
                 {
@@ -605,7 +613,9 @@ async def test_multi_batch_rejections(db, create_test_project, auth_user):
 
                 file_name = f"{seg['label']}_{i:03d}.jpg"
                 s3_key = f"dtm-data/projects/{project_id}/user-uploads/{file_name}"
-                hash_md5 = hashlib.md5(file_name.encode("utf-8")).hexdigest()
+                hash_md5 = hashlib.md5(
+                    file_name.encode("utf-8"), usedforsecurity=False
+                ).hexdigest()
 
                 exif_data = json.dumps(
                     {

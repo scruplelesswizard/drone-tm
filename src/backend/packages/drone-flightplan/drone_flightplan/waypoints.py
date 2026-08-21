@@ -721,10 +721,7 @@ def create_waypoint(
     )
 
     # If mode is "waylines", simplify to only start and end points
-    if mode == FlightMode.WAYLINES:
-        waypoints = remove_middle_points(path)
-    else:
-        waypoints = path
+    waypoints = remove_middle_points(path) if mode == FlightMode.WAYLINES else path
 
     # If no-fly zones are provided, exclude points that fall inside no-fly zones
     if no_fly_zones:

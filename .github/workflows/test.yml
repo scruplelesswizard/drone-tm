@@ -29,6 +29,52 @@ jobs:
       command: "test backend"
     secrets: inherit
 
+  # Nothing in CI previously ran any of .pre-commit-config.yaml's backend
+  # hooks (ruff/mypy) - a PR could fail every local lint rule and still go
+  # fully green. This runs the two hooks that catch real bugs (mypy) or
+  # real style/security debt (ruff), not the ones that are cheap/reformat-
+  # only locally (ruff-format is a --check here, not autofix-and-push).
+  backend-lint:
+    runs-on: ubuntu-latest
+    # `gdal==3.10.3` (pinned in pyproject.toml) builds from an sdist against
+    # the *exact* matching system libgdal-dev - ubuntu-latest's runner OS
+    # (24.04, libgdal-dev 3.8.4) can't build it at all ("Python bindings of
+    # GDAL 3.10.3 require at least libgdal 3.10.3, but 3.8.4 was found").
+    # Running inside the same base image as src/backend/Dockerfile's build
+    # stage (Debian trixie, matching libgdal-dev) is the only way `uv sync`
+    # (which `uv run` triggers implicitly) actually succeeds.
+    container:
+      image: python:3.11-slim-trixie
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends \
+            build-essential gcc g++ libpcre2-dev libpq-dev \
+            libspatialindex-dev libproj-dev libgeos-dev libgdal-dev \
+            git curl ca-certificates
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: mypy
+        working-directory: src/backend
+        run: uv run mypy app
+
+      # ruff isn't a project dependency - pre-commit manages its own
+      # isolated venv for it. Install the exact version pinned in
+      # .pre-commit-config.yaml so this gate can't silently drift from
+      # what `just lint` checks locally.
+      - name: ruff check
+        run: uvx ruff@0.16.2 check src/backend
+
+      - name: ruff format --check
+        run: uvx ruff@0.16.2 format --check src/backend
+
   # Governance: a PR that touches a route file must also touch a test file.
   # PR-only (needs github.base_ref, which push events don't have).
   require-route-tests:

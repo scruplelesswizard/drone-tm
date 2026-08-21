@@ -337,7 +337,9 @@ async def test_head_project_odm_assets_returns_available(app, monkeypatch):
             transport=ASGITransport(app=app),
             base_url="http://test",
         ) as test_client:
-            response = await test_client.head(f"/api/v1/projects/odm/export/{project_id}/")
+            response = await test_client.head(
+                f"/api/v1/projects/odm/export/{project_id}/"
+            )
     finally:
         app.dependency_overrides.pop(project_deps.get_project_by_id, None)
 
@@ -368,7 +370,9 @@ async def test_head_project_odm_assets_returns_404_when_missing(app, monkeypatch
             transport=ASGITransport(app=app),
             base_url="http://test",
         ) as test_client:
-            response = await test_client.head(f"/api/v1/projects/odm/export/{project_id}/")
+            response = await test_client.head(
+                f"/api/v1/projects/odm/export/{project_id}/"
+            )
     finally:
         app.dependency_overrides.pop(project_deps.get_project_by_id, None)
 

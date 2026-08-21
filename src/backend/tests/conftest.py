@@ -346,7 +346,9 @@ async def load_freetown_into_db(
             for i, row in enumerate(metadata):
                 file_name = row["SourceFile"].split("/")[-1]
                 s3_key = f"projects/{project_id}/user-uploads/{file_name}"
-                hash_md5 = hashlib.md5(file_name.encode("utf-8")).hexdigest()
+                hash_md5 = hashlib.md5(
+                    file_name.encode("utf-8"), usedforsecurity=False
+                ).hexdigest()
                 uploaded_at = now + timedelta(seconds=i)
 
                 lat = dms_to_decimal(row.get("GPSLatitude"))

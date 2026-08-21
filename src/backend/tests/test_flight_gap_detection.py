@@ -32,10 +32,7 @@ async def test_north_wrap_around(db, load_freetown_into_db):
             continue
 
         # Oscillating around 359 - 1 degrees.
-        if i % 2:
-            yaw_degree = 359
-        else:
-            yaw_degree = 1
+        yaw_degree = 359 if i % 2 else 1
 
         # Ensure 0.2 arc-seconds as >5m threshold
         north_path.append(
@@ -70,7 +67,9 @@ async def test_gap_missing_flight_leg(db, load_freetown_into_db):
     lat_offsets = [8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 40.0, 70.0, 100.0, 130.0]
     yaw_degrees = ["90", "270", "90", "270", "90", "270", "90", "270", "90", "270"]
 
-    for leg_idx, (lat_sec, yaw_value) in enumerate(zip(lat_offsets, yaw_degrees)):
+    for leg_idx, (lat_sec, yaw_value) in enumerate(
+        zip(lat_offsets, yaw_degrees, strict=True)
+    ):
         for i in range(15):
             side_gap_metadata.append(
                 {
