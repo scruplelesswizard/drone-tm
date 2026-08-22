@@ -241,6 +241,7 @@ const LockTaskDialog = ({
         )}
       <div className="naxatw-flex naxatw-justify-end naxatw-gap-3">
         <Button
+          variant="ghost"
           className="!naxatw-text-red"
           onClick={() => setShowLockDialog(false)}
         >

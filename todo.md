@@ -2212,3 +2212,61 @@ standard as the rest of this file.
       spinners that never overflow. Not captured as a permanent
       automated test - these routes need an authenticated session and
       the e2e suite has no seed/login fixture yet.
+
+## Round 4 — Individual Project view (2026-08-21)
+
+Scoped audit of the Individual Project view (About/Tasks/Instructions/
+Contributions tabs, map section, modals, GCP editor entry, exports) as
+part of the app-wide UX/design pass. No live docker stack available for
+this pass (port conflicts with a concurrent worktree) - verified via
+`pnpm lint`/`pnpm build`/`pnpm test` (all clean) plus careful reading;
+flagged below wherever that matters.
+
+- [x] **Real bug (same regression class as the CreateProject wizard):**
+      3 more modal "Cancel" buttons - `DeleteProjectConfirmation`,
+      `LockTaskDialog`, `UnlockTaskPromptDialog` - used the `Button`
+      default variant (real `bg-primary-400` background since the CVA
+      fix) with a bare `!naxatw-text-red` override and no `variant`,
+      producing invisible blue-on-blue text. Same root cause as the
+      CreateProject wizard's "Previous" button fixed elsewhere this
+      round.
+      DONE — added `variant="ghost"` to all 3, matching the established
+      pattern.
+- [x] **Real bug:** `DeleteProjectConfirmation`'s inline "invalid
+      project name" validation error text used bare `text-red` (now the
+      blue brand color) instead of a real danger color - a genuine error
+      message rendering in brand-blue instead of red.
+      DONE — changed to `text-red-500`.
+- [x] **Real bug (missed in the blue-anchor rework):** 9 buttons in
+      `IndividualProject/index.tsx` (GCP Editor, View/Convert Orthophoto,
+      View/Convert 3D, Export toggle) hardcoded the pre-rebrand hex
+      `#D73F3F` directly via Tailwind arbitrary values
+      (`border-[#D73F3F]`/`text-[#D73F3F]`, including the `/40`/`/60`
+      opacity variants) instead of the `red` token, so they stayed
+      old-red while every other action button in the app turned blue.
+      DONE — replaced with `border-red`/`text-red` (and `/40`, `/60`
+      variants), matching the rest of the app.
+- [x] Audited the rest of the `#D73F3F` hardcoded-hex usages in this
+      view's scope (`MapSection`'s task-status color map, `Legend.tsx`,
+      `ProcessingStatusDialog/types.ts`) - confirmed these are a genuine
+      multi-color STATUS palette (grey/pink/light-blue/green/purple/
+      dark-green/red for UNLOCKED/AWAITING_APPROVAL/LOCKED/FULLY_FLOWN/
+      HAS_IMAGERY/HAS_ISSUES/READY_FOR_PROCESSING/IMAGE_PROCESSING_*),
+      not brand-color usage - `#D73F3F` there correctly marks
+      `HAS_ISSUES`/`IMAGE_PROCESSING_FAILED` (danger states) and should
+      stay red. Left unchanged.
+- [ ] **Judgment call, not changed:** the project-area boundary
+      line-color on the live map (`MapSection/index.tsx`) and the export
+      printout's static map (`ExportSection/MapSection.tsx`) both draw
+      the AOI outline in the same hardcoded `#D73F3F`. Arguably should
+      match the new blue brand color (the Create Project wizard's own
+      AOI-drawing step already renders the "Project" boundary toggle in
+      blue), but changing map layer paint colors felt like it deserved a
+      deliberate call rather than a drive-by find - left as-is.
+- Everything else in scope (`ChooseProcessingParameter`, `GcpEditor`
+  entry point, `Contributions`, `ExportSection` print flow, `MapSection`
+  interaction logic, `ProcessingStatusDialog` family) read clean on a
+  careful pass - no other real bugs found. Not verified against a live
+  backend/DB this round (see note above) - a live spot-check of the GCP
+  editor launch and the modal flows (delete/lock/unlock confirmations)
+  is still worth doing before/soon after merge.

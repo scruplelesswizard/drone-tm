@@ -370,7 +370,7 @@ const IndividualProject = () => {
           <div className="naxatw-flex naxatw-gap-3">
             <Button
               variant="ghost"
-              className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
+              className="naxatw-border naxatw-border-red naxatw-text-[0.875rem] naxatw-text-red"
               leftIcon="pin_drop"
               iconClassname="naxatw-text-[1.125rem]"
               onClick={() => dispatch(setProjectState({ showGcpEditor: true }))}
@@ -385,7 +385,7 @@ const IndividualProject = () => {
                   return (
                     <Button
                       variant="ghost"
-                      className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
+                      className="naxatw-border naxatw-border-red naxatw-text-[0.875rem] naxatw-text-red"
                       leftIcon="image"
                       iconClassname="naxatw-text-[1.125rem]"
                       onClick={() =>
@@ -405,7 +405,7 @@ const IndividualProject = () => {
                     <Button
                       variant="ghost"
                       disabled
-                      className="naxatw-border naxatw-border-[#D73F3F]/40 naxatw-text-[0.875rem] naxatw-text-[#D73F3F]/60"
+                      className="naxatw-border naxatw-border-red/40 naxatw-text-[0.875rem] naxatw-text-red/60"
                       leftIcon="hourglass_empty"
                       iconClassname="naxatw-text-[1.125rem]"
                     >
@@ -415,7 +415,7 @@ const IndividualProject = () => {
                 return (
                   <Button
                     variant="ghost"
-                    className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
+                    className="naxatw-border naxatw-border-red naxatw-text-[0.875rem] naxatw-text-red"
                     leftIcon="image"
                     iconClassname="naxatw-text-[1.125rem]"
                     onClick={() =>
@@ -439,7 +439,7 @@ const IndividualProject = () => {
                 const meshViewerButton = projectData?.mesh_glb_url ? (
                   <Button
                     variant="ghost"
-                    className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
+                    className="naxatw-border naxatw-border-red naxatw-text-[0.875rem] naxatw-text-red"
                     leftIcon="view_in_ar"
                     iconClassname="naxatw-text-[1.125rem]"
                     onClick={() => {
@@ -467,7 +467,7 @@ const IndividualProject = () => {
                   tilesButton = (
                     <Button
                       variant="ghost"
-                      className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
+                      className="naxatw-border naxatw-border-red naxatw-text-[0.875rem] naxatw-text-red"
                       leftIcon="view_in_ar"
                       iconClassname="naxatw-text-[1.125rem]"
                       onClick={() => navigate(`/projects/${projId}/3d-model`)}
@@ -483,7 +483,7 @@ const IndividualProject = () => {
                     <Button
                       variant="ghost"
                       disabled
-                      className="naxatw-border naxatw-border-[#D73F3F]/40 naxatw-text-[0.875rem] naxatw-text-[#D73F3F]/60"
+                      className="naxatw-border naxatw-border-red/40 naxatw-text-[0.875rem] naxatw-text-red/60"
                       leftIcon="hourglass_empty"
                       iconClassname="naxatw-text-[1.125rem]"
                     >
@@ -494,7 +494,7 @@ const IndividualProject = () => {
                   tilesButton = (
                     <Button
                       variant="ghost"
-                      className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
+                      className="naxatw-border naxatw-border-red naxatw-text-[0.875rem] naxatw-text-red"
                       leftIcon="view_in_ar"
                       iconClassname="naxatw-text-[1.125rem]"
                       onClick={() => convertMesh(projId as string)}
@@ -510,7 +510,7 @@ const IndividualProject = () => {
             <div className="naxatw-relative">
               <Button
                 variant="ghost"
-                className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
+                className="naxatw-border naxatw-border-red naxatw-text-[0.875rem] naxatw-text-red"
                 leftIcon="download"
                 iconClassname="naxatw-text-[1.125rem]"
                 onClick={() => setShowDownloadOptions(prev => !prev)}

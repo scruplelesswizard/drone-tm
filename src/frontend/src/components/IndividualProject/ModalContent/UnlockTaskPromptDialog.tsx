@@ -21,6 +21,7 @@ const UnlockTaskPromptDialog = ({
       </div>
       <div className="naxatw-flex naxatw-justify-end naxatw-gap-3 naxatw-py-3">
         <Button
+          variant="ghost"
           className="!naxatw-text-red"
           onClick={() => setShowUnlockDialog(false)}
         >
