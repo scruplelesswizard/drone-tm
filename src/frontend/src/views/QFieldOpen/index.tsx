@@ -112,7 +112,7 @@ export default function QFieldOpen() {
 
         <Button
           size="lg"
-          className="naxatw-h-14 naxatw-w-full naxatw-bg-[#D73F3F] naxatw-text-base naxatw-text-white"
+          className="naxatw-h-14 naxatw-w-full naxatw-bg-red naxatw-text-base naxatw-text-white"
           onClick={openInQField}
         >
           {m.qfield_open_button()}
@@ -124,7 +124,7 @@ export default function QFieldOpen() {
             href={QFIELD_STORE_URL}
             target="_blank"
             rel="noreferrer"
-            className="naxatw-font-medium naxatw-text-[#D73F3F] naxatw-underline"
+            className="naxatw-font-medium naxatw-text-red naxatw-underline"
           >
             {m.qfield_open_install_link()}
           </a>

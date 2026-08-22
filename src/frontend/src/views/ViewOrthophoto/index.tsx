@@ -179,7 +179,7 @@ const ViewOrthophoto = () => {
         <button
           type="button"
           aria-label={m.viewer_back_to_project()}
-          className="material-icons naxatw-cursor-pointer naxatw-text-[#D73F3F] hover:naxatw-opacity-75"
+          className="material-icons naxatw-cursor-pointer naxatw-text-red hover:naxatw-opacity-75"
           onClick={() => navigate(`/projects/${id}`)}
         >
           arrow_back
@@ -202,7 +202,7 @@ const ViewOrthophoto = () => {
             className="naxatw-absolute naxatw-right-4 naxatw-top-4 naxatw-z-10 naxatw-flex naxatw-h-10 naxatw-w-10 naxatw-cursor-pointer naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-bg-white naxatw-shadow-lg hover:naxatw-bg-gray-50"
             onClick={handleZoomToExtent}
           >
-            <span className="material-icons naxatw-text-[#D73F3F]">
+            <span className="material-icons naxatw-text-red">
               center_focus_strong
             </span>
           </button>

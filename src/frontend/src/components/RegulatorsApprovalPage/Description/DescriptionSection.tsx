@@ -158,7 +158,7 @@ const DescriptionSection = ({
   return (
     <div className="naxatw-mt-4 naxatw-flex naxatw-flex-col naxatw-gap-3">
       {page === 'project-approval' && (
-        <p className="naxatw-text-[0.875rem] naxatw-font-semibold naxatw-leading-normal naxatw-tracking-[0.0175rem] naxatw-text-[#D73F3F]">
+        <p className="naxatw-text-[0.875rem] naxatw-font-semibold naxatw-leading-normal naxatw-tracking-[0.0175rem] naxatw-text-red">
           {m.proj_desc_description_heading()}
         </p>
       )}
