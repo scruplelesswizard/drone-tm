@@ -43,11 +43,12 @@ const DeleteProjectPromptDialog = ({
           setValue(e.target.value);
         }}
       />
-      <span className="naxatw-py-1 naxatw-text-sm naxatw-text-red">
+      <span className="naxatw-py-1 naxatw-text-sm naxatw-text-red-500">
         {error}
       </span>
       <div className="naxatw-flex naxatw-justify-end naxatw-gap-3 naxatw-py-3">
         <Button
+          variant="ghost"
           className="!naxatw-text-red"
           onClick={() => setShowUnlockDialog(false)}
         >
