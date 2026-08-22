@@ -135,11 +135,25 @@ class BaseUserProfile(BaseModel):
     @classmethod
     def srting_role_to_integer(cls, value: UserRole) -> str:
         if isinstance(value, str):
-            role_list = value.strip("{}").split(",")
+            role_list = [role.strip() for role in value.strip("{}").split(",")]
+            unknown_roles = [
+                role for role in role_list if role and role not in UserRole.__members__
+            ]
+            if unknown_roles:
+                # Silently dropping these would leave `role` short (or empty),
+                # which fails the frontend's `role.includes(signedInAs)` check
+                # and permanently redirects the user to /complete-profile with
+                # no visible error. Log loudly so a stale/orphaned DB value
+                # (e.g. the vestigial pre-array-role "BOTH") is debuggable
+                # instead of silently breaking the affected account.
+                log.warning(
+                    "user_profile.role contains unrecognized value(s) not in "
+                    f"UserRole: {unknown_roles} (raw value: {value!r})"
+                )
             value = [
-                UserRole[role.strip()].value
+                UserRole[role].value
                 for role in role_list
-                if role.strip() in UserRole.__members__
+                if role in UserRole.__members__
             ]
         return value
 
