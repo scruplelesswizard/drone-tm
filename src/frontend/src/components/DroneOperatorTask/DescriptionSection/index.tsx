@@ -278,7 +278,7 @@ const DroneOperatorDescriptionBox = () => {
           <div className="naxatw-relative">
             <Button
               variant="ghost"
-              className="naxatw-border naxatw-border-[#D73F3F] naxatw-text-[0.875rem] naxatw-text-[#D73F3F]"
+              className="naxatw-border naxatw-border-red naxatw-text-[0.875rem] naxatw-text-red"
               leftIcon="download"
               iconClassname="naxatw-text-[1.125rem]"
               onClick={() => setShowDownloadOptions(prev => !prev)}
