@@ -432,6 +432,7 @@ const CreateprojectLayout = () => {
           <FlexRow className="naxatw-absolute naxatw-bottom-5 naxatw-h-9 naxatw-w-full naxatw-justify-between naxatw-px-8">
             {activeStep !== 1 ? (
               <Button
+                variant="ghost"
                 onClick={onPrevBtnClick}
                 className="!naxatw-text-red"
                 leftIcon="chevron_left"

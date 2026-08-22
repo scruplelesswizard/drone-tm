@@ -2555,3 +2555,51 @@ stack can run host-wide at a time. Verification here was static only
 backend to express as a test, but a live-browser spot-check of the 4 real
 bugs above (especially the button-visibility fixes) is still worth doing
 once a stack is free.
+
+## Round 4 — app-wide UX/design pass, Projects list + Create Project wizard (2026-08-21)
+
+Scoping a full app-wide visual/flow audit (blue brand anchor from Round 3
+carried through). Found two more real bugs while exercising the actual
+Projects list and Create Project wizard against a live seeded login,
+neither of them cosmetic.
+
+- [x] **Real bug:** logging in via a direct/bookmarked `/login` visit (as
+      opposed to the landing page's role-picker overlay) permanently
+      redirected an already-complete profile back to `/complete-profile`
+      on every route. `Login`'s `onSubmit` computes `signedInAs` as
+      `localStorage.getItem('signedInAs') || 'PROJECT_CREATOR'` (an
+      in-memory fallback) but never writes it back to `localStorage`;
+      `UserProfile` (mounted in the navbar on every route) reads
+      `localStorage.getItem('signedInAs')` with no fallback and
+      redirects to `/complete-profile` whenever it's falsy, even for a
+      fully-provisioned user. Only the landing page's sign-in overlay
+      sets this key today, so any other path into `/login` breaks.
+      DONE — `Login`'s `onSuccess` now also persists
+      `localStorage.setItem('signedInAs', signedInAs)`.
+- [x] **Real bug (regression from PR #100's Button variant fix):** the
+      Create Project wizard's "Previous" button, 4 modal "Cancel"
+      buttons (delete-project, lock-task, unlock-task confirmations),
+      and the Dashboard sidebar's "Edit Profile" button all rendered
+      with **invisible text** - blue-on-blue. Each uses the shared
+      `Button` component's `default` variant (now correctly painting
+      `bg-primary-400`, since PR #100 fixed the previously-dead CVA
+      classes) combined with a bare `!naxatw-text-red` override and no
+      `variant` prop; since `red`'s DEFAULT is now the same blue as
+      `primary-400` (Round 3's brand-anchor swap), the override matched
+      the background exactly. Before PR #100 these looked fine by
+      accident (no background ever painted). Found by clicking through
+      the actual wizard with a live login rather than trusting a static
+      color-token read.
+      DONE — added `variant="ghost"` (or `variant="outline"` for the
+      one with an explicit border) to all 5 call sites, matching the
+      pattern already used correctly by Login's own Back/Forgot-password
+      buttons. Also caught one adjacent issue in the same file: the
+      delete-project confirmation's inline validation error text used
+      the same bare `text-red` (now blue) for a real "invalid project
+      name" error message - flipped to `text-red-500` so genuine
+      error/danger states stay visually red, independent of the brand
+      anchor color.
+      Audited every other bare `text-red`/`bg-red` Button usage
+      app-wide for the same blue-on-blue pattern (~130 call sites
+      grepped); all others either pair `bg-red` with `text-white` (still
+      correct/visible) or already specify `variant="ghost"`/`"outline"`.

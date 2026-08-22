@@ -61,6 +61,13 @@ export default function Login() {
       dispatch(setUserState({ user: res.data }));
       localStorage.setItem('token', res.data.access_token);
       localStorage.setItem('refresh', res.data.refresh_token);
+      // Persist the role this session was submitted with - UserProfile reads
+      // this key directly (no fallback) on every route to detect a role
+      // mismatch. Without this, a login reached without going through the
+      // landing page's role overlay (e.g. a bookmarked /login) leaves the
+      // key unset and permanently redirects an already-complete profile
+      // back to /complete-profile.
+      localStorage.setItem('signedInAs', signedInAs);
       toast.success(m.auth_login_success());
       const userDetailsUrl = `${API_URL}/users/my-info`;
       const response2 = await fetch(userDetailsUrl, {
