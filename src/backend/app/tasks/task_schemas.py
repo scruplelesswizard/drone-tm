@@ -411,7 +411,7 @@ class TaskDetailsOut(BaseModel):
                         ST_AsGeoJSON(ST_Centroid(tasks.outline))::jsonb AS centroid,
                         te.created_at,
                         te.updated_at,
-                        te.state,
+                        COALESCE(te.state, 'UNLOCKED') AS state,
                         tasks.project_id AS project_id,
                         projects.slug AS project_slug,
                         projects.name AS project_name,
@@ -421,25 +421,39 @@ class TaskDetailsOut(BaseModel):
                         projects.gsd_cm_px AS gsd_cm_px,
                         projects.gimble_angles_degrees AS gimble_angles_degrees
 
-                    FROM (
+                    FROM tasks
+                    JOIN projects ON tasks.project_id = projects.id
+                    -- LEFT JOIN, not JOIN: a task with no recorded events yet
+                    -- (e.g. immediately after generation, before any state
+                    -- transition) must still be returned, with state/
+                    -- created_at/updated_at null, not silently excluded - an
+                    -- inner join here previously made this endpoint return
+                    -- no row at all for such a task, which FastAPI's
+                    -- response_model validation then turned into an
+                    -- unhandled 500 (None isn't a valid TaskDetailsOut).
+                    LEFT JOIN (
                         SELECT DISTINCT ON (te.task_id)
                             te.task_id,
                             te.created_at,
                             te.updated_at,
                             te.state
                         FROM task_events te
-                        WHERE te.task_id = %(task_id)s
                         ORDER BY te.task_id, te.created_at DESC
-                    ) AS te
-                    JOIN tasks ON te.task_id = tasks.id
-                    JOIN projects ON tasks.project_id = projects.id
-                    WHERE te.task_id = %(task_id)s;
+                    ) AS te ON te.task_id = tasks.id
+                    WHERE tasks.id = %(task_id)s;
                     """,
                     {"task_id": task_id},
                 )
                 records = await cur.fetchone()
+                if records is None:
+                    raise HTTPException(
+                        status_code=HTTPStatus.NOT_FOUND,
+                        detail="Task not found.",
+                    )
                 return records
 
+        except HTTPException:
+            raise
         except Exception as e:
             log.error(f"Failed to fetch task details for {task_id}: {e}")
             raise HTTPException(
@@ -482,7 +496,7 @@ class TaskDetailsOut(BaseModel):
                         ST_AsGeoJSON(ST_Centroid(tasks.outline))::jsonb AS centroid,
                         te.created_at,
                         te.updated_at,
-                        te.state,
+                        COALESCE(te.state, 'UNLOCKED') AS state,
                         tasks.project_id AS project_id,
                         projects.slug AS project_slug,
                         projects.name AS project_name,

@@ -58,6 +58,8 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         )}
       </PersistGate>
     </Provider>
-    <ReactQueryDevtools initialIsOpen={false} />
+    {process.env.NODE_ENV !== 'production' && (
+      <ReactQueryDevtools initialIsOpen={false} />
+    )}
   </QueryClientProvider>,
 );

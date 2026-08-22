@@ -67,7 +67,7 @@ export default function ToolTip({
             <Icon
               name={name!}
               iconSymbolType={symbolType}
-              className={`hover:naxatw-text-primary-400 naxatw-text-grey-500 hover:naxatw-animate-pulse ${iconClassName}`}
+              className={`naxatw-text-grey-500 hover:naxatw-animate-pulse hover:naxatw-text-primary-400 ${iconClassName}`}
             />
           </TooltipTrigger>
           {message && (

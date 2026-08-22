@@ -80,7 +80,7 @@ export default function FinalProcessingPanel({
       )}
       {!isFinalProcessingRunning &&
         projectImageProcessingStatus === 'FAILED' && (
-          <div className="naxatw-text-red-700 naxatw-flex naxatw-items-start naxatw-gap-2 naxatw-text-sm">
+          <div className="naxatw-flex naxatw-items-start naxatw-gap-2 naxatw-text-sm naxatw-text-red-700">
             <Icon name="error" className="!naxatw-text-base" />
             <span>{m.processing_dialog_final_failed()}</span>
           </div>

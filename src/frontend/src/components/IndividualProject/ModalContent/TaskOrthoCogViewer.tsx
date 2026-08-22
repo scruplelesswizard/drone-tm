@@ -180,7 +180,7 @@ const TaskOrthoCogViewer = ({
         </div>
         <div ref={containerRef} className="naxatw-min-h-0 naxatw-flex-1" />
         {loadError && (
-          <div className="naxatw-border-red-200 naxatw-bg-red-50 naxatw-text-red-800 naxatw-border-t naxatw-px-4 naxatw-py-2 naxatw-text-xs">
+          <div className="naxatw-border-t naxatw-border-red-200 naxatw-bg-red-50 naxatw-px-4 naxatw-py-2 naxatw-text-xs naxatw-text-red-800">
             {loadError}
           </div>
         )}

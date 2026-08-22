@@ -25,7 +25,7 @@ export default function DataCard({
     >
       <FlexColumn>
         <h5>{title}</h5>
-        <FlexRow className="naxatw-text-primary-400 naxatw-items-center naxatw-justify-between naxatw-text-[38px] naxatw-font-bold">
+        <FlexRow className="naxatw-items-center naxatw-justify-between naxatw-text-[38px] naxatw-font-bold naxatw-text-primary-400">
           <FlexRow>
             <div>{formatNumberWithCommas(count)}</div>
           </FlexRow>

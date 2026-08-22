@@ -156,5 +156,12 @@ input:-webkit-autofill:active {
 }
 
 .main-content {
-  @apply naxatw-h-[calc(100vh-3.5rem)];
+  /* Same fixed-height-with-no-scroll bug as h-screen-nav (see the
+     overflow-y-auto fix on IndividualProject/Dashboard/CreateProject/
+     RegulatorsApprovalPage): once real content exceeds one viewport,
+     it's rendered past the fixed height but never reachable by any
+     scroll gesture. Fixed once here since every h-full-viewport wrapper
+     using this class inherits the fix instead of needing its own
+     override. */
+  @apply naxatw-h-[calc(100vh-3.5rem)] naxatw-overflow-y-auto;
 }

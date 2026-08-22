@@ -233,8 +233,8 @@ export const UploadImageryDialog = ({
             </p>
             <div className="naxatw-flex naxatw-flex-col naxatw-gap-3">
               {showDeleteConfirmation && (
-                <div className="naxatw-border-red-300 naxatw-bg-red-50 naxatw-text-red-700 naxatw-flex naxatw-items-center naxatw-gap-2 naxatw-rounded naxatw-border naxatw-p-3 naxatw-text-sm">
-                  <span className="material-icons naxatw-text-red-500 naxatw-text-base">
+                <div className="naxatw-flex naxatw-items-center naxatw-gap-2 naxatw-rounded naxatw-border naxatw-border-red-300 naxatw-bg-red-50 naxatw-p-3 naxatw-text-sm naxatw-text-red-700">
+                  <span className="material-icons naxatw-text-base naxatw-text-red-500">
                     warning
                   </span>
                   {m.imagery_upload_are_you_sure()}
@@ -545,7 +545,7 @@ export const ClassifyImageryDialog = ({
         <div className="naxatw-flex naxatw-flex-col naxatw-gap-4 naxatw-pb-4">
           {/* Error States */}
           {isErrorStatus && (
-            <div className="naxatw-border-red-300 naxatw-bg-red-50 naxatw-text-red-700 naxatw-flex naxatw-flex-shrink-0 naxatw-items-center naxatw-gap-3 naxatw-rounded naxatw-border naxatw-p-4">
+            <div className="naxatw-flex naxatw-flex-shrink-0 naxatw-items-center naxatw-gap-3 naxatw-rounded naxatw-border naxatw-border-red-300 naxatw-bg-red-50 naxatw-p-4 naxatw-text-red-700">
               <span className="material-icons">error</span>
               <div>
                 <p className="naxatw-font-semibold">
@@ -580,7 +580,7 @@ export const ClassifyImageryDialog = ({
                         (projectStatus?.uploaded ?? 0) ===
                         0
                     }
-                    className="hover:naxatw-bg-red-600 naxatw-rounded naxatw-bg-red naxatw-px-8 naxatw-py-3 naxatw-text-lg naxatw-font-bold naxatw-text-white naxatw-shadow-md naxatw-transition-all active:naxatw-scale-95 disabled:naxatw-cursor-not-allowed disabled:naxatw-bg-gray-400"
+                    className="naxatw-rounded naxatw-bg-red naxatw-px-8 naxatw-py-3 naxatw-text-lg naxatw-font-bold naxatw-text-white naxatw-shadow-md naxatw-transition-all hover:naxatw-bg-red-600 active:naxatw-scale-95 disabled:naxatw-cursor-not-allowed disabled:naxatw-bg-gray-400"
                   >
                     {startClassificationMutation.isPending ? (
                       <div className="naxatw-flex naxatw-items-center naxatw-gap-2">

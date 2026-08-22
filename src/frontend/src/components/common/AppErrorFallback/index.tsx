@@ -29,7 +29,7 @@ export default function AppErrorFallback({
       <button
         type="button"
         onClick={resetErrorBoundary}
-        className="naxatw-bg-red-600 naxatw-rounded naxatw-px-4 naxatw-py-2 naxatw-text-sm naxatw-font-semibold naxatw-text-white"
+        className="naxatw-rounded naxatw-bg-red-600 naxatw-px-4 naxatw-py-2 naxatw-text-sm naxatw-font-semibold naxatw-text-white"
       >
         {m.common_retry()}
       </button>

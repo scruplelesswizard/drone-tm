@@ -35,8 +35,31 @@ module.exports = {
         "screen-nav": "calc(100vh - 57px)",
       },
       colors: {
-        red: "#D73F3F",
-        redlight: "#FFEDED",
+        // Brand anchor moved from red to blue (matches the pre-existing
+        // `landing.blue` token below - not a new color). The `red` name is
+        // kept because ~130 call sites across the app reference
+        // naxatw-bg-red/text-red/border-red directly; renaming every one of
+        // those is a separate, purely-mechanical follow-up, not bundled
+        // into this color-value change. `red.500` stays an *actual* red -
+        // Button's `destructive` variant (bg-red-500) and any future
+        // danger/error UI should reference that, not the bare `red` token.
+        red: {
+          DEFAULT: "#1B66AF",
+          50: "#FDEDED",
+          500: "#D73F3F",
+        },
+        redlight: "#E8F1FA",
+        // Fixes a real, previously-invisible bug: Button.tsx's CVA variants
+        // reference naxatw-bg-primary-400/text-primary-400/text-primary-500,
+        // none of which existed anywhere in this config (`primary` was only
+        // ever defined as a fontFamily key) - Tailwind silently emits no CSS
+        // for an unmatched color, so every Button variant except the ones a
+        // caller manually overrides with `!naxatw-bg-red` etc. rendered with
+        // no background/text color at all. This scale is the new brand blue.
+        primary: {
+          400: "#1B66AF",
+          500: "#14538F",
+        },
         orange: "#FAA71E",
         tan: "#F0EFEF",
         bluedark: "#2C3038",
@@ -58,7 +81,7 @@ module.exports = {
         landing: {
           blue: "#1B66AF",
           white: "#FBF8F3",
-          red: "#D73F3F",
+          red: "#1B66AF",
           grey: "#464646",
         },
       },

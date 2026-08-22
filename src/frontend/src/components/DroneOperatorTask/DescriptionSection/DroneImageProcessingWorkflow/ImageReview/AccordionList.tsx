@@ -243,7 +243,7 @@ const TaskAccordionContent = ({
                       })()}
                       {(image.status === 'rejected' ||
                         image.status === 'invalid_exif') && (
-                        <div className="naxatw-bg-red-500 naxatw-absolute naxatw-bottom-0 naxatw-left-0 naxatw-right-0 naxatw-truncate naxatw-bg-opacity-75 naxatw-px-1 naxatw-py-0.5 naxatw-text-center naxatw-text-[10px] naxatw-text-white">
+                        <div className="naxatw-absolute naxatw-bottom-0 naxatw-left-0 naxatw-right-0 naxatw-truncate naxatw-bg-red-500 naxatw-bg-opacity-75 naxatw-px-1 naxatw-py-0.5 naxatw-text-center naxatw-text-[10px] naxatw-text-white">
                           {image.rejection_reason || m.common_rejected()}
                         </div>
                       )}

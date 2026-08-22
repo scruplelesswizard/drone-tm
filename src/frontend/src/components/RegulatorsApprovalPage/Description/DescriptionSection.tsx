@@ -221,7 +221,7 @@ const DescriptionSection = ({
           {/* Step 1: Upload Imagery */}
           <button
             type="button"
-            className="hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-border-gray-200 naxatw-bg-white naxatw-p-3 naxatw-text-left naxatw-transition-all"
+            className="naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-border-gray-200 naxatw-bg-white naxatw-p-3 naxatw-text-left naxatw-transition-all hover:naxatw-border-red-300 hover:naxatw-bg-red-50"
             onClick={onOpenUpload || onOpenWorkflow}
           >
             <div className="naxatw-flex naxatw-h-8 naxatw-w-8 naxatw-flex-shrink-0 naxatw-items-center naxatw-justify-center naxatw-rounded-full naxatw-bg-red naxatw-text-sm naxatw-font-bold naxatw-text-white">
@@ -245,7 +245,7 @@ const DescriptionSection = ({
             type="button"
             className={`naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-p-3 naxatw-text-left naxatw-transition-all ${
               onOpenClassify
-                ? 'hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-border-gray-200 naxatw-bg-white'
+                ? 'naxatw-border-gray-200 naxatw-bg-white hover:naxatw-border-red-300 hover:naxatw-bg-red-50'
                 : 'naxatw-cursor-not-allowed naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-opacity-60'
             }`}
             onClick={onOpenClassify}
@@ -274,7 +274,7 @@ const DescriptionSection = ({
             type="button"
             className={`naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-p-3 naxatw-text-left naxatw-transition-all ${
               onOpenVerify
-                ? 'hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-border-gray-200 naxatw-bg-white'
+                ? 'naxatw-border-gray-200 naxatw-bg-white hover:naxatw-border-red-300 hover:naxatw-bg-red-50'
                 : 'naxatw-cursor-not-allowed naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-opacity-60'
             }`}
             onClick={onOpenVerify}
@@ -303,7 +303,7 @@ const DescriptionSection = ({
             type="button"
             className={`naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-p-3 naxatw-text-left naxatw-transition-all ${
               isAbleToStartProcessing
-                ? 'hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-border-gray-200 naxatw-bg-white'
+                ? 'naxatw-border-gray-200 naxatw-bg-white hover:naxatw-border-red-300 hover:naxatw-bg-red-50'
                 : 'naxatw-cursor-not-allowed naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-opacity-60'
             }`}
             onClick={() =>
@@ -336,7 +336,7 @@ const DescriptionSection = ({
               type="button"
               className={`naxatw-flex naxatw-items-center naxatw-gap-3 naxatw-rounded-lg naxatw-border naxatw-p-3 naxatw-text-left naxatw-transition-all ${
                 canUploadToOam
-                  ? 'hover:naxatw-border-red-300 hover:naxatw-bg-red-50 naxatw-border-gray-200 naxatw-bg-white'
+                  ? 'naxatw-border-gray-200 naxatw-bg-white hover:naxatw-border-red-300 hover:naxatw-bg-red-50'
                   : 'naxatw-cursor-not-allowed naxatw-border-gray-100 naxatw-bg-gray-50 naxatw-opacity-60'
               }`}
               onClick={() =>

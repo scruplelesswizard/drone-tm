@@ -162,7 +162,7 @@ export default function TaskTable({
                     </span>
                     {task.state === 'IMAGE_PROCESSING_FAILED' &&
                       task.failure_reason && (
-                        <p className="naxatw-text-red-700 naxatw-max-w-[320px] naxatw-text-xs">
+                        <p className="naxatw-max-w-[320px] naxatw-text-xs naxatw-text-red-700">
                           {task.failure_reason}
                         </p>
                       )}

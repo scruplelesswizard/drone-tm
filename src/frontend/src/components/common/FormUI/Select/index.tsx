@@ -144,7 +144,7 @@ export default function Select({
         {showClearIcon ? (
           <Icon
             name="clear"
-            className="hover:naxatw-text-primary-400 naxatw-absolute naxatw-right-0 naxatw-items-center !naxatw-text-base"
+            className="naxatw-absolute naxatw-right-0 naxatw-items-center !naxatw-text-base hover:naxatw-text-primary-400"
             onClick={() => setSearchText('')}
           />
         ) : (
@@ -153,7 +153,7 @@ export default function Select({
               // eslint-disable-next-line no-nested-ternary
               !isOpen ? 'expand_more' : withSearch ? 'search' : 'expand_less'
             }
-            className="group-hover:naxatw-text-primary-400 naxatw-absolute naxatw-right-1 naxatw-items-center"
+            className="naxatw-absolute naxatw-right-1 naxatw-items-center group-hover:naxatw-text-primary-400"
           />
         )}
       </div>
