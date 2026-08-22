@@ -2270,3 +2270,48 @@ flagged below wherever that matters.
   backend/DB this round (see note above) - a live spot-check of the GCP
   editor launch and the modal flows (delete/lock/unlock confirmations)
   is still worth doing before/soon after merge.
+
+## Round 5 — remaining views: QField, 3D/Ortho viewers, Regulator approval (2026-08-21)
+
+Continuation of the app-wide UX/design pass, scoped to the views not yet
+touched: Tutorials, Import, QFieldOpen, QFieldExport, View3DModel,
+ViewOrthophoto, RegulatorsApprovalPage.
+
+- [x] **Real bug:** 10 leftover hardcoded `#D73F3F` (the old red) hex
+      values across 5 files completely bypassed the blue brand-anchor
+      rework - `View3DModel` (back arrow + recenter-icon buttons),
+      `ViewOrthophoto` (back arrow + zoom-to-extent icon), `QFieldOpen`
+      (primary CTA button + install link, 2 of its 3 occurrences from an
+      earlier partial fix), `QFieldExport` (generate/regenerate buttons +
+      generating-spinner), and `RegulatorsApprovalPage`'s description
+      heading. Because these used Tailwind arbitrary-value syntax
+      (`text-[#D73F3F]`) instead of the `red`/`primary` tokens, changing
+      the token's value in `tailwind.config.js` had no effect on them -
+      they stayed the old red while every token-based accent in the rest
+      of the app went blue, a real visual inconsistency on exactly the
+      pages a user reaches from a project's map/3D/orthophoto views and
+      the QField mobile handoff flow.
+      DONE — replaced all 10 with the `naxatw-text-red`/`naxatw-bg-red`
+      token classes (now blue, matching everywhere else). Also fixed one
+      adjacent real bug in the same file: `QFieldExport`'s inline
+      generation-error message used the same bare `text-red` (now blue)
+      for a genuine error string - flipped to `text-red-500` so it stays
+      visually distinct as an error, consistent with the equivalent fix
+      already made in `DeleteProjectConfirmation` (PR #101).
+      Considered also recoloring `RegulatorsApprovalPage`'s Reject button
+      to `red-500` (destructive-looking action) but reverted that
+      instinct - every other solid/filled action button in the app,
+      including genuinely destructive ones (Delete/Lock/Unlock), already
+      uses the brand blue post-rebrand; singling out Reject would break
+      that established convention rather than fix a bug.
+      Tutorial, Import, and 3 of the QFieldOpen/View3DModel/ViewOrthophoto
+      code paths were re-checked and found already correct (prior
+      rounds' fixes hold, no new issues).
+      Verified via `pnpm lint`/`pnpm build`/`pnpm test` (27/27 passing) -
+      no live docker stack was started for this round (compose.yaml
+      hardcodes the db/nodeodm host ports, so only one stack can run
+      system-wide at a time and another was in use); these are pure
+      Tailwind class swaps with no logic change, so static verification
+      is sufficient, but a live visual spot-check of `RegulatorsApprovalPage`
+      (which needs a REGULATOR-role seed user not yet in the local
+      fixture set) is still worth doing in a follow-up pass.

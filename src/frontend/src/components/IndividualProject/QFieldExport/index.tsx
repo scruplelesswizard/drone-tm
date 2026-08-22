@@ -133,12 +133,12 @@ function QFieldExportDialog({
               {m.qfield_export_description()}
             </p>
             {error && (
-              <p className="naxatw-text-center naxatw-text-sm naxatw-text-red">
+              <p className="naxatw-text-center naxatw-text-sm naxatw-text-red-500">
                 {error}
               </p>
             )}
             <Button
-              className="naxatw-bg-[#D73F3F] naxatw-text-white"
+              className="naxatw-bg-red naxatw-text-white"
               onClick={handleGenerate}
             >
               {m.qfield_generate_project()}
@@ -148,7 +148,7 @@ function QFieldExportDialog({
 
         {status === 'generating' && (
           <div className="naxatw-flex naxatw-flex-col naxatw-items-center naxatw-gap-3">
-            <span className="material-icons naxatw-animate-spin naxatw-text-[2rem] naxatw-text-[#D73F3F]">
+            <span className="material-icons naxatw-animate-spin naxatw-text-[2rem] naxatw-text-red">
               refresh
             </span>
             <p className="naxatw-text-sm naxatw-text-gray-600">
@@ -184,7 +184,7 @@ function QFieldExportDialog({
                 {m.qfield_download_zip()}
               </Button>
               <Button
-                className="naxatw-bg-[#D73F3F] naxatw-text-sm naxatw-text-white"
+                className="naxatw-bg-red naxatw-text-sm naxatw-text-white"
                 onClick={handleGenerate}
               >
                 {m.qfield_regenerate()}
