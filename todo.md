@@ -2486,3 +2486,72 @@ for prioritization, unlike prior rounds' find-and-fix entries.
   imagery in the local seed data - would need a fabricated task state
   beyond what's reasonable to hand-seed), and a systematic
   color-contrast audit beyond the one sampled control above.
+
+## Round 4 — Dashboard / user profile / settings (2026-08-21)
+
+Scoped audit of the Dashboard (stat cards, sidebar, request/task logs) and
+the "edit my profile" settings flow (`UpdateUserProfile`/
+`UpdateUserDetails`), as part of the same app-wide UX/design pass. Static
+verification only (lint/build/vitest) - no live docker stack available in
+this worktree (see note on `compose.yaml`'s hardcoded db/nodeodm ports at
+the end of this section).
+
+- [x] **Real bug:** the Dashboard sidebar's "Edit Profile" button had
+      invisible blue-on-blue text - same root cause as the CreateProject
+      wizard/modal-Cancel-button bug already fixed elsewhere this round
+      (default `Button` variant's new `bg-primary-400` colliding with a
+      bare `!naxatw-text-red` override, both now the same blue since the
+      brand-anchor swap). This exact fix already exists in an
+      as-yet-unmerged sibling PR; fixing it here too since it's still
+      broken on this branch's base and squarely in scope - expect this
+      hunk to become a no-op once that PR lands first.
+      DONE - added `variant="outline"`.
+- [x] **Real bug:** `RequestLogs`'s approve/reject mutation surfaced the
+      generic Axios error (`err.message`, e.g. "Request failed with
+      status code 400") instead of the backend's actual `detail` message,
+      unlike every other mutation in this same area (`Password`,
+      `BasicDetails`, `OrganizationDetails`, `OtherDetails` all correctly
+      extract `err.response?.data?.detail`). A project creator
+      rejecting/approving a drone-pilot flight request on a task in the
+      wrong state would see an unhelpful generic HTTP error instead of
+      the real reason.
+      DONE - matched the established pattern.
+- [x] **Real bug:** the Edit Profile page's breadcrumb "Dashboard" link
+      pointed at `/` (the public landing page) instead of `/dashboard` -
+      clicking it took a logged-in user back to the marketing page
+      instead of their dashboard.
+      DONE - fixed the `navLink`.
+- [x] **Real bug (missed by the Round 3 brand-anchor swap):** the
+      Dashboard stat cards' hover/active border hardcoded the *old* raw
+      hex `#D73F3F` as a Tailwind arbitrary value
+      (`hover:naxatw-border-[#D73F3F]`), not the `red` token - so it never
+      picked up the blue brand-anchor change, while the card's own count
+      text right next to it (`naxatw-text-red`) did. Result: hovering or
+      selecting a stat card showed a red border around a blue number.
+      DONE - switched to the `border-red` token.
+      **Not fixed here, out of scope, flagged for the agents/rounds
+      owning those areas:** the same `#D73F3F`/`#D73F3f` hardcoded-hex
+      pattern (arbitrary Tailwind values that don't track the `red`
+      token) also appears in ~19 other files outside this scope -
+      `IndividualProject` (incl. `MapSection`, `ExportSection`,
+      `QFieldExport`), `DroneOperatorTask` (`DescriptionSection` and its
+      many subcomponents, `ImageReview`), `RegulatorsApprovalPage`,
+      `ViewOrthophoto`, `View3DModel`, `Projects/MapSection`,
+      `LandingPage/MobileAppDownload`, `common/RadioButton`, and
+      `constants/projectDescription.ts`. Worth a dedicated grep-and-fix
+      pass (`grep -rl '#D73F3F' src/frontend/src`) before considering the
+      brand-anchor rework fully done app-wide.
+- [x] Audited every `naxatw-text-red`/`naxatw-bg-red` `<Button>` usage in
+      this scope for the invisible-blue-on-blue pattern; all others
+      either pair `bg-red` with the CVA default variant's own
+      `text-white` (visible) or aren't `<Button>`s at all. No further
+      instances found in this scope.
+
+**Environment note for future rounds:** this worktree could not run
+`docker compose up` - `compose.yaml` hardcodes the db port (`5467:5432`)
+and nodeodm port (`9900:9900`) with no `.env` override, so only one live
+stack can run host-wide at a time. Verification here was static only
+(`pnpm lint`/`build`/`test`); nothing in this round's fixes needs a live
+backend to express as a test, but a live-browser spot-check of the 4 real
+bugs above (especially the button-visibility fixes) is still worth doing
+once a stack is free.

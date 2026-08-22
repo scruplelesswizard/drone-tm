@@ -38,7 +38,8 @@ const RequestLogs = () => {
       void queryClient.invalidateQueries({ queryKey: ['task-statistics'] });
     },
     onError: err => {
-      toast.error(err.message);
+      const detail = (err.response?.data as { detail?: string })?.detail;
+      toast.error(detail || m.profile_something_went_wrong());
     },
   });
 
