@@ -2464,7 +2464,7 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       full placeholder/disabled-text contrast pass across the app's
       form controls rather than a single spot fix - this was one
       sampled control, not an exhaustive audit.
-- [ ] **Density/balance:** Projects list and Dashboard both dedicate the
+- [x] **Density/balance:** Projects list and Dashboard both dedicate the
       majority of a 1440px viewport to dead white space regardless of
       how much real content exists (a single project card floating in
       an otherwise-empty grid+map layout; a profile card and an empty
@@ -2472,6 +2472,22 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       low-count/empty layout treatment (center content, cap max-width,
       or add contextual guidance/CTAs in the freed space) rather than
       always reserving full desktop-grid space.
+      DONE — Projects list (`views/Projects/index.tsx`): the cards+map
+      row forced `calc(100vh-11rem)`/`h-full` regardless of result
+      count; added low-count/empty checks (≤3 results, or 0) that let
+      the row size to content instead of stretching, with the map panel
+      given an explicit height rather than `h-full`; empty state now
+      reuses `NoDataComponent` instead of a bare unstyled string.
+      Dashboard (`views/Dashboard/index.tsx`): swapped the forced
+      `h-screen-nav` for `min-h-screen-nav`, an existing pattern already
+      used in `Import/index.tsx` for the same problem, verified against
+      CSS Grid's default `align-items: stretch` to confirm sidebar/
+      content-column height-matching still holds without a definite
+      parent height. Many-item case untouched in both. Not live-verified
+      (Dashboard/Projects both require a full authenticated Redux
+      session, not reachable from an isolated worktree) - verified via
+      static CSS mechanics reasoning instead, documented in the PR.
+      `pnpm lint`/`pnpm build` clean. PR #119.
 - Follow-up after the host restart: seeded a regulator-linked project
   (`requires_approval_from_regulator`/`regulator_emails`/
   `commenting_regulator_id`) and hit the real token-based approval URL -
