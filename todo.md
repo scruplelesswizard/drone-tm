@@ -2323,7 +2323,7 @@ both PROJECT_CREATOR and DRONE_OPERATOR roles), seeded login, real
 screenshots. These are **recommendations, not yet implemented** — logged
 for prioritization, unlike prior rounds' find-and-fix entries.
 
-- [ ] **Real bug:** CreateProject wizard step header
+- [x] **Real bug:** CreateProject wizard step header
       (`common/StepSwitcher/index.tsx`) - the step-number/label row uses
       `naxatw-flex ... naxatw-grid-cols-5 naxatw-flex-wrap` on the same
       div: `grid-cols-5` is a dead class (parent is `flex`, not `grid`,
@@ -2336,6 +2336,10 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       the dead `grid-cols-5`, give each step a fixed/min basis) rather
       than a fix targeted at just this data set, since `data.length`
       varies by call site.
+      DONE — the dead-class diagnosis turned out to be a false lead;
+      Round 8 traced the real cause to the staggered entrance animation
+      overshooting into the neighbor's slot, fixed the animation
+      distance, and dropped `grid-cols-5` as a no-op cleanup. PR #115.
 - [x] **Real bug / IA gap:** Individual Project's "Available Tasks" tab
       and "Contributions" tab disagree about scope. Locking a task
       (`LockTaskDialog`) makes it vanish from the Available Tasks table
@@ -2360,7 +2364,7 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       own locked/in-progress work. Re-adding it to Available Tasks with
       a "locked by you" state would duplicate Contributions' job and
       muddy what the tab name promises. No code change.
-- [ ] **Layout/hierarchy:** on mobile (390px), Individual Project's tab
+- [x] **Layout/hierarchy:** on mobile (390px), Individual Project's tab
       strip (About/Available Tasks/Instructions/Contributions) sits
       *below* the map+legend block in document order, pushed off the
       first screen entirely - confirmed the tabs are still clickable
@@ -2368,7 +2372,10 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       on-screen affordance telling them to scroll past a full map to find
       primary navigation. Move the tab strip above the map on narrow
       viewports, or make it sticky.
-- [ ] **Responsive gap:** the public landing page's top bar
+      DONE — an existing `naxatw-order-*` mechanism tied correctly on
+      desktop but put the map first on mobile; Round 8 fixed the order
+      classes rather than restructuring or going sticky. PR #112.
+- [x] **Responsive gap:** the public landing page's top bar
       (`v2026.8.8` version tag + Tutorials/Documentation/Supported
       Drones/language links) has no mobile breakpoint - at 390px
       "Supported Drones" wraps and visually collides with the language
@@ -2376,18 +2383,27 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       row as primary nav on the very first screen anonymous visitors
       see. Worth demoting the version tag to a footer/about-page detail
       and collapsing the link row into a mobile menu.
-- [ ] **Empty state:** Individual Project's "Instructions" tab renders
+      DONE — Round 8 reused the existing hamburger+Drawer pattern from
+      `common/Navbar`: version tag moves into the drawer header, the
+      link row collapses into the drawer body below `sm`. Live-verified
+      via Playwright screenshots at 390x844. PR #113.
+- [x] **Empty state:** Individual Project's "Instructions" tab renders
       completely blank (no heading, no copy) when a project has no
       instructions set, rather than the "No Data Available" empty-state
       pattern already used elsewhere in the app (Dashboard's Request
       Logs, Available Tasks' "No Data Found"). Inconsistent - some
       empty states are designed, this one is just absent content.
-- [ ] **Redundancy:** Dashboard's profile card shows name/role/email
+      DONE — reused the same `NoDataFound` component backing Available
+      Tasks/Dashboard Request Logs instead of building a new pattern.
+      PR #111.
+- [x] **Redundancy:** Dashboard's profile card shows name/role/email
       twice - once in the avatar header, again immediately below as a
       Name/Email/Role list - on a page that's otherwise mostly empty
       space. Either drop the duplicate list or use that space for
       something the header doesn't already say.
-- [ ] **Onboarding gap:** logging in with a role that doesn't match the
+      DONE — removed the duplicate list; header already covers it.
+      PR #110.
+- [x] **Onboarding gap:** logging in with a role that doesn't match the
       account's actual role (e.g. signing in as Drone Pilot on a
       Project-Creator-only account) silently redirects to what looks
       exactly like the ordinary Edit-Profile form, with the entire top
@@ -2397,6 +2413,10 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       account. Needs at minimum a message ("This account isn't
       registered as a Drone Pilot yet - complete this section to add
       that role") and the standard nav chrome kept intact.
+      DONE — `CompleteUserProfile` now distinguishes "existing profile,
+      wrong role" from "genuinely new user" and shows a minimal header +
+      back link + explanatory banner only in the mismatch case; the
+      new-user wizard is untouched. PR #116.
 - [x] **Real bug (backend):** the `BOTH` role - meant for accounts that
       are both project creator and drone pilot, and a real value in the
       Postgres `userrole` enum type - is **not** a member of the Python
@@ -2463,14 +2483,16 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       convention) rather than picking a side by default.
       **Resolved in Round 7** (below) — differentiated Reject to
       `red-500`, kept Accept on brand blue.
-- [ ] **Copy:** the same approval page labels its status/comment fields
+- [x] **Copy:** the same approval page labels its status/comment fields
       "Local Regulator Approval Status" / "Local Regulator Comment"
       (`messages/en.json`: `proj_desc_label_regulator_approval_status`,
       `proj_desc_label_regulator_comment`). Addressed to the regulator
       who is themself taking the action, "Local Regulator" reads like a
       third party is being described, not the reader - worth rewording
       (e.g. "Your Approval Status" / "Your Comment").
-- [ ] **Accessibility:** the "Filter By Project Status" dropdown
+      DONE — reworded to "Your Approval Status" / "Your Comment". PR
+      #108 (merged).
+- [x] **Accessibility:** the "Filter By Project Status" dropdown
       placeholder on the Projects list measures at a **1.88:1** contrast
       ratio (`rgb(189,189,189)` on white, ~13px) - well under WCAG AA's
       4.5:1 minimum for normal text (measured directly via
@@ -2478,6 +2500,11 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       full placeholder/disabled-text contrast pass across the app's
       form controls rather than a single spot fix - this was one
       sampled control, not an exhaustive audit.
+      DONE — root cause was the shared `common/FormUI/Select`
+      component's placeholder color (`grey-400`, 1.88:1); fixed at the
+      component level (`grey-700`, 6.18:1 computed), covering every
+      non-search `<Select>` in the app, not just this one control. PR
+      #109 (merged).
 - [x] **Density/balance:** Projects list and Dashboard both dedicate the
       majority of a 1440px viewport to dead white space regardless of
       how much real content exists (a single project card floating in
