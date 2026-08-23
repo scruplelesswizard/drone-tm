@@ -135,7 +135,7 @@ export default function Select({
           <p
             className={`naxatw-w-full naxatw-border-none ${
               selected && selectedLabel ? 'naxatw-text-grey-800' : ''
-            } naxatw-px-2 naxatw-text-sm naxatw-text-grey-400`}
+            } naxatw-px-2 naxatw-text-sm naxatw-text-grey-700`}
           >
             {getPlaceholderText()}
           </p>
