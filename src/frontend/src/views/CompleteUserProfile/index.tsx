@@ -15,6 +15,7 @@ import {
 } from '@Constants/index';
 import { setCommonState } from '@Store/actions/common';
 import { Button } from '@Components/RadixComponents/Button';
+import Image from '@Components/RadixComponents/Image';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchUserProfile, postUserProfile } from '@Services/common';
 import { toast } from 'react-toastify';
@@ -25,6 +26,7 @@ import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import useWindowDimensions from '@Hooks/useWindowDimensions';
 import { useGetUserDetailsQuery } from '@Api/projects';
 import callApiSimultaneously from '@Utils/callApiSimultaneously';
+import dtmLogo from '@Assets/images/drone-tasking-manager.svg';
 import { getRuntimeConfig } from '@/runtimeConfig';
 import { m } from '@/paraglide/messages';
 
@@ -95,6 +97,13 @@ const CompleteUserProfile = () => {
   const userProfile = getLocalStorageValue('userprofile');
   const existingRole = userProfile?.role?.[0] === 'PROJECT_CREATOR' ? 1 : 2;
   const newRole = isDroneOperator ? 2 : 1;
+  // An existing account with a role already set, landing here only because
+  // the picked sign-in role doesn't match it yet - as opposed to a brand
+  // new account with no profile at all, mid first-time setup.
+  const isRoleMismatch = !!userProfile?.role?.length;
+  const missingRoleLabel = isDroneOperator
+    ? m.auth_role_drone_operator()
+    : m.auth_role_project_creator();
 
   const initialState: ProfileFormData = {
     name: userProfile?.name,
@@ -239,6 +248,36 @@ const CompleteUserProfile = () => {
 
   return (
     <section className="naxatw-h-screen md:naxatw-pt-[5%]">
+      {isRoleMismatch && (
+        <div className="naxatw-mx-auto naxatw-mb-2 naxatw-flex naxatw-w-full naxatw-max-w-[34rem] naxatw-items-center naxatw-justify-between naxatw-px-1">
+          <a
+            className="naxatw-flex naxatw-items-center naxatw-gap-2 hover:naxatw-no-underline"
+            href="/projects"
+          >
+            <Image
+              src={dtmLogo}
+              alt={m.common_dtm_logo_alt()}
+              className="naxatw-h-6 naxatw-w-6"
+            />
+            <span className="naxatw-text-hot-gray-950 naxatw-text-sm naxatw-font-bold">
+              Drone Tasking Manager
+            </span>
+          </a>
+          <a
+            className="naxatw-text-sm naxatw-text-red hover:naxatw-underline"
+            href="/projects"
+          >
+            {m.auth_back()}
+          </a>
+        </div>
+      )}
+      {isRoleMismatch && (
+        <p className="naxatw-mx-auto naxatw-mb-2 naxatw-w-full naxatw-max-w-[34rem] naxatw-rounded-md naxatw-bg-yellow-50 naxatw-p-3 naxatw-text-sm naxatw-text-grey-800">
+          {m.complete_profile_role_mismatch_banner({
+            role: missingRoleLabel,
+          })}
+        </p>
+      )}
       <div className="naxatw-mx-auto naxatw-flex naxatw-h-[80vh] naxatw-w-full naxatw-flex-col naxatw-gap-2 naxatw-border naxatw-shadow-lg md:naxatw-w-[34rem] md:naxatw-flex-row">
         <div className="naxatw-w-full naxatw-border-r md:naxatw-w-2/6">
           <Tab
