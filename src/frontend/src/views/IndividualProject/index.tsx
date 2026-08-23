@@ -710,7 +710,7 @@ const IndividualProject = () => {
           </div>
         ) : (
           <div className="naxatw-flex naxatw-flex-col naxatw-gap-6 md:naxatw-flex-row">
-            <div className="naxatw-relative naxatw-order-2 naxatw-w-full naxatw-max-w-[35rem] naxatw-pb-20">
+            <div className="naxatw-relative naxatw-order-1 naxatw-w-full naxatw-max-w-[35rem] naxatw-pb-20 md:naxatw-order-2">
               <Tab
                 orientation="row"
                 className="naxatw-bg-transparent hover:naxatw-border-b-2 hover:naxatw-border-red"
@@ -755,7 +755,7 @@ const IndividualProject = () => {
                 )}
               </div>
             </div>
-            <div className="naxatw-order-1 naxatw-h-[calc(100vh-10rem)] naxatw-w-full md:naxatw-order-2">
+            <div className="naxatw-order-2 naxatw-h-[calc(100vh-10rem)] naxatw-w-full md:naxatw-order-2">
               {isProjectDataFetching ? (
                 <Skeleton className="naxatw-h-full naxatw-w-full" />
               ) : (
