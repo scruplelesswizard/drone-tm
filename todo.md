@@ -2662,3 +2662,38 @@ verification tool given that constraint.
   no logic bugs in this area, but a live pass with real task/imagery
   data would be needed to fully confirm the processing workflow and
   map interactions.
+
+
+## Round 7 — resolve the Round 5/6 Reject-button color disagreement (2026-08-23)
+
+Round 5 (above) considered recoloring `RegulatorsApprovalPage`'s Reject
+button and reverted the instinct, reasoning every other solid action
+button in the app (including Delete/Lock/Unlock) already uses the brand
+blue post-rebrand, so singling out Reject would break that convention.
+A later app-wide UX review flagged the same button as a bug: Accept and
+Reject, sitting side by side, were differentiated only by fill-vs-outline
+with identical color. Asked to resolve it directly rather than leave both
+takes standing.
+
+- [x] **Decision: differentiate, using the existing `red-500` danger
+      token.** Delete/Lock/Unlock are standalone actions with their own
+      confirm-dialog safety net - "everything's brand blue" holds fine
+      there. Accept/Reject is a different shape of decision: two mutually
+      exclusive buttons presented together with no confirmation step, for
+      an external regulator who arrived via a one-off emailed token link,
+      not a logged-in session with time to read carefully. That's exactly
+      the case color-coding earns its keep. The codebase already
+      distinguishes "genuine negative/error state" (`red-500`, real red)
+      from "branded action" (`red`, now blue) - `tailwind.config.js`'s own
+      comment on the `red` token says as much: "Button's `destructive`
+      variant (bg-red-500) and any future danger/error UI should
+      reference that, not the bare `red` token." Reject fits the former
+      category; Round 5's "stay consistent" read Reject as the latter.
+      DONE — `ApprovalSection.tsx`'s Reject button:
+      `naxatw-border-red naxatw-text-red` → `naxatw-border-red-500
+      naxatw-text-red-500`. Accept unchanged (stays brand blue, matching
+      other affirmative solid actions). Verified live via the same
+      token-based regulator approval link as Round 6: Reject now renders
+      `rgb(215,63,63)` (`#D73F3F`, real red) against Accept's
+      `rgb(27,102,175)` (`#1B66AF`, brand blue) - clearly distinct.
+      `pnpm lint`/`pnpm build` clean.
