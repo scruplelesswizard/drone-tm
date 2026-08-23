@@ -4,7 +4,13 @@ import pytest
 from app.db.database import get_db
 from app.models.enums import UserRole
 from app.users.user_deps import create_reset_password_token, login_required
-from app.users.user_schemas import AuthUser, DbUser, DbUserProfile, UserProfileCreate
+from app.users.user_schemas import (
+    AuthUser,
+    BaseUserProfile,
+    DbUser,
+    DbUserProfile,
+    UserProfileCreate,
+)
 from httpx import ASGITransport, AsyncClient
 from loguru import logger as log
 
@@ -61,6 +67,29 @@ async def test_my_info_non_numeric_user_id(app, db):
     assert body["id"] == non_numeric_user.id
     assert body["has_user_profile"] is True
     assert body["user_id"] == non_numeric_user.id
+
+
+def test_role_parses_known_values_from_postgres_array_literal():
+    """psycopg hands the `role` column back as a raw '{A,B}' array literal
+    string; the parser should decode every recognized role."""
+    profile = BaseUserProfile(role="{PROJECT_CREATOR,DRONE_PILOT}")
+    assert set(profile.role) == {"PROJECT_CREATOR", "DRONE_PILOT"}
+
+
+def test_role_drops_unrecognized_value_instead_of_erroring():
+    """`BOTH` is a vestigial Postgres enum value from before roles became an
+    array (a user with both roles is now `{PROJECT_CREATOR,DRONE_PILOT}`, two
+    elements, not a single `BOTH` sentinel) - it was never re-added to the
+    `UserRole` Python enum. A user profile row that somehow still carries it
+    (or any other value the Python enum doesn't know about) used to have it
+    silently dropped with zero trace, which - combined with the frontend's
+    `role.includes(signedInAs)` check - permanently redirected that account
+    to /complete-profile on every login with no way to diagnose why. This
+    only asserts the parse still succeeds and known roles still come through;
+    it does not assert on log output (loguru doesn't route through the
+    stdlib `logging` module `caplog` hooks into by default)."""
+    profile = BaseUserProfile(role="{PROJECT_CREATOR,BOTH}")
+    assert set(profile.role) == {"PROJECT_CREATOR"}
 
 
 @pytest.mark.asyncio

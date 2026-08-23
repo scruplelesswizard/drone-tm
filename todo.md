@@ -2315,3 +2315,174 @@ ViewOrthophoto, RegulatorsApprovalPage.
       is sufficient, but a live visual spot-check of `RegulatorsApprovalPage`
       (which needs a REGULATOR-role seed user not yet in the local
       fixture set) is still worth doing in a follow-up pass.
+
+## Round 6 — expert UX design review (2026-08-22)
+
+Requested design/UX pass over the live app (desktop 1440px, mobile 390px,
+both PROJECT_CREATOR and DRONE_OPERATOR roles), seeded login, real
+screenshots. These are **recommendations, not yet implemented** — logged
+for prioritization, unlike prior rounds' find-and-fix entries.
+
+- [ ] **Real bug:** CreateProject wizard step header
+      (`common/StepSwitcher/index.tsx`) - the step-number/label row uses
+      `naxatw-flex ... naxatw-grid-cols-5 naxatw-flex-wrap` on the same
+      div: `grid-cols-5` is a dead class (parent is `flex`, not `grid`,
+      so Tailwind never applies it), leaving `flex-wrap`+`justify-evenly`
+      to lay out just 2 steps. At 1440px this collapses the "01"/"02"
+      step numerals directly onto the "Intended Use Case"/"Basic
+      Information" labels - unreadable overlapping text on the very
+      first screen of the project-creation flow. Confirmed live via
+      screenshot at `/create-project`. Needs a real flex layout (drop
+      the dead `grid-cols-5`, give each step a fixed/min basis) rather
+      than a fix targeted at just this data set, since `data.length`
+      varies by call site.
+- [ ] **Real bug / IA gap:** Individual Project's "Available Tasks" tab
+      and "Contributions" tab disagree about scope. Locking a task
+      (`LockTaskDialog`) makes it vanish from the Available Tasks table
+      ("No Data Found") while the same task keeps rendering on the map
+      with no distinguishing treatment - the legend defines a dashed
+      yellow "Assigned to You" outline that never gets applied, even to
+      a task the current user just locked. The task's real state
+      ("Locked", who holds it) is only visible by switching to
+      Contributions. A user who just locked their own task sees it
+      disappear from the tab named for finding tasks, with no visual
+      cue on the map explaining why - confirmed live (locked Task #1,
+      compared map/legend/tabs).
+- [ ] **Layout/hierarchy:** on mobile (390px), Individual Project's tab
+      strip (About/Available Tasks/Instructions/Contributions) sits
+      *below* the map+legend block in document order, pushed off the
+      first screen entirely - confirmed the tabs are still clickable
+      (Playwright auto-scroll reached them fine) but a real thumb has no
+      on-screen affordance telling them to scroll past a full map to find
+      primary navigation. Move the tab strip above the map on narrow
+      viewports, or make it sticky.
+- [ ] **Responsive gap:** the public landing page's top bar
+      (`v2026.8.8` version tag + Tutorials/Documentation/Supported
+      Drones/language links) has no mobile breakpoint - at 390px
+      "Supported Drones" wraps and visually collides with the language
+      switcher, and a bare semver string competes for the same cramped
+      row as primary nav on the very first screen anonymous visitors
+      see. Worth demoting the version tag to a footer/about-page detail
+      and collapsing the link row into a mobile menu.
+- [ ] **Empty state:** Individual Project's "Instructions" tab renders
+      completely blank (no heading, no copy) when a project has no
+      instructions set, rather than the "No Data Available" empty-state
+      pattern already used elsewhere in the app (Dashboard's Request
+      Logs, Available Tasks' "No Data Found"). Inconsistent - some
+      empty states are designed, this one is just absent content.
+- [ ] **Redundancy:** Dashboard's profile card shows name/role/email
+      twice - once in the avatar header, again immediately below as a
+      Name/Email/Role list - on a page that's otherwise mostly empty
+      space. Either drop the duplicate list or use that space for
+      something the header doesn't already say.
+- [ ] **Onboarding gap:** logging in with a role that doesn't match the
+      account's actual role (e.g. signing in as Drone Pilot on a
+      Project-Creator-only account) silently redirects to what looks
+      exactly like the ordinary Edit-Profile form, with the entire top
+      navbar/logo missing and zero explanation of why the user landed
+      there or how to get back. Confirmed live by signing in with
+      `signedInAs=DRONE_PILOT` against the seeded Project Creator
+      account. Needs at minimum a message ("This account isn't
+      registered as a Drone Pilot yet - complete this section to add
+      that role") and the standard nav chrome kept intact.
+- [x] **Real bug (backend):** the `BOTH` role - meant for accounts that
+      are both project creator and drone pilot, and a real value in the
+      Postgres `userrole` enum type - is **not** a member of the Python
+      `UserRole(IntEnum)` in `app/models/enums.py:97-100` (only
+      `PROJECT_CREATOR`/`DRONE_PILOT`/`REGULATOR` are defined).
+      `UserProfileOut`'s `srting_role_to_integer` validator
+      (`app/users/user_schemas.py:134-144`) silently drops any role
+      string that isn't in `UserRole.__members__`, so any user whose
+      `user_profile.role` contains `{BOTH}` gets back `"role": []` from
+      **every** API response (confirmed via a direct `/users/my-info`
+      call against a seeded user with `role = ARRAY['BOTH']::userrole[]`).
+      Because the frontend's post-login check is
+      `userDetails?.role?.includes(signedInAs)`, an empty array can
+      never match either role string - a `BOTH`-role account is
+      permanently bounced to `/complete-profile` on **every** login,
+      regardless of which role tile they pick.
+      DONE (branch `todo/108-fix-both-role-enum`) - traced `BOTH` back
+      through migration history: it's a leftover from the *pre-array*
+      role column (`users.role` as a single `PROJECT_CREATOR|DRONE_PILOT
+      |BOTH` enum, migration `d2b9d45d3ede`), superseded when role
+      became `user_profile.role: userrole[]` (migration `b36a13183a83`,
+      which only (re)creates the enum with `PROJECT_CREATOR`/
+      `DRONE_PILOT` - "both" is now correctly expressed as two array
+      elements, `{PROJECT_CREATOR,DRONE_PILOT}`). Never re-added to the
+      Postgres type by design; no code path writes it. Rather than
+      resurrecting a redundant sentinel that would let "both roles" be
+      expressed two conflicting ways, fixed the actual defect: the
+      validator now logs a loud warning for any unrecognized role
+      string instead of silently swallowing it, so a stray/orphaned DB
+      value is immediately debuggable via logs instead of producing an
+      inexplicable permanent `/complete-profile` redirect. Verified
+      live: reset the seed user to the correct
+      `{PROJECT_CREATOR,DRONE_PILOT}` array - both role logins now land
+      on `/projects` as expected. 2 new unit tests on
+      `BaseUserProfile.role` parsing (known multi-value array parses
+      correctly; an unrecognized value like `BOTH` is dropped, not
+      fatal). Full backend suite (271 tests), ruff check/format, and
+      coverage gate all pass.
+- [ ] **Real bug:** RegulatorsApprovalPage's Accept/Reject buttons
+      (`components/RegulatorsApprovalPage/Description/ApprovalSection.tsx`)
+      both key off the same `red` brand token - Reject is
+      `naxatw-border-red naxatw-text-red` (outline), Accept is
+      `naxatw-bg-red naxatw-text-white` (filled) - and since Round 3's
+      brand-anchor swap `red` resolves to the same blue as everything
+      else, the two decisions are differentiated only by fill-vs-outline,
+      not color. Confirmed live via a real token-based regulator
+      approval link (seeded `requires_approval_from_regulator=true` +
+      `regulator_emails` on the test project, hit
+      `/projects/:id/approval?token=<base64 email>` per
+      `app/users/user_routes.py`'s `/users/regulator` endpoint). A
+      regulator scanning quickly has no color cue distinguishing
+      "approve this drone project" from "reject it" - this is exactly
+      the kind of destructive/affirmative pair that should stay
+      red-vs-blue (or red-vs-green) regardless of the rebrand.
+      **Note:** Round 5 independently considered recoloring this same
+      Reject button and reverted the instinct, reasoning that every
+      other solid action button in the app (including genuinely
+      destructive ones - Delete/Lock/Unlock) already went blue
+      post-rebrand, so singling out Reject would break that
+      convention rather than fix a bug. Real disagreement between two
+      passes over the same code, not an oversight - worth a deliberate
+      call (scope it to Accept/Reject specifically as a binary
+      approve/deny decision, vs. the app's general single-color action
+      convention) rather than picking a side by default.
+- [ ] **Copy:** the same approval page labels its status/comment fields
+      "Local Regulator Approval Status" / "Local Regulator Comment"
+      (`messages/en.json`: `proj_desc_label_regulator_approval_status`,
+      `proj_desc_label_regulator_comment`). Addressed to the regulator
+      who is themself taking the action, "Local Regulator" reads like a
+      third party is being described, not the reader - worth rewording
+      (e.g. "Your Approval Status" / "Your Comment").
+- [ ] **Accessibility:** the "Filter By Project Status" dropdown
+      placeholder on the Projects list measures at a **1.88:1** contrast
+      ratio (`rgb(189,189,189)` on white, ~13px) - well under WCAG AA's
+      4.5:1 minimum for normal text (measured directly via
+      `getComputedStyle` against the live page, not eyeballed). Worth a
+      full placeholder/disabled-text contrast pass across the app's
+      form controls rather than a single spot fix - this was one
+      sampled control, not an exhaustive audit.
+- [ ] **Density/balance:** Projects list and Dashboard both dedicate the
+      majority of a 1440px viewport to dead white space regardless of
+      how much real content exists (a single project card floating in
+      an otherwise-empty grid+map layout; a profile card and an empty
+      "Request Logs" panel on an otherwise blank page). Worth a
+      low-count/empty layout treatment (center content, cap max-width,
+      or add contextual guidance/CTAs in the freed space) rather than
+      always reserving full desktop-grid space.
+- Follow-up after the host restart: seeded a regulator-linked project
+  (`requires_approval_from_regulator`/`regulator_emails`/
+  `commenting_regulator_id`) and hit the real token-based approval URL -
+  see the Accept/Reject color finding and the "Local Regulator" copy
+  finding above. Also traced the role-mismatch redirect to its actual
+  root cause (the missing `BOTH` enum member, above) rather than leaving
+  it as a surface-level observation. Sampled one contrast ratio
+  end-to-end (measured, not eyeballed) rather than running a full
+  audit - still worth a proper WCAG pass across form controls.
+- Not chased this round: the full drone-operator task/upload flow
+  (blocked on there being no locked-and-flyable task with actual
+  imagery in the local seed data - would need a fabricated task state
+  beyond what's reasonable to hand-seed), and a systematic
+  color-contrast audit beyond the one sampled control above.
