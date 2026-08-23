@@ -2336,7 +2336,7 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       the dead `grid-cols-5`, give each step a fixed/min basis) rather
       than a fix targeted at just this data set, since `data.length`
       varies by call site.
-- [ ] **Real bug / IA gap:** Individual Project's "Available Tasks" tab
+- [x] **Real bug / IA gap:** Individual Project's "Available Tasks" tab
       and "Contributions" tab disagree about scope. Locking a task
       (`LockTaskDialog`) makes it vanish from the Available Tasks table
       ("No Data Found") while the same task keeps rendering on the map
@@ -2348,6 +2348,18 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       disappear from the tab named for finding tasks, with no visual
       cue on the map explaining why - confirmed live (locked Task #1,
       compared map/legend/tabs).
+      **Resolved as a judgment call, no Available Tasks change needed:**
+      Round 8 (PR #114) fixed the actual bug half of this finding - the
+      map now applies the dashed-yellow "Assigned to You" outline to a
+      self-locked task, which was the missing piece explaining "why did
+      it disappear." The remaining half (should a locked task still list
+      in Available Tasks?) isn't a bug once that cue exists - "Available
+      Tasks" is scoped to tasks you can still take, and a task already
+      locked (by anyone, including yourself) genuinely isn't one of
+      those anymore; Contributions is correctly the place to see your
+      own locked/in-progress work. Re-adding it to Available Tasks with
+      a "locked by you" state would duplicate Contributions' job and
+      muddy what the tab name promises. No code change.
 - [ ] **Layout/hierarchy:** on mobile (390px), Individual Project's tab
       strip (About/Available Tasks/Instructions/Contributions) sits
       *below* the map+legend block in document order, pushed off the
