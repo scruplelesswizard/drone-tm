@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Flex, FlexColumn, FlexRow } from '@Components/common/Layouts';
+import { Flex, FlexColumn } from '@Components/common/Layouts';
 import { Button } from '@Components/RadixComponents/Button';
 import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
@@ -43,37 +43,6 @@ const DashboardSidebar = () => {
       >
         {m.dashboard_sidebar_edit_profile()}
       </Button>
-      <FlexColumn className="naxatw-my-5 naxatw-w-full naxatw-gap-2">
-        <FlexRow className="naxatw-justify-center naxatw-gap-1 md:naxatw-justify-normal">
-          <p className="md:naxatw-min-w-[30%]">
-            {m.dashboard_sidebar_name_label()}
-          </p>
-          :
-          <p className="naxatw-break-words md:naxatw-min-w-[65%]">
-            {userDetails?.name}
-          </p>
-        </FlexRow>
-        <FlexRow className="naxatw-justify-center naxatw-gap-1 md:naxatw-justify-normal">
-          <p className="md:naxatw-min-w-[30%]">
-            {m.dashboard_sidebar_email_label()}
-          </p>
-          :
-          <p className="naxatw-break-words md:naxatw-min-w-[65%]">
-            {userDetails?.email_address}
-          </p>
-        </FlexRow>
-        <FlexRow className="naxatw-justify-center naxatw-gap-1 md:naxatw-justify-normal">
-          <p className="md:naxatw-min-w-[30%]">
-            {m.dashboard_sidebar_role_label()}
-          </p>
-          :
-          <p className="naxatw-break-words md:naxatw-min-w-[65%]">
-            {role === 'PROJECT_CREATOR'
-              ? m.dashboard_role_project_creator()
-              : m.dashboard_role_drone_operator()}
-          </p>
-        </FlexRow>
-      </FlexColumn>
     </FlexColumn>
   );
 };
