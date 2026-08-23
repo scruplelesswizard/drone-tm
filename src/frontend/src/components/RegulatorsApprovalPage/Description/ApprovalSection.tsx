@@ -63,7 +63,7 @@ const ApprovalSection = () => {
         <Button
           variant="outline"
           onClick={() => handleApprovalStatus('REJECTED')}
-          className="naxatw-border-red naxatw-font-primary naxatw-text-red"
+          className="naxatw-border-red-500 naxatw-font-primary naxatw-text-red-500"
           isLoading={isPending}
           disabled={isPending}
         >
