@@ -12,7 +12,7 @@ const DescriptionBoxComponent = ({
   return (
     <>
       <div className="naxatw-flex naxatw-flex-col naxatw-gap-3">
-        <p className="naxatw-text-[0.875rem] naxatw-font-semibold naxatw-leading-normal naxatw-tracking-[0.0175rem] naxatw-text-[#D73F3F]">
+        <p className="naxatw-text-[0.875rem] naxatw-font-semibold naxatw-leading-normal naxatw-tracking-[0.0175rem] naxatw-text-red">
           {title}
         </p>
         <div className="naxatw-flex naxatw-flex-col naxatw-gap-2">

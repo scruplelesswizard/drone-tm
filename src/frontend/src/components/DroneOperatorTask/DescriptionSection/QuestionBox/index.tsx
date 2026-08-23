@@ -98,7 +98,7 @@ const QuestionBox = ({
           <div className="naxatw-my-4 naxatw-flex naxatw-w-full naxatw-justify-center">
             <Button
               variant="ghost"
-              className="naxatw-w-fit naxatw-bg-[#D73F3F] naxatw-text-[#FFFFFF]"
+              className="naxatw-w-fit naxatw-bg-red naxatw-text-[#FFFFFF]"
               onClick={() => handleSubmit()}
               disabled={flyable === 'yes'}
               isLoading={commentIsUpdating}

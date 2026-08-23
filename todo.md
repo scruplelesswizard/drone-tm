@@ -2603,3 +2603,62 @@ neither of them cosmetic.
       app-wide for the same blue-on-blue pattern (~130 call sites
       grepped); all others either pair `bg-red` with `text-white` (still
       correct/visible) or already specify `variant="ghost"`/`"outline"`.
+
+## Round 4 (parallel) — Drone operator task flow audit (2026-08-21)
+
+Scoped to `DroneOperatorTask/**` (task description, image upload,
+processing workflow) as part of the app-wide UX/design pass. Verified
+statically only (lint/build/vitest) - no live docker stack available
+concurrently with sibling audit branches (compose.yaml hardcodes the db
+port 5467 and nodeodm port 9900, so only one live stack fits on a host
+at a time). Read the flow's code very carefully as the primary
+verification tool given that constraint.
+
+- [x] **Real bug (regression from PR #100's Button/brand-anchor
+      change):** `ManualOverrideSection`'s admin "last resort" warning
+      text and its Cancel button. The warning copy
+      (`drone_task_manual_override_last_resort`, e.g. "this is a last
+      resort") used bare `naxatw-text-red` (now blue, following the
+      brand anchor) instead of a real danger color - a warning about a
+      destructive manual state override should stay visually red
+      regardless of brand color. Its neighboring Cancel button also had
+      no `variant` prop, defaulting to a solid blue fill inconsistent
+      with every other Cancel button in the app (already fixed to
+      `variant="ghost"` elsewhere in PR #101).
+      DONE - warning text to `naxatw-text-red-500`; Cancel button to
+      `variant="ghost"`.
+- [x] **Real bug:** 6 hardcoded pre-rebrand hex `#D73F3F` usages, all
+      genuine brand-accent headings/CTAs that PR #100's rebrand sweep
+      missed because they never went through the `red` Tailwind token:
+      the upload `ProgressBar` fill color, the "Upload Information" /
+      Uppy dashboard label headings (3 call sites sharing the same
+      className string), the task-description "download options"
+      toggle button, and the flight-comment submit button in
+      `QuestionBox`. All flipped to the `red`/token classes
+      (`naxatw-bg-red` / `naxatw-text-red` / `naxatw-border-red`), which
+      now correctly resolve to the blue brand anchor like every other
+      CTA/heading in this same flow.
+      Explicitly did NOT touch the two other `#D73F3F` occurrences in
+      `ImageReview/index.tsx` (the map marker color and the status
+      legend swatch for `rejected` images) - those are a genuine
+      red/green/yellow/orange/gray status-color legend with real
+      semantic meaning (rejected = red), unrelated to brand color, and
+      correctly staying red.
+- Read (not modified, no confirmed bug): `FlightGapDetectionModal.tsx`,
+  `VerificationFooter.tsx`, `ImageSidebar.tsx`, `TaskMapPanel.tsx`,
+  `ChooseTakeOffPointOptions.tsx`, `MissingDemModal.tsx`,
+  `MapControlsBar.tsx`, most of `MapSection.tsx` and
+  `DroneImageProcessingWorkflow/index.tsx` - all correctly styled
+  post-rebrand, no invisible-button pattern found beyond what's fixed
+  above.
+- **Not verified live** (noted per the effort's own instructions rather
+  than skipped silently): the actual image-upload/Uppy flow, the
+  processing state-machine transitions in
+  `DroneImageProcessingWorkflow/index.tsx`, and `ImageReview`'s
+  map-based review/rejection UI all need a `DRONE_PILOT`-role user with
+  a real locked task and uploaded imagery to exercise meaningfully: the
+  seed data used elsewhere in this audit (a `PROJECT_CREATOR` with one
+  `Not-Started` task) doesn't reach these states. Static reading found
+  no logic bugs in this area, but a live pass with real task/imagery
+  data would be needed to fully confirm the processing workflow and
+  map interactions.

@@ -147,11 +147,15 @@ const ManualOverrideSection = ({
               state: selectedState ? getTaskStateLabel(selectedState) : '',
             })}
           </p>
-          <p className="naxatw-text-sm naxatw-font-semibold naxatw-text-red">
+          <p className="naxatw-text-sm naxatw-font-semibold naxatw-text-red-500">
             {m.drone_task_manual_override_last_resort()}
           </p>
           <div className="naxatw-flex naxatw-justify-end naxatw-gap-3 naxatw-pt-2">
-            <Button onClick={() => setShowConfirm(false)} disabled={isPending}>
+            <Button
+              variant="ghost"
+              onClick={() => setShowConfirm(false)}
+              disabled={isPending}
+            >
               {m.common_cancel()}
             </Button>
             <Button
