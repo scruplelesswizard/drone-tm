@@ -2423,7 +2423,7 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       correctly; an unrecognized value like `BOTH` is dropped, not
       fatal). Full backend suite (271 tests), ruff check/format, and
       coverage gate all pass.
-- [ ] **Real bug:** RegulatorsApprovalPage's Accept/Reject buttons
+- [x] **Real bug:** RegulatorsApprovalPage's Accept/Reject buttons
       (`components/RegulatorsApprovalPage/Description/ApprovalSection.tsx`)
       both key off the same `red` brand token - Reject is
       `naxatw-border-red naxatw-text-red` (outline), Accept is
@@ -2449,6 +2449,8 @@ for prioritization, unlike prior rounds' find-and-fix entries.
       call (scope it to Accept/Reject specifically as a binary
       approve/deny decision, vs. the app's general single-color action
       convention) rather than picking a side by default.
+      **Resolved in Round 7** (below) — differentiated Reject to
+      `red-500`, kept Accept on brand blue.
 - [ ] **Copy:** the same approval page labels its status/comment fields
       "Local Regulator Approval Status" / "Local Regulator Comment"
       (`messages/en.json`: `proj_desc_label_regulator_approval_status`,
@@ -2697,3 +2699,65 @@ takes standing.
       `rgb(215,63,63)` (`#D73F3F`, real red) against Accept's
       `rgb(27,102,175)` (`#1B66AF`, brand blue) - clearly distinct.
       `pnpm lint`/`pnpm build` clean.
+
+## Round 8 — clear the Round 6 backlog (2026-08-23)
+
+Implemented the remaining Round 6 findings, one PR per fix, all branched
+from the same `dev` tip (`cb852279`) and left independent (no shared-file
+edits between them, so no repeat of the earlier todo.md conflict cycle).
+
+- [x] CreateProject wizard step-header overlap. Original diagnosis (dead
+      `naxatw-grid-cols-5`) was a false lead - live Playwright checks at
+      fixed post-load delays found the real cause: the staggered entrance
+      animation's `translateX(-100%)` transiently slides each step item
+      across its neighbor's slot while fading in. Fixed by shrinking the
+      slide distance to `-24px`; also dropped the genuinely-dead
+      `grid-cols-5` class as a no-op cleanup. PR #115.
+- [x] RegulatorsApprovalPage "Local Regulator" copy → "Your Approval
+      Status" / "Your Comment" (`messages/en.json`). PR #108.
+- [x] Filter dropdown 1.88:1 contrast. Root cause was the shared
+      `common/FormUI/Select` component's placeholder color
+      (`naxatw-text-grey-400`, `#BDBDBD`) - fixed at the component level
+      (`grey-700`, 6.18:1 computed), so this covers every non-search
+      `<Select>` in the app, not just the one sampled control. PR #109.
+- [x] Dashboard profile card redundancy - removed the duplicate
+      Name/Email/Role list below the avatar header. PR #110.
+- [x] Instructions tab empty state - reused the existing `NoDataFound`
+      component (same one backing Available Tasks/Dashboard Request Logs)
+      instead of rendering blank. PR #111.
+- [x] Mobile tab strip below the map - root cause was an existing
+      `naxatw-order-*` mechanism that tied correctly on desktop but put
+      the map first on mobile; fixed the order classes rather than
+      restructuring or going sticky. PR #112.
+- [x] Landing page mobile top bar - reused the existing hamburger+Drawer
+      pattern from `common/Navbar` (not a new pattern): version tag moves
+      into the drawer header, Tutorials/Documentation/Supported
+      Drones/language links collapse into the drawer body below `sm`.
+      Live-verified via Playwright screenshots at 390x844. PR #113.
+- [x] Onboarding role-mismatch gap - `CompleteUserProfile` now
+      distinguishes "existing profile, wrong role" from "genuinely new
+      user" (`isRoleMismatch = !!userProfile?.role?.length`, mirroring
+      logic already in the same file) and shows a minimal header + back
+      link + explanatory banner ("This account isn't registered as a
+      {role} yet - complete this section to add that role") only in the
+      mismatch case; the new-user wizard is untouched. PR #116.
+- [x] "Assigned to You" map treatment never applied to self-locked tasks
+      - the dashed-yellow legend style was wired only to `@mention`-based
+      `mentionedTaskIds`, not to tasks the user actually locked. Extended
+      the same filter (renamed `assignedToYouTaskIds`) to also include
+      tasks where `taskStatusObj[task.id] === 'LOCKED' &&
+      task.user_id === userDetails.id`, reusing the `task.user_id`
+      lock-holder field already read elsewhere in `MapSection`. Scoped to
+      the map's visual treatment only - the Available Tasks tab's
+      scope/filtering (a separate, bigger IA question from the original
+      finding) is untouched. PR #114.
+- Not attempted this round: the Available Tasks/Contributions IA-scope
+  disagreement itself (should a self-locked task still appear in
+  "Available Tasks"?) and the Projects-list/Dashboard density-and-balance
+  finding - both are design calls bigger than a single-PR fix, left open
+  for a deliberate follow-up rather than a drive-by change.
+- All 9 PRs verified via `pnpm lint`/`pnpm build`; several with live
+  Playwright screenshot comparisons (StepSwitcher, landing page mobile,
+  onboarding banner), noted per-PR where live verification wasn't
+  reachable (e.g. routes needing a full authenticated Redux session in an
+  isolated worktree) rather than claimed without having been done.
