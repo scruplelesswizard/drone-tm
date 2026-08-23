@@ -206,12 +206,20 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
     setTaskStatusObj(taskStatus);
   }, [map, taskStates]);
 
-  // Compute set of task IDs where the current user is @mentioned in the lock comment
-  const mentionedTaskIds = useMemo(() => {
+  // Compute set of task IDs "assigned to you": either the current user is
+  // @mentioned in the lock comment, or the task is LOCKED by the current
+  // user themself - both render the same dashed-yellow highlight the
+  // legend calls "Assigned to You" (see Legend.tsx).
+  const assignedToYouTaskIds = useMemo(() => {
     if (!tasksData || !userDetails?.id) return new Set<string>();
     return new Set(
       tasksData
         .filter(task => {
+          if (
+            taskStatusObj?.[task.id] === 'LOCKED' &&
+            task.user_id === userDetails.id
+          )
+            return true;
           const outline = task?.outline as {
             properties?: { lock_comment?: string };
           } | null;
@@ -220,7 +228,7 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
         })
         .map(task => task.id),
     );
-  }, [tasksData, userDetails?.id]);
+  }, [tasksData, userDetails?.id, taskStatusObj]);
 
   // zoom to layer in the project area
   const bbox = useMemo(() => {
@@ -543,16 +551,17 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
               />
             );
           })}
-        {/* @mention highlight: dashed outline for tasks mentioning current user */}
+        {/* Assigned-to-you highlight: dashed outline for tasks the current
+            user is @mentioned on, or has locked themself (see Legend.tsx) */}
         {taskStatusObj &&
           tasksData &&
           tasksData
-            ?.filter(task => mentionedTaskIds.has(task?.id))
+            ?.filter(task => assignedToYouTaskIds.has(task?.id))
             .map(task => (
               <VectorLayer
-                key={`mention-${task?.id}`}
+                key={`assigned-${task?.id}`}
                 map={map as Map}
-                id={`mention-highlight-${task?.id}`}
+                id={`assigned-highlight-${task?.id}`}
                 visibleOnMap
                 geojson={
                   {
