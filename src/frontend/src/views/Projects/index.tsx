@@ -6,6 +6,7 @@ import {
   ProjectsHeader,
   ProjectsMapSection,
 } from '@Components/Projects';
+import NoDataComponent from '@Components/common/DataTable/NoDataFound';
 import {
   useGetProjectCentroidQuery,
   useGetProjectsListQuery,
@@ -94,11 +95,25 @@ const Projects = () => {
     };
   }, [dispatch]);
 
+  const resultCount = projectListData?.results?.length ?? 0;
+  // Round 6/8 density finding: forcing the cards+map row to full viewport
+  // height regardless of result count left a single low-count project
+  // card floating above a large empty void. Below a full first page
+  // (12), let the row size to its content instead.
+  const isLowCount = !isLoading && resultCount > 0 && resultCount <= 3;
+  const isEmpty = !isLoading && resultCount === 0;
+
   return (
     <section className="naxatw-px-3 naxatw-pt-2 lg:naxatw-px-16">
       <ProjectsHeader />
 
-      <div className="naxatw-grid naxatw-gap-2 naxatw-pb-10 md:naxatw-flex md:naxatw-h-[calc(100vh-11rem)] md:naxatw-pb-0">
+      <div
+        className={`naxatw-grid naxatw-gap-2 naxatw-pb-10 md:naxatw-flex md:naxatw-pb-0 ${
+          isLowCount || isEmpty
+            ? 'md:naxatw-h-auto'
+            : 'md:naxatw-h-[calc(100vh-11rem)]'
+        }`}
+      >
         <div
           className={`scrollbar naxatw-grid naxatw-grid-rows-[19rem] naxatw-gap-3 naxatw-overflow-y-auto naxatw-py-2 ${showMap ? 'naxatw-w-full naxatw-grid-cols-1 md:naxatw-w-1/2 md:naxatw-grid-cols-1 lg:naxatw-grid-cols-2 xl:naxatw-grid-cols-3' : 'naxatw-w-full naxatw-grid-cols-1 sm:naxatw-grid-cols-2 md:naxatw-grid-cols-3 lg:naxatw-grid-cols-6'}`}
           style={{ gridAutoRows: '19rem' }}
@@ -111,8 +126,12 @@ const Projects = () => {
             </>
           ) : (
             <>
-              {!projectListData?.results?.length && (
-                <div>{m.projects_no_projects_available()}</div>
+              {isEmpty && (
+                <div className="naxatw-col-span-full naxatw-row-span-full">
+                  <NoDataComponent
+                    message={m.projects_no_projects_available()}
+                  />
+                </div>
               )}
               {projectListData?.results?.map(project => (
                 <ProjectCard
@@ -134,7 +153,11 @@ const Projects = () => {
           )}
         </div>
         {showMap && (
-          <div className="naxatw-h-[70vh] naxatw-w-full naxatw-py-2 naxatw-shadow-xl md:naxatw-h-full md:naxatw-w-1/2">
+          <div
+            className={`naxatw-h-[70vh] naxatw-w-full naxatw-py-2 naxatw-shadow-xl md:naxatw-w-1/2 ${
+              isLowCount || isEmpty ? 'md:naxatw-h-[19rem]' : 'md:naxatw-h-full'
+            }`}
+          >
             {!isCentroidFetching ? (
               <ProjectsMapSection
                 projectCentroidList={
