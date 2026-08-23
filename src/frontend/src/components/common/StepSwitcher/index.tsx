@@ -30,7 +30,7 @@ const StepSwitcher = ({
 }: IStepSwitcherProps) => {
   return (
     <div className="naxatw-flex naxatw-w-full naxatw-justify-center">
-      <div className="naxatw-flex naxatw-w-full naxatw-max-w-[1350px] naxatw-grid-cols-5 naxatw-flex-wrap naxatw-justify-evenly naxatw-gap-3 naxatw-py-4">
+      <div className="naxatw-flex naxatw-w-full naxatw-max-w-[1350px] naxatw-flex-wrap naxatw-justify-evenly naxatw-gap-3 naxatw-py-4">
         {data?.map((step: IIndividualStep, i = 1) => {
           const index = i + 1;
           return (
