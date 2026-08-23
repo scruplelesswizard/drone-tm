@@ -171,6 +171,7 @@
   "profile_save": "Save",
   "profile_next": "Next",
   "profile_complete_profile": "Complete Profile",
+  "complete_profile_role_mismatch_banner": "This account isn't registered as a {role} yet — complete this section to add that role.",
   "profile_update_success": "UserProfile Updated Successfully",
   "profile_details_updated_success": "Details Updated Successfully",
   "profile_details_updated_success_lower": "Details Updated successfully",
