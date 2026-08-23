@@ -6,7 +6,7 @@ const Header = () => {
     <div className="naxatw-py-1">
       <BreadCrumb
         data={[
-          { name: m.profile_breadcrumb_dashboard(), navLink: '/' },
+          { name: m.profile_breadcrumb_dashboard(), navLink: '/dashboard' },
           { name: m.profile_breadcrumb_edit_profile(), navLink: '' },
         ]}
       />

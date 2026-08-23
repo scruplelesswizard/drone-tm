@@ -36,8 +36,9 @@ const DashboardSidebar = () => {
       <p className="naxatw-text-body-sm">{userDetails?.email_address}</p>
 
       <Button
+        variant="outline"
         leftIcon="edit"
-        className="naxatw-mt-8 naxatw-border naxatw-border-red !naxatw-text-red"
+        className="naxatw-mt-8 naxatw-border-red !naxatw-text-red"
         onClick={() => navigate('/user-profile')}
       >
         {m.dashboard_sidebar_edit_profile()}

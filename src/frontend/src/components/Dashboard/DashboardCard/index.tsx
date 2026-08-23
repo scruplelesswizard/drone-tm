@@ -24,7 +24,7 @@ export const DashboardCardSkeleton = () => {
 const DashboardCard = ({ title, count, active }: IDashboardCardProps) => {
   return (
     <FlexRow
-      className={`naxatw-items-center naxatw-gap-7 naxatw-rounded-lg naxatw-border naxatw-p-5 naxatw-shadow-lg hover:naxatw-border-[#D73F3F] ${active ? 'naxatw-border-[#D73F3F]' : ''}`}
+      className={`naxatw-items-center naxatw-gap-7 naxatw-rounded-lg naxatw-border naxatw-p-5 naxatw-shadow-lg hover:naxatw-border-red ${active ? 'naxatw-border-red' : ''}`}
     >
       <Image src={graphImage} />
       <FlexColumn>
