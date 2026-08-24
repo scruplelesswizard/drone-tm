@@ -491,7 +491,7 @@ const MapSection = ({ projectData }: { projectData: ProjectInfo }) => {
             layerOptions={{
               type: 'line',
               paint: {
-                'line-color': '#D73F3F',
+                'line-color': '#1B66AF',
                 'line-width': 2,
               },
             }}
