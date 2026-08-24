@@ -2255,14 +2255,20 @@ flagged below wherever that matters.
       not brand-color usage - `#D73F3F` there correctly marks
       `HAS_ISSUES`/`IMAGE_PROCESSING_FAILED` (danger states) and should
       stay red. Left unchanged.
-- [ ] **Judgment call, not changed:** the project-area boundary
-      line-color on the live map (`MapSection/index.tsx`) and the export
-      printout's static map (`ExportSection/MapSection.tsx`) both draw
-      the AOI outline in the same hardcoded `#D73F3F`. Arguably should
-      match the new blue brand color (the Create Project wizard's own
-      AOI-drawing step already renders the "Project" boundary toggle in
-      blue), but changing map layer paint colors felt like it deserved a
-      deliberate call rather than a drive-by find - left as-is.
+- [x] **Judgment call:** the project-area boundary line-color on the live
+      map (`MapSection/index.tsx`) and the export printout's static map
+      (`ExportSection/MapSection.tsx`) both drew the AOI outline in the
+      same hardcoded `#D73F3F`. Arguably should match the new blue brand
+      color (the Create Project wizard's own AOI-drawing step already
+      renders the "Project" boundary toggle in blue), but changing map
+      layer paint colors felt like it deserved a deliberate call rather
+      than a drive-by find - left as-is pending that call.
+      DONE — decided blue, matching the wizard's own boundary toggle and
+      every other brand action. Both `project-area` layers switched from
+      `#D73F3F` to `#1B66AF`. Left the `statusColor` switch in
+      `MapSection/index.tsx` (HAS_ISSUES/IMAGE_PROCESSING_FAILED) alone -
+      that's the separate status palette, confirmed correctly red back
+      in Round 4. `pnpm lint`/`pnpm build` clean.
 - Everything else in scope (`ChooseProcessingParameter`, `GcpEditor`
   entry point, `Contributions`, `ExportSection` print flow, `MapSection`
   interaction logic, `ProcessingStatusDialog` family) read clean on a
