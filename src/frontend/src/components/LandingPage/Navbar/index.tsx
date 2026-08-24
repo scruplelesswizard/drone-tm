@@ -28,7 +28,7 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <header>
+    <header className="naxatw-sticky naxatw-top-0 naxatw-z-30">
       {/* Hidden auth component for session verification - redirects to /hanko-auth if user has SSO session */}
       {AUTH_PROVIDER === 'hanko' && (
         <div style={{ display: 'none' }}>
