@@ -9,7 +9,8 @@ import {
   dashboardCardsForProjectCreator,
 } from '@Constants/dashboard';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import useSignedInRole from '@Hooks/useSignedInRole';
 import { m } from '@/paraglide/messages';
 import { FlexRow } from '@/components/common/Layouts';
 
@@ -18,23 +19,32 @@ const getContent = (activeTab: string, title: string) => {
   return <TaskLogs title={title} activeTab={activeTab} />;
 };
 
+const defaultTabFor = (role: string) =>
+  role === 'PROJECT_CREATOR'
+    ? { value: 'request_logs', title: m.dashboard_request_logs_title() }
+    : { value: 'ongoing_tasks', title: m.dashboard_ongoing_tasks_title() };
+
 const Dashboard = () => {
-  const signedInAs = localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
-  const [activeTab, setActiveTab] = useState(
-    signedInAs === 'PROJECT_CREATOR'
-      ? {
-          value: 'request_logs',
-          title: m.dashboard_request_logs_title(),
-        }
-      : {
-          value: 'ongoing_tasks',
-          title: m.dashboard_ongoing_tasks_title(),
-        },
-  );
+  const [signedInAs] = useSignedInRole();
+  const [activeTab, setActiveTab] = useState(() => defaultTabFor(signedInAs));
   const dashboardCards =
     signedInAs === 'PROJECT_CREATOR'
       ? dashboardCardsForProjectCreator()
       : dashboardCardsForDroneOperator();
+
+  // request_logs only exists for project creators - toggling to Operate
+  // mid-session must not leave that stale tab selected, since it isn't
+  // even one of the drone-operator card options any more.
+  useEffect(() => {
+    setActiveTab(current =>
+      dashboardCards.some(card => card.value === current.value)
+        ? current
+        : defaultTabFor(signedInAs),
+    );
+    // Only re-run when the role itself changes, not on every dashboardCards
+    // identity change (a fresh array every render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedInAs]);
 
   const { data: taskStatistics, isLoading } = useGetDashboardTaskStaticsQuery({
     select: (res: unknown) => {

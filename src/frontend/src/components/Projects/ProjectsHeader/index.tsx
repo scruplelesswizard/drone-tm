@@ -10,13 +10,14 @@ import { setCreateProjectState } from '@Store/actions/createproject';
 import SearchInput from '@Components/common/FormUI/SearchInput';
 import useDebounceListener from '@Hooks/useDebouncedListener';
 import useAuth from '@Hooks/useAuth';
+import useSignedInRole from '@Hooks/useSignedInRole';
 import { m } from '@/paraglide/messages';
 
 export default function ProjectsHeader() {
   const dispatch = useTypedDispatch();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const signedInAs = localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
+  const [signedInAs] = useSignedInRole();
   const showMap = useTypedSelector(state => state.common.showMap);
   const projectsFilterByOwner = useTypedSelector(
     state => state.createproject.ProjectsFilterByOwner,

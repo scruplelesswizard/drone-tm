@@ -9,6 +9,7 @@ import OtherDetails from '@Components/UpdateUserDetails/OtherDetails';
 import Password from '@Components/UpdateUserDetails/Password';
 import { tabOptions } from '@Constants/index';
 import useWindowDimensions from '@Hooks/useWindowDimensions';
+import useSignedInRole from '@Hooks/useSignedInRole';
 
 const getActiveFormContent = (activeTab: number, userType: string) => {
   switch (activeTab) {
@@ -34,7 +35,7 @@ const UpdateUserProfile = () => {
   const userProfileActiveTab = useTypedSelector(
     state => state.common.userProfileActiveTab,
   );
-  const signedInAs = localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
+  const [signedInAs] = useSignedInRole();
 
   return (
     <div className="main-content naxatw-w-full naxatw-flex-col naxatw-gap-3 md:naxatw-bg-gray-50">

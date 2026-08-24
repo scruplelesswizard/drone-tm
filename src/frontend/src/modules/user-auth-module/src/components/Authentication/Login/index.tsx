@@ -125,11 +125,7 @@ export default function Login() {
         className="naxatw-h-screen naxatw-w-full naxatw-flex-col naxatw-items-center naxatw-justify-center"
       >
         <Image src={Person} />
-        <h3>
-          {signedInAs === 'PROJECT_CREATOR'
-            ? m.auth_role_project_creator()
-            : m.auth_role_drone_operator()}
-        </h3>
+        <h3>{m.auth_login_heading()}</h3>
 
         {/* Conditional auth rendering */}
         {AUTH_PROVIDER === 'hanko' ? (

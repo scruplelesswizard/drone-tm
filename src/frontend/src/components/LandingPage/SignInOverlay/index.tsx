@@ -5,8 +5,7 @@ import { FlexColumn, FlexRow } from '@Components/common/Layouts';
 import { Button } from '@Components/RadixComponents/Button';
 import Image from '@Components/RadixComponents/Image';
 import droneTMLogo from '@Assets/images/DTM-logo-black.svg';
-import projectCreator from '@Assets/images/LandingPage/project-creator.svg';
-import droneOperator from '@Assets/images/LandingPage/drone-operator.svg';
+import droneTaskingIllustration from '@Assets/images/LandingPage/project-creator.svg';
 import Icon from '@Components/common/Icon';
 import { setCommonState } from '@Store/actions/common';
 import { motion } from 'framer-motion';
@@ -28,6 +27,36 @@ export default function SignInOverlay() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
 
+  const handleContinue = () => {
+    // Every account gets both roles now (Manage/Operate is a header
+    // toggle post sign-in) - this is just the internal handshake value
+    // for the initial login request, not a user choice anymore.
+    localStorage.setItem('signedInAs', 'PROJECT_CREATOR');
+
+    if (AUTH_PROVIDER === 'hanko') {
+      // Clear any existing Hanko session to force fresh login
+      // This prevents account confusion when switching users
+      document.cookie = `hanko=; path=/; max-age=0; domain=${
+        window.location.hostname
+      }`;
+      document.cookie = 'hanko=; path=/; max-age=0'; // Also clear without domain
+
+      // Use FRONTEND_URL to ensure consistent domain (127.0.0.1) for cookies
+      // Return to /hanko-auth callback which validates with backend and sets up user profile
+      const returnUrl = `${FRONTEND_URL}/hanko-auth?role=PROJECT_CREATOR`;
+      window.location.href = `${HANKO_URL}/app?return_to=${encodeURIComponent(returnUrl)}`;
+      return;
+    }
+
+    if (isAuthenticated()) {
+      void navigate('/projects');
+    } else {
+      void navigate('/login', {
+        state: { from: location.state?.from },
+      });
+    }
+  };
+
   return (
     <motion.section
       initial="hidden"
@@ -47,89 +76,22 @@ export default function SignInOverlay() {
           }}
         />
       </FlexRow>
-      <FlexRow className="naxatw-mt-12 naxatw-w-full naxatw-flex-wrap naxatw-gap-5 naxatw-px-6 lg:naxatw-flex-nowrap lg:naxatw-px-16 xl:naxatw-justify-between">
+      <FlexRow className="naxatw-mt-12 naxatw-w-full naxatw-justify-center naxatw-px-6 lg:naxatw-px-16">
         <FlexColumn
           gap={5}
-          className="naxatw-flex-1 naxatw-items-center naxatw-rounded-lg naxatw-border naxatw-border-grey-200 naxatw-px-10 naxatw-py-8 naxatw-text-landing-red lg:naxatw-px-16 lg:naxatw-py-14 xl:naxatw-px-24 xl:naxatw-py-20"
+          className="naxatw-w-full naxatw-max-w-[26rem] naxatw-items-center naxatw-rounded-lg naxatw-border naxatw-border-grey-200 naxatw-px-10 naxatw-py-8 naxatw-text-landing-red lg:naxatw-px-16 lg:naxatw-py-14 xl:naxatw-px-24 xl:naxatw-py-20"
         >
-          <h5>{m.landing_signin_overlay_project_creator()}</h5>
-          <Image src={projectCreator} />
+          <h5>{m.landing_signin_overlay_heading()}</h5>
+          <Image src={droneTaskingIllustration} />
           <Button
             className="naxatw-whitespace-nowrap !naxatw-bg-landing-red"
             rightIcon="east"
-            onClick={() => {
-              localStorage.setItem('signedInAs', 'PROJECT_CREATOR');
-
-              if (AUTH_PROVIDER === 'hanko') {
-                // Clear any existing Hanko session to force fresh login
-                // This prevents account confusion when switching users
-                document.cookie = `hanko=; path=/; max-age=0; domain=${
-                  window.location.hostname
-                }`;
-                document.cookie = 'hanko=; path=/; max-age=0'; // Also clear without domain
-
-                // Use FRONTEND_URL to ensure consistent domain (127.0.0.1) for cookies
-                // Return to /hanko-auth callback which validates with backend and sets up user profile
-                const returnUrl = `${FRONTEND_URL}/hanko-auth?role=${'PROJECT_CREATOR'}`;
-                window.location.href = `${HANKO_URL}/app?return_to=${encodeURIComponent(returnUrl)}`;
-                return;
-              }
-
-              if (isAuthenticated()) {
-                void navigate('/projects');
-              } else {
-                void navigate('/login', {
-                  state: { from: location.state?.from },
-                });
-              }
-            }}
+            onClick={handleContinue}
           >
-            {m.landing_signin_overlay_im_project_creator()}
-          </Button>
-        </FlexColumn>
-        <FlexColumn
-          gap={5}
-          className="naxatw-flex-1 naxatw-items-center naxatw-rounded-lg naxatw-border naxatw-border-grey-200 naxatw-px-10 naxatw-py-8 naxatw-text-landing-red lg:naxatw-px-16 lg:naxatw-py-14 xl:naxatw-px-24 xl:naxatw-py-20"
-        >
-          <h5>{m.landing_signin_overlay_drone_operator()}</h5>
-          <Image src={droneOperator} />
-          <Button
-            className="naxatw-whitespace-nowrap !naxatw-bg-landing-red"
-            rightIcon="east"
-            onClick={() => {
-              localStorage.setItem('signedInAs', 'DRONE_PILOT');
-
-              if (AUTH_PROVIDER === 'hanko') {
-                // Clear any existing Hanko session to force fresh login
-                // This prevents account confusion when switching users
-                document.cookie = `hanko=; path=/; max-age=0; domain=${
-                  window.location.hostname
-                }`;
-                document.cookie = 'hanko=; path=/; max-age=0'; // Also clear without domain
-
-                // Use FRONTEND_URL to ensure consistent domain (127.0.0.1) for cookies
-                // Return to /hanko-auth callback which validates with backend and sets up user profile
-                const returnUrl = `${FRONTEND_URL}/hanko-auth?role=${'DRONE_PILOT'}`;
-                window.location.href = `${HANKO_URL}/app?return_to=${encodeURIComponent(returnUrl)}`;
-                return;
-              }
-
-              if (isAuthenticated()) {
-                void navigate('/projects');
-              } else {
-                void navigate('/login', {
-                  state: { from: location.state?.from },
-                });
-              }
-            }}
-          >
-            {m.landing_signin_overlay_im_drone_operator()}
+            {m.landing_signin_overlay_cta()}
           </Button>
         </FlexColumn>
       </FlexRow>
-      <p className="naxatw-mt-6 naxatw-text-center naxatw-text-sm naxatw-text-grey-600">
-        {m.landing_signin_overlay_both_roles_hint()}
-      </p>
     </motion.section>
   );
 }

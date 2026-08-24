@@ -4,12 +4,13 @@ import { Button } from '@Components/RadixComponents/Button';
 import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import avatarImage from '@Assets/images/avatar-images.svg';
+import useSignedInRole from '@Hooks/useSignedInRole';
 import { m } from '@/paraglide/messages';
 
 const DashboardSidebar = () => {
   const navigate = useNavigate();
   const userDetails = getLocalStorageValue('userprofile');
-  const role = localStorage.getItem('signedInAs');
+  const [role] = useSignedInRole();
   return (
     <FlexColumn className="naxatw-h-full naxatw-items-center naxatw-rounded-xl naxatw-border naxatw-border-gray-500 naxatw-p-2.5 naxatw-py-4">
       <Flex className="naxatw-h-20 naxatw-w-20 naxatw-items-center naxatw-justify-center naxatw-overflow-hidden naxatw-rounded-full naxatw-bg-grey-600">
