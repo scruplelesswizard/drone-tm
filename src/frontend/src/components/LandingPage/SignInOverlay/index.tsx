@@ -35,7 +35,7 @@ export default function SignInOverlay() {
       exit="exit"
       variants={slideVariants}
       transition={{ duration: 0.5 }}
-      className="naxatw-font-manrope naxatw-absolute naxatw-top-7 naxatw-z-20 naxatw-h-screen naxatw-w-full naxatw-bg-white naxatw-px-8 naxatw-py-8 md:naxatw-px-16 lg:naxatw-px-36 lg:naxatw-py-12"
+      className="naxatw-font-manrope naxatw-fixed naxatw-inset-0 naxatw-z-20 naxatw-bg-white naxatw-px-8 naxatw-py-8 md:naxatw-px-16 lg:naxatw-px-36 lg:naxatw-py-12"
     >
       <FlexRow className="naxatw-items-center naxatw-justify-between">
         <Image src={droneTMLogo} />
@@ -127,6 +127,9 @@ export default function SignInOverlay() {
           </Button>
         </FlexColumn>
       </FlexRow>
+      <p className="naxatw-mt-6 naxatw-text-center naxatw-text-sm naxatw-text-grey-600">
+        {m.landing_signin_overlay_both_roles_hint()}
+      </p>
     </motion.section>
   );
 }
