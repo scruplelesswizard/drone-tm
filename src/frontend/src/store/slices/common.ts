@@ -17,12 +17,17 @@ export interface CommonState {
   showPromptDialog: boolean;
   promptDialogContent: PromptDialogContentsType;
   showMap: boolean;
-  openSignInMenu: boolean;
   userProfileActiveTab: number;
   isCertifiedDroneUser: 'yes' | 'no';
   projectSearchKey: string;
   selectedDocumentDetails: documentDetailType | null;
   projectCountry: string | null;
+  // Set by whichever page is showing a tab that only makes sense for the
+  // CURRENT role (e.g. Dashboard's Request Logs, project-creator only) -
+  // the header's Manage/Operate toggle disables itself and shows this as
+  // the reason, rather than switching roles out from under an invalid
+  // tab. Pages that set this must clear it on unmount.
+  roleToggleDisabledReason: string | null;
 }
 
 const initialState: CommonState = {
@@ -31,12 +36,12 @@ const initialState: CommonState = {
   showPromptDialog: false,
   promptDialogContent: null,
   showMap: true,
-  openSignInMenu: false,
   userProfileActiveTab: 1,
   isCertifiedDroneUser: 'no',
   projectSearchKey: '',
   selectedDocumentDetails: null,
   projectCountry: null,
+  roleToggleDisabledReason: null,
 };
 
 const setCommonState: CaseReducer<

@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useTypedDispatch, useTypedSelector } from '@Store/hooks';
-import { setCommonState } from '@Store/actions/common';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Home,
@@ -13,30 +11,26 @@ import {
   CaseStudies,
   ClientAndPartners,
   Footer,
-  SignInOverlay,
   TalkToUs,
 } from '@Components/LandingPage';
-import { AnimatePresence } from 'framer-motion';
 import MobileAppDownload from '@Components/LandingPage/MobileAppDownload';
 import { toast } from 'react-toastify';
 import { m } from '@/paraglide/messages';
 
 export default function LandingPage() {
-  const openSignInMenu = useTypedSelector(state => state.common.openSignInMenu);
-  const dispatch = useTypedDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (location.state?.from) {
-      dispatch(setCommonState({ openSignInMenu: true }));
       toast.error(m.landing_signin_required_toast());
+      void navigate('/login', { state: { from: location.state.from } });
     }
-  }, [location, dispatch]);
+  }, [location, navigate]);
 
   return (
     <main className="landing-page naxatw-font-secondary">
       <Navbar />
-      <AnimatePresence>{openSignInMenu && <SignInOverlay />}</AnimatePresence>
       <Home />
       <AboutTM />
       <CaseStudies />

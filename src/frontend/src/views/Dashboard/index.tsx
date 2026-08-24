@@ -11,6 +11,8 @@ import {
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
 import { useEffect, useState } from 'react';
 import useSignedInRole from '@Hooks/useSignedInRole';
+import { useTypedDispatch } from '@Store/hooks';
+import { setCommonState } from '@Store/actions/common';
 import { m } from '@/paraglide/messages';
 import { FlexRow } from '@/components/common/Layouts';
 
@@ -25,6 +27,7 @@ const defaultTabFor = (role: string) =>
     : { value: 'ongoing_tasks', title: m.dashboard_ongoing_tasks_title() };
 
 const Dashboard = () => {
+  const dispatch = useTypedDispatch();
   const [signedInAs] = useSignedInRole();
   const [activeTab, setActiveTab] = useState(() => defaultTabFor(signedInAs));
   const dashboardCards =
@@ -32,19 +35,31 @@ const Dashboard = () => {
       ? dashboardCardsForProjectCreator()
       : dashboardCardsForDroneOperator();
 
-  // request_logs only exists for project creators - toggling to Operate
-  // mid-session must not leave that stale tab selected, since it isn't
-  // even one of the drone-operator card options any more.
+  // request_logs only exists for project creators - if the active tab
+  // isn't one of the OTHER role's cards, switching roles right now would
+  // strand the user on a tab that no longer applies. Disable the header's
+  // Manage/Operate toggle instead of silently resetting the tab, and say
+  // why. Must clear on unmount so leaving Dashboard doesn't leave the
+  // toggle disabled on some other page.
   useEffect(() => {
-    setActiveTab(current =>
-      dashboardCards.some(card => card.value === current.value)
-        ? current
-        : defaultTabFor(signedInAs),
+    const otherRoleCards =
+      signedInAs === 'PROJECT_CREATOR'
+        ? dashboardCardsForDroneOperator()
+        : dashboardCardsForProjectCreator();
+    const validForOtherRole = otherRoleCards.some(
+      card => card.value === activeTab.value,
     );
-    // Only re-run when the role itself changes, not on every dashboardCards
-    // identity change (a fresh array every render).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signedInAs]);
+    dispatch(
+      setCommonState({
+        roleToggleDisabledReason: validForOtherRole
+          ? null
+          : m.nav_role_toggle_disabled_for_tab({ tab: activeTab.title }),
+      }),
+    );
+    return () => {
+      dispatch(setCommonState({ roleToggleDisabledReason: null }));
+    };
+  }, [dispatch, signedInAs, activeTab.value, activeTab.title]);
 
   const { data: taskStatistics, isLoading } = useGetDashboardTaskStaticsQuery({
     select: (res: unknown) => {

@@ -12,7 +12,9 @@ const BASE_URL = getRuntimeConfig('VITE_API_URL', '/api/v1');
  * HankoAuth - Callback component after Portal SSO login
  *
  * Flow:
- * 1. User selects role in SignInOverlay (PROJECT_CREATOR or DRONE_PILOT)
+ * 1. User clicks Sign In, which goes straight to /login (role is no
+ *    longer a sign-in choice - every account gets both roles; role= here
+ *    is just the login handshake's internal default, PROJECT_CREATOR)
  * 2. Redirects to Portal (https://login.hotosm.org) with role in return URL
  * 3. Portal handles Hanko authentication and sets JWT cookie
  * 4. Portal redirects back to this component (/hanko-auth?role=PROJECT_CREATOR)

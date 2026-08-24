@@ -1,4 +1,6 @@
 import useSignedInRole, { SignedInRole } from '@Hooks/useSignedInRole';
+import { useTypedSelector } from '@Store/hooks';
+import ToolTip from '@Components/RadixComponents/ToolTip';
 import { m } from '@/paraglide/messages';
 
 const OPTIONS: { role: SignedInRole; label: () => string }[] = [
@@ -8,8 +10,11 @@ const OPTIONS: { role: SignedInRole; label: () => string }[] = [
 
 export default function RoleToggle() {
   const [role, setRole] = useSignedInRole();
+  const disabledReason = useTypedSelector(
+    state => state.common.roleToggleDisabledReason,
+  );
 
-  return (
+  const group = (
     <div
       role="group"
       aria-label={m.nav_role_toggle_aria_label()}
@@ -17,25 +22,35 @@ export default function RoleToggle() {
     >
       {OPTIONS.map(option => {
         const active = role === option.role;
+        const disabled = !active && !!disabledReason;
+        let stateClassName = 'naxatw-text-grey-600 hover:naxatw-text-grey-800';
+        if (active) stateClassName = 'naxatw-bg-red naxatw-text-white';
+        else if (disabled)
+          stateClassName = 'naxatw-cursor-not-allowed naxatw-text-grey-400';
         return (
           <button
             key={option.role}
             type="button"
             aria-pressed={active}
+            disabled={disabled}
             onClick={() => {
-              if (active) return;
+              if (active || disabled) return;
               setRole(option.role);
             }}
-            className={`naxatw-rounded-full naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-medium naxatw-transition-colors ${
-              active
-                ? 'naxatw-bg-red naxatw-text-white'
-                : 'naxatw-text-grey-600 hover:naxatw-text-grey-800'
-            }`}
+            className={`naxatw-rounded-full naxatw-px-3 naxatw-py-1 naxatw-text-xs naxatw-font-medium naxatw-transition-colors ${stateClassName}`}
           >
             {option.label()}
           </button>
         );
       })}
     </div>
+  );
+
+  if (!disabledReason) return group;
+
+  return (
+    <ToolTip message={disabledReason} side="bottom">
+      {group}
+    </ToolTip>
   );
 }
