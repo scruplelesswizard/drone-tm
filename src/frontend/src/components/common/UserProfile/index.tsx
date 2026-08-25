@@ -8,13 +8,14 @@ import UserAvatar from '@Components/common/UserAvatar';
 import { toast } from 'react-toastify';
 import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
 import { useGetUserDetailsQuery } from '@Api/projects';
+import useSignedInRole from '@Hooks/useSignedInRole';
 import { m } from '@/paraglide/messages';
 
 export default function UserProfile() {
   const [toggle, setToggle] = useState(false);
   const navigate = useNavigate();
   const userProfile = getLocalStorageValue('userprofile');
-  const role = localStorage.getItem('signedInAs');
+  const [role] = useSignedInRole();
 
   const { data: userDetails, isFetching } = useGetUserDetailsQuery({
     enabled: !!(userProfile?.role && role),

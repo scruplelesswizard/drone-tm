@@ -124,7 +124,11 @@ const CompleteUserProfile = () => {
     certificate_file: null,
     registration_file: null,
     drone_you_own: null,
-    role: userProfile?.role ? [existingRole, newRole] : [newRole],
+    // A brand-new account gets both roles up front - there's no more
+    // sign-in role choice, just a header toggle post sign-in. An existing
+    // single-role account (pre-dating this change) landing here because
+    // it's missing a role still just adds that one role.
+    role: userProfile?.role ? [existingRole, newRole] : [1, 2],
   };
 
   const {
@@ -154,10 +158,14 @@ const CompleteUserProfile = () => {
     unknown
   >({
     mutationFn: payloadDataObject => {
-      const role = payloadDataObject?.data?.role;
-      return Array.isArray(role) && role.length === 1
-        ? postUserProfile(payloadDataObject)
-        : patchUserProfile(payloadDataObject);
+      // isRoleMismatch means a profile row already exists (missing just
+      // one role) - PATCH it. A brand-new profile is always POSTed, even
+      // though it now submits both roles at once (role.length is no
+      // longer a reliable create-vs-update signal now that new accounts
+      // aren't single-role).
+      return isRoleMismatch
+        ? patchUserProfile(payloadDataObject)
+        : postUserProfile(payloadDataObject);
     },
     onSuccess: async response => {
       const results = (response.data as { results?: Record<string, unknown> })

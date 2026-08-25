@@ -9,7 +9,10 @@ import {
   dashboardCardsForProjectCreator,
 } from '@Constants/dashboard';
 import hasErrorBoundary from '@Utils/hasErrorBoundary';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import useSignedInRole from '@Hooks/useSignedInRole';
+import { useTypedDispatch } from '@Store/hooks';
+import { setCommonState } from '@Store/actions/common';
 import { m } from '@/paraglide/messages';
 import { FlexRow } from '@/components/common/Layouts';
 
@@ -18,23 +21,45 @@ const getContent = (activeTab: string, title: string) => {
   return <TaskLogs title={title} activeTab={activeTab} />;
 };
 
+const defaultTabFor = (role: string) =>
+  role === 'PROJECT_CREATOR'
+    ? { value: 'request_logs', title: m.dashboard_request_logs_title() }
+    : { value: 'ongoing_tasks', title: m.dashboard_ongoing_tasks_title() };
+
 const Dashboard = () => {
-  const signedInAs = localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
-  const [activeTab, setActiveTab] = useState(
-    signedInAs === 'PROJECT_CREATOR'
-      ? {
-          value: 'request_logs',
-          title: m.dashboard_request_logs_title(),
-        }
-      : {
-          value: 'ongoing_tasks',
-          title: m.dashboard_ongoing_tasks_title(),
-        },
-  );
+  const dispatch = useTypedDispatch();
+  const [signedInAs] = useSignedInRole();
+  const [activeTab, setActiveTab] = useState(() => defaultTabFor(signedInAs));
   const dashboardCards =
     signedInAs === 'PROJECT_CREATOR'
       ? dashboardCardsForProjectCreator()
       : dashboardCardsForDroneOperator();
+
+  // request_logs only exists for project creators - if the active tab
+  // isn't one of the OTHER role's cards, switching roles right now would
+  // strand the user on a tab that no longer applies. Disable the header's
+  // Manage/Operate toggle instead of silently resetting the tab, and say
+  // why. Must clear on unmount so leaving Dashboard doesn't leave the
+  // toggle disabled on some other page.
+  useEffect(() => {
+    const otherRoleCards =
+      signedInAs === 'PROJECT_CREATOR'
+        ? dashboardCardsForDroneOperator()
+        : dashboardCardsForProjectCreator();
+    const validForOtherRole = otherRoleCards.some(
+      card => card.value === activeTab.value,
+    );
+    dispatch(
+      setCommonState({
+        roleToggleDisabledReason: validForOtherRole
+          ? null
+          : m.nav_role_toggle_disabled_for_tab({ tab: activeTab.title }),
+      }),
+    );
+    return () => {
+      dispatch(setCommonState({ roleToggleDisabledReason: null }));
+    };
+  }, [dispatch, signedInAs, activeTab.value, activeTab.title]);
 
   const { data: taskStatistics, isLoading } = useGetDashboardTaskStaticsQuery({
     select: (res: unknown) => {

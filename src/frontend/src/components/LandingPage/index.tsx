@@ -8,7 +8,6 @@ import MajorImpacts from './MajorImpacts';
 import CaseStudies from './CaseStudies';
 import ClientAndPartners from './ClientsAndPartners';
 import Footer from './Footer';
-import SignInOverlay from './SignInOverlay';
 import TalkToUs from './TalkToUs';
 
 export {
@@ -22,6 +21,5 @@ export {
   CaseStudies,
   ClientAndPartners,
   Footer,
-  SignInOverlay,
   TalkToUs,
 };

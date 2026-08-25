@@ -4,7 +4,9 @@ import { NavLink, useLocation } from 'react-router-dom';
 import dtmLogo from '@Assets/images/drone-tasking-manager.svg';
 import { useGetUserDetailsQuery } from '@Api/projects';
 import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
+import useSignedInRole from '@Hooks/useSignedInRole';
 import UserProfile from '../UserProfile';
+import RoleToggle from '../RoleToggle';
 import { FlexRow } from '../Layouts';
 import Icon from '../Icon';
 import Drawer from '../Drawer';
@@ -35,7 +37,12 @@ export default function Navbar() {
     pathnameOnArray?.includes('approval');
 
   // Get user role for Hanko auth callback
-  const signedInAs = localStorage.getItem('signedInAs') || 'PROJECT_CREATOR';
+  const [signedInAs] = useSignedInRole();
+  // REGULATOR is a separate token-based flow, not part of the Manage/
+  // Operate toggle - read the raw value since it's outside SignedInRole's
+  // union.
+  const showRoleToggle =
+    !isApprovalPage && localStorage.getItem('signedInAs') !== 'REGULATOR';
 
   // For Hanko SSO: fetch user profile to keep localStorage in sync
   // (In legacy auth, UserProfile component handles this)
@@ -139,11 +146,12 @@ export default function Navbar() {
 
           {!isApprovalPage && (
             <>
-              {/* Right: auth + lang + tool-menu */}
+              {/* Right: role toggle + auth + lang + tool-menu */}
               <FlexRow
                 className="naxatw-hidden naxatw-items-center md:naxatw-flex"
                 gap={2}
               >
+                {showRoleToggle && <RoleToggle />}
                 {desktopAuth}
                 <LanguageSwitcher />
                 <hotosm-tool-menu />
@@ -184,6 +192,11 @@ export default function Navbar() {
               <Icon name="close" />
             </button>
           </div>
+          {showRoleToggle && (
+            <div className="naxatw-flex naxatw-justify-center naxatw-border-b naxatw-border-grey-300 naxatw-pb-4">
+              <RoleToggle />
+            </div>
+          )}
           <div className="naxatw-flex naxatw-flex-col naxatw-gap-2">
             <NavLink
               to="/projects"

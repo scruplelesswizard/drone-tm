@@ -1,10 +1,8 @@
-import { useTypedDispatch } from '@Store/hooks';
 import { FlexColumn } from '@Components/common/Layouts';
 import Image from '@Components/RadixComponents/Image';
 import { Button } from '@Components/RadixComponents/Button';
 import { motion } from 'framer-motion';
 import droneTaskingManagerLogo from '@Assets/images/DTM-logo-white.svg';
-import { setCommonState } from '@Store/actions/common';
 import useAuth from '@Hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { m } from '@/paraglide/messages';
@@ -13,7 +11,6 @@ const droneBackgroundImage = '/images/DroneTM-bg.jpg';
 // import { getLocalStorageValue } from '@Utils/getLocalStorageValue';
 
 export default function Home() {
-  const dispatch = useTypedDispatch();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   // const userProfile = getLocalStorageValue('userprofile');
@@ -55,7 +52,7 @@ export default function Home() {
             </Button>
           ) : (
             <Button
-              onClick={() => dispatch(setCommonState({ openSignInMenu: true }))}
+              onClick={() => navigate('/login')}
               className="naxatw-cursor-pointer !naxatw-rounded-[3.125rem] !naxatw-bg-landing-red naxatw-px-5 naxatw-py-3 naxatw-text-body-md naxatw-font-normal naxatw-text-landing-white"
             >
               {m.landing_signin_button()}
