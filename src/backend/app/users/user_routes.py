@@ -24,6 +24,7 @@ from app.users.user_schemas import (
     Token,
     UserProfileCreate,
     UserProfileUpdate,
+    UserRegister,
 )
 from app.utils import send_reset_password_email
 from fastapi import (
@@ -50,6 +51,55 @@ router = APIRouter(
     tags=["users"],
     responses={404: {"description": "Not found"}},
 )
+
+
+@router.post(
+    "/register",
+    response_model=Token,
+    summary="Register a new account with email and password",
+)
+@limiter.limit("5/minute")
+async def register(
+    request: Request,
+    user_data: UserRegister,
+    db: Annotated[Connection, Depends(database.get_db)],
+) -> Token:
+    """Create a new email+password account and log it straight in.
+
+    This only creates the bare `users` row + password - it does not create
+    a `user_profile` (no role, no name/org details beyond what's given
+    here). The frontend sends a brand-new account through the same
+    /complete-profile flow as a first-time Google/Hanko login right after
+    this, which is what actually grants both roles.
+    """
+    auth_user = AuthUser(
+        id=str(uuid.uuid4()),
+        email=user_data.email_address,
+        name=user_data.name,
+        profile_img="",
+    )
+    # Raises 400 on a duplicate email - the check is a DB unique constraint,
+    # not a separate lookup, to avoid a check-then-insert race.
+    await DbUser.create(db, auth_user)
+
+    hashed_password = get_password_hash(user_data.password)
+    async with db.cursor() as cur:
+        await cur.execute(
+            "UPDATE users SET password = %(password)s WHERE id = %(user_id)s;",
+            {"password": hashed_password, "user_id": auth_user.id},
+        )
+
+    role = "PROJECT_CREATOR"
+    user_info = {
+        "id": auth_user.id,
+        "email": auth_user.email,
+        "name": auth_user.name,
+        "profile_img": auth_user.profile_img,
+        "role": role,
+    }
+    access_token, refresh_token = await user_logic.create_access_token(user_info)
+
+    return Token(access_token=access_token, refresh_token=refresh_token, role=role)
 
 
 @router.post(

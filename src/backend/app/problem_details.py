@@ -8,6 +8,7 @@ shape instead of each route hand-rolling its own {"detail": ...} dict.
 import http
 
 from fastapi import HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger as log
@@ -45,8 +46,17 @@ async def handle_http_exception(request: Request, exc: HTTPException) -> JSONRes
 async def handle_validation_error(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    """Render request validation failures as an RFC 7807 problem+json body."""
-    return _problem(422, "Request validation failed", errors=exc.errors())
+    """Render request validation failures as an RFC 7807 problem+json body.
+
+    A custom Pydantic field_validator that raises a plain ValueError (e.g.
+    UserRegister's password_complexity check) makes exc.errors() include
+    the raw ValueError instance under each error's `ctx.error` key, not a
+    string - json.dumps can't serialize that and would 500 instead of
+    returning the 422. jsonable_encoder is what FastAPI's own default
+    handler uses to make arbitrary error content JSON-safe; do the same
+    here rather than passing exc.errors() through raw.
+    """
+    return _problem(422, "Request validation failed", errors=jsonable_encoder(exc.errors()))
 
 
 async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:

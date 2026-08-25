@@ -20,6 +20,12 @@ const userRoutes: IRoute[] = [
     authenticated: false,
   },
   {
+    path: '/signup',
+    name: 'SignUp',
+    component: AuthenticationPage,
+    authenticated: false,
+  },
+  {
     path: '/forgot-password',
     name: 'ForgotPassword',
     component: AuthenticationPage,

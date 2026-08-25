@@ -13,6 +13,7 @@ from app.users.user_schemas import (
 )
 from httpx import ASGITransport, AsyncClient
 from loguru import logger as log
+from psycopg.rows import dict_row
 
 
 @pytest.mark.asyncio
@@ -116,6 +117,81 @@ async def test_reset_password_success(client, auth_user):
         log.debug("Response:", response.status_code, response.json())
 
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_register_creates_account_and_returns_token(client, db):
+    """POST /users/register creates the bare users row + password and logs
+    the new account straight in - no user_profile yet, that's still
+    /complete-profile's job (this only covers the auth identity)."""
+    email = f"new-signup-{uuid.uuid4()}@example.com"
+    response = await client.post(
+        "/api/v1/users/register",
+        json={
+            "email_address": email,
+            "password": "StrongPass123!",
+            "name": "New Signup",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "access_token" in body
+    assert "refresh_token" in body
+    assert body["role"] == "PROJECT_CREATOR"
+
+    async with db.cursor(row_factory=dict_row) as cur:
+        await cur.execute(
+            "SELECT id, name, password FROM users WHERE email_address = %(email)s;",
+            {"email": email},
+        )
+        row = await cur.fetchone()
+    assert row is not None
+    assert row["name"] == "New Signup"
+    # Hashed, not the plaintext password we sent.
+    assert row["password"] != "StrongPass123!"
+
+    async with db.cursor(row_factory=dict_row) as cur:
+        await cur.execute(
+            "SELECT 1 FROM user_profile WHERE user_id = %(user_id)s;",
+            {"user_id": row["id"]},
+        )
+        profile_row = await cur.fetchone()
+    assert profile_row is None
+
+
+@pytest.mark.asyncio
+async def test_register_rejects_duplicate_email(client):
+    """A second registration with the same email must fail, not silently
+    take over or duplicate the account."""
+    email = f"dupe-signup-{uuid.uuid4()}@example.com"
+    payload = {
+        "email_address": email,
+        "password": "StrongPass123!",
+        "name": "First Signup",
+    }
+
+    first = await client.post("/api/v1/users/register", json=payload)
+    assert first.status_code == 200
+
+    second = await client.post("/api/v1/users/register", json=payload)
+    assert second.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_register_rejects_weak_password(client):
+    """The password complexity validator (length + upper/lower/digit/
+    special char) must reject an obviously weak password rather than
+    creating the account anyway."""
+    response = await client.post(
+        "/api/v1/users/register",
+        json={
+            "email_address": f"weak-pass-{uuid.uuid4()}@example.com",
+            "password": "weak",
+            "name": "Weak Password",
+        },
+    )
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio

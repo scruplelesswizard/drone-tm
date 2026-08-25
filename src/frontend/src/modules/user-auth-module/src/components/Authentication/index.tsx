@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { Flex } from '@Components/common/Layouts';
 import Login from './Login';
+import SignUp from './SignUp';
 import ForgotPassword from './ForgotPassword';
 import SignInBanner from './SignInBanner';
 
@@ -12,6 +13,8 @@ export default function AuthenticationPage() {
     switch (pathname) {
       case '/login':
         return <Login />;
+      case '/signup':
+        return <SignUp />;
       case '/forgot-password':
         return <ForgotPassword />;
       default:
