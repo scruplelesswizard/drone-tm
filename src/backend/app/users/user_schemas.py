@@ -1,4 +1,5 @@
 import base64
+import re
 import uuid
 from typing import Any
 
@@ -11,7 +12,7 @@ from fastapi import HTTPException
 from loguru import logger as log
 from psycopg import Connection
 from psycopg.rows import class_row, dict_row
-from pydantic import BaseModel, EmailStr, Field, ValidationInfo, model_validator
+from pydantic import BaseModel, EmailStr, ValidationInfo, model_validator
 from pydantic.functional_validators import field_validator
 
 
@@ -57,7 +58,6 @@ class UserPublic(UserBase):
 
 
 class UserRegister(BaseModel):
-    username: str = Field(min_length=4)
     email_address: EmailStr
     password: str
     name: str
@@ -74,15 +74,14 @@ class UserRegister(BaseModel):
     def password_complexity(cls, v: str, info: ValidationInfo):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
-        # TODO: Add them if required
-        # if not re.search(r'[A-Z]', v):
-        #     raise ValueError('Password must contain at least one uppercase letter')
-        # if not re.search(r'[a-z]', v):
-        #     raise ValueError('Password must contain at least one lowercase letter')
-        # if not re.search(r'[0-9]', v):
-        #     raise ValueError('Password must contain at least one digit')
-        # if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-        #     raise ValueError('Password must contain at least one special character')
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Password must contain at least one digit")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+            raise ValueError("Password must contain at least one special character")
         return v
 
 

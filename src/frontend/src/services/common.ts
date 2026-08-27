@@ -9,6 +9,18 @@ export const signInUser = (data: {
   role?: string;
 }) => api.post('/users/login', data);
 
+export const signUpUser = (data: {
+  email_address: string;
+  password: string;
+  name: string;
+}) =>
+  // /users/register takes a JSON body (unlike /users/login's OAuth2 form
+  // data), so it needs an explicit Content-Type - the `api` instance
+  // defaults to multipart/form-data for the form-based endpoints.
+  api.post('/users/register', data, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+
 export const signInGoogle = () => api.get('/users/google-login');
 
 export const signInCallBackUrl = () => api.get('/users/callback');

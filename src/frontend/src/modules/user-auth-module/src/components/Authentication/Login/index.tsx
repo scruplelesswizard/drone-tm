@@ -238,6 +238,18 @@ export default function Login() {
             {m.auth_back()}
           </Button>
         </form>
+
+        <FlexRow className="naxatw-items-center naxatw-justify-center" gap={2}>
+          <span>{m.auth_no_account_question()}</span>
+          <Button
+            variant="ghost"
+            className="naxatw-text-body-btn !naxatw-text-red"
+            onClick={() => navigate('/signup')}
+            type="button"
+          >
+            {m.auth_sign_up_link()}
+          </Button>
+        </FlexRow>
       </Flex>
     </>
   );

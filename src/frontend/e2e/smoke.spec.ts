@@ -32,3 +32,17 @@ test('qfield-open interstitial is reachable without auth', async ({
   expect(response?.status()).toBeLessThan(400);
   await expect(page).toHaveURL(/qfield-open/);
 });
+
+test('login page links to sign up, and sign up links back to login', async ({
+  page,
+}) => {
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Sign up' }).click();
+  await expect(page).toHaveURL(/\/signup/);
+  await expect(
+    page.getByRole('heading', { name: 'Create your account' }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Log in' }).click();
+  await expect(page).toHaveURL(/\/login/);
+});
